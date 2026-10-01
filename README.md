@@ -6,6 +6,8 @@ Sản phẩm tham gia **MLAI 2026 · Track VNG · Đề A: The Escalation Refere
 
 **[Mở VNG Support](https://vng-support.vercel.app)** · **[Mã nguồn](https://github.com/dakiemdarktharr/DOCRELAY_MLAI2026)**
 
+README này mô tả mã nguồn sau commit [`878448f`](https://github.com/dakiemdarktharr/DOCRELAY_MLAI2026/commit/878448f9460f831d015faa6e0f0d720be3b79504): dashboard nhân viên cam–trắng theo VNG, lọc nhanh hàng đợi, tìm mã `HT-…`, khôi phục bộ lọc khi quay lại và API danh bạ mock đã sửa lỗi đọc dữ liệu. Phiên bản trên website cần được đối chiếu riêng theo [runbook](RUNBOOK.md#đối-chiếu-bản-triển-khai).
+
 ## Bạn có thể làm gì?
 
 - **Gửi yêu cầu theo hai cách:** mô tả vấn đề bằng lời hoặc chọn theo danh mục.
@@ -98,6 +100,53 @@ Reviewer có bộ lọc **Hàng đợi chuyển tiếp**: **Ngoài quy định**
 
 Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees.csv). CSV là nguồn dữ liệu duy nhất cho API và tra cứu danh tính RBAC; API kiểm tra ID trong CSV theo ID sinh từ họ tên trước khi dùng hồ sơ. Level là số nguyên từ `00` đến `36` (miền giá trị có 37 level); các level không xuất hiện trong 36 hồ sơ vẫn hợp lệ cho policy.
 
+Đây là dataset mô phỏng của dự án, không phải danh sách nhân viên thật hoặc cơ cấu quyền chính thức của VNG. Ô **ID nhân viên (đang phát triển)** trên form hỗ trợ có thể để trống; điền ID không xác thực danh tính và không mở quyền reviewer. API danh bạ dùng header riêng, không tự lấy ID từ form.
+
+### Dataset ID nhân viên
+
+| ID mock | Họ tên mock | Level | Chức danh mô phỏng | Phòng ban mô phỏng |
+| --- | --- | --- | --- | --- |
+| hoapqm | Phạm Quang Minh Hòa | 36 | Chief Executive Officer (CEO) | Executive Board |
+| anhtn | Trần Ngọc Anh | 35 | Chief Technology Officer (CTO) | Executive Board |
+| dunglv | Lê Văn Dũng | 34 | Managing Director | VNGGames |
+| linhth | Trần Hoàng Linh | 33 | Vice President | ZaloPay |
+| minhnd | Nguyễn Đăng Minh | 32 | Senior Director | AI Cloud |
+| haonv | Nguyễn Văn Hào | 31 | Director | Data platform |
+| huongtt | Trịnh Thị Hương | 30 | Head of Department | Human Resources |
+| phuongnt | Nguyễn Thành Phương | 28 | Deputy Head | Legal |
+| khanhnd | Nguyễn Duy Khánh | 26 | Senior Manager | ZaloPay Operations |
+| tuanha | Hoàng Anh Tuấn | 24 | Project Manager | VNGGames |
+| trangtt | Trần Thu Trang | 22 | Team Leader | Frontend Engineering |
+| namhp | Hoàng Phan Nam | 21 | Assistant Team Leader | Backend Engineering |
+| bachnt | Nguyễn Thành Bách | 20 | Principal Engineer | AI Cloud |
+| longvt | Vũ Tiến Long | 18 | Lead Architect | Data platform |
+| maivt | Vũ Thị Mai | 17 | Senior Level II | UI/UX Design |
+| quanhm | Hoàng Minh Quân | 16 | Senior Level I | DevOps |
+| thuynt | Nguyễn Thị Thủy | 15 | Engineer Level III | Backend Engineering |
+| hieupm | Phạm Minh Hiếu | 12 | Engineer Level II | Frontend Engineering |
+| sonnv | Nguyễn Văn Sơn | 09 | Engineer Level I | QC/QA |
+| vynt | Nguyễn Thảo Vy | 06 | Junior Developer | Mobile Engineering |
+| ducna | Nguyễn Anh Đức | 05 | Fresher Developer | AI Cloud |
+| yenph | Phạm Hoàng Yến | 03 | Long-term Intern | Data platform |
+| khoanm | Nguyễn Minh Khoa | 02 | Short-term Intern | Frontend Engineering |
+| binhnt | Nguyễn Thành Bình | 01 | Contractor | IT Support |
+| tamnt | Nguyễn Thanh Tâm | 00 | Collaborator | Game Localization |
+| cuongnv | Nguyễn Văn Cường | 15 | Specialist Level III | Finance & Accounting |
+| oanhnt | Nguyễn Thị Oanh | 12 | Specialist Level II | Human Resources |
+| hungpv | Phan Văn Hùng | 09 | Specialist Level I | Marketing |
+| dungtt | Trần Tiến Dũng | 24 | Product Owner | ZaloPay |
+| lanht | Hoàng Thị Lan | 22 | Team Leader | Customer Service |
+| kienvd | Vũ Đăng Kiên | 17 | Senior Artist II | VNGGames |
+| ngocpt | Phạm Thị Ngọc | 16 | Senior Specialist I | Legal |
+| haidv | Đinh Văn Hải | 12 | Business Analyst II | ZaloPay |
+| nhannt | Nguyễn Thành Nhân | 06 | Junior Specialist | Marketing |
+| quynhnt | Nguyễn Thị Quỳnh | 05 | Fresher Specialist | Human Resources |
+| thangnv | Nguyễn Văn Thắng | 00 | Collaborator | Creator Management |
+
+Khi cần thay đổi hồ sơ, cập nhật CSV và kiểm tra lại bảng này. ID `oanhnt` và `nhannt` là các ID đã sửa trong phiên bản `878448f`; không dùng các ID cũ `oanhtn` hoặc `nhant`.
+
+### Thử API danh bạ ở local
+
 `GET /api/employees` trả toàn bộ danh bạ cho nhân viên level 21 trở lên. Route dùng `X-Employee-ID` để mô phỏng danh tính: thiếu ID hoặc ID không có trong CSV nhận `401`, level dưới 21 nhận `403`. Đây là xác thực mock để trình diễn RBAC, không phải đăng nhập an toàn hoặc danh tính đã xác minh.
 
 ```powershell
@@ -106,9 +155,20 @@ Invoke-RestMethod http://localhost:3000/api/employees -Headers @{
 }
 ```
 
-ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ `Phạm Quang Minh Hòa` → `hoapqm`, `Trần Ngọc Anh` → `anhtn`. `checkAuthorityLevel(minRequiredLevel)` tạo guard dùng lại cho các API khác. Mốc phân quyền: `00–05` đọc task cá nhân được giao; `06–20` đọc/ghi phạm vi dự án; `21–30` xem log phòng ban, tạo task/project và duyệt workflow dưới `$500`; `31–36` quyền điều hành toàn hệ thống và phê duyệt cuối.
+Phản hồi thành công chứa mảng 36 hồ sơ trong `data`, với `level` là số (ví dụ `00` trong CSV thành `0` trong JSON), và header `Cache-Control: no-store`.
 
-Level `00` có thể xác thực mock nhưng chỉ đọc được tài nguyên được gán khi route tương ứng triển khai scope kiểm tra assignment. Phần này cung cấp helper kiểm tra level và route danh bạ; nó không giả lập task, project, tài chính hay approval.
+| Header `X-Employee-ID` | Kết quả | Ý nghĩa |
+| --- | --- | --- |
+| `namhp` (level 21) hoặc `trangtt` (22) | `200` | Đủ ngưỡng xem danh bạ mock |
+| `bachnt` (20) hoặc `tamnt` (00) | `403` | ID tồn tại nhưng dưới ngưỡng 21 |
+| Bỏ header hoặc `synthetic_unknown_employee` | `401` | Chưa cung cấp ID hoặc không có trong CSV |
+| ID hợp lệ khi CSV không đọc/validate được | `500` | Danh bạ không khả dụng; không trả nội dung lỗi nội bộ |
+
+Header được trim và chuyển thành chữ thường, nên `TRANGTT` cũng khớp `trangtt`. Chạy các ví dụ trên server local; không dùng header tự khai báo này làm xác thực production.
+
+ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ `Phạm Quang Minh Hòa` → `hoapqm`, `Trần Ngọc Anh` → `anhtn`. Tên có thể sinh trùng ID; bộ đọc CSV từ chối ID trùng, không tự phân biệt người trùng tên. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
+
+Hiện chỉ `GET /api/employees` gắn guard này, với ngưỡng `management=21`. Chưa có scope theo người được giao task, project, phòng ban hoặc quyền duyệt tài chính. Các mốc level không tự cấp quyền cho workflow IT/reviewer, không thay deterministic policy và không thay SSO. Mã nguồn: [bộ đọc CSV và sinh ID](src/domain/employees.ts), [guard level](src/lib/employee-rbac.ts), [route danh bạ](src/app/api/employees/route.ts).
 
 ## Chạy trên máy của bạn
 
@@ -137,6 +197,10 @@ npm test
 npm run build
 npm run test:e2e
 ```
+
+Build phải hoàn tất trước E2E. Để kiểm tra production build bằng mock/memory trên server riêng `127.0.0.1:3227`, dùng các lệnh desktop/mobile tách biệt trong [runbook](RUNBOOK.md#kiểm-tra-trước-khi-phát-hành).
+
+Ở commit `878448f`, kiểm tra **local** đạt 505 unit/integration tests (32 file), 11 kiểm tra guard Mongo và 89 E2E (45 desktop, 44 mobile; bỏ qua một bài quay video mobile). Lint, typecheck và build đạt. Đây là kết quả AI-assisted đã ghi cho commit đó, không phải bằng chứng hosted CI hoặc production hiện tại. Xem [phạm vi và kết quả kiểm tra UI](docs/UI-REVIEW-VNG.md). Lượt cập nhật README này chỉ kiểm tra tính khớp của tài liệu với CSV/code và các liên kết local; không chạy lại toàn bộ bộ kiểm thử ứng dụng.
 
 Xem thêm [hướng dẫn giám khảo](docs/JUDGE-ONBOARDING.md) và [hướng dẫn vận hành](RUNBOOK.md).
 
