@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   poweredByHeader: false,
   outputFileTracingRoot: path.resolve(__dirname),
+  outputFileTracingIncludes: {
+    "/api/employees": ["./data/employees.csv"],
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

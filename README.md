@@ -92,6 +92,22 @@ Reviewer có bộ lọc **Hàng đợi chuyển tiếp**: **Ngoài quy định**
 | [Lịch sử xử lý](https://vng-support.vercel.app/audit) | Xem diễn biến và quyết định |
 | [Kiểm thử](https://vng-support.vercel.app/verify) | Chạy các tình huống và đối chiếu kết quả |
 
+## I.D — Mock Employee RBAC
+
+Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees.csv). CSV là nguồn dữ liệu duy nhất cho API và tra cứu danh tính RBAC; API kiểm tra ID trong CSV theo ID sinh từ họ tên trước khi dùng hồ sơ. Level là số nguyên từ `00` đến `36` (miền giá trị có 37 level); các level không xuất hiện trong 36 hồ sơ vẫn hợp lệ cho policy.
+
+`GET /api/employees` trả toàn bộ danh bạ cho nhân viên level 21 trở lên. Route dùng `X-Employee-ID` để mô phỏng danh tính: thiếu ID hoặc ID không có trong CSV nhận `401`, level dưới 21 nhận `403`. Đây là xác thực mock để trình diễn RBAC, không phải đăng nhập an toàn hoặc danh tính đã xác minh.
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api/employees -Headers @{
+  "X-Employee-ID" = "trangtt"
+}
+```
+
+ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ `Phạm Quang Minh Hòa` → `hoapqm`, `Trần Ngọc Anh` → `anhtn`. `checkAuthorityLevel(minRequiredLevel)` tạo guard dùng lại cho các API khác. Mốc phân quyền: `00–05` đọc task cá nhân được giao; `06–20` đọc/ghi phạm vi dự án; `21–30` xem log phòng ban, tạo task/project và duyệt workflow dưới `$500`; `31–36` quyền điều hành toàn hệ thống và phê duyệt cuối.
+
+Level `00` có thể xác thực mock nhưng chỉ đọc được tài nguyên được gán khi route tương ứng triển khai scope kiểm tra assignment. Phần này cung cấp helper kiểm tra level và route danh bạ; nó không giả lập task, project, tài chính hay approval.
+
 ## Chạy trên máy của bạn
 
 Cài **Node.js 22 trở lên** và **npm**, sau đó mở terminal tại thư mục repository:
