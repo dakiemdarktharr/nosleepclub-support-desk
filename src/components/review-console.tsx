@@ -6,6 +6,11 @@ import {
   RefreshCw,
   ChevronRight,
   ShieldCheck,
+  ShieldAlert,
+  UserCheck,
+  BookOpen,
+  FlaskConical,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -37,10 +42,38 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [filtersReady, setFiltersReady] = useState(false);
+  useEffect(() => {
+    try {
+      const saved: unknown = JSON.parse(sessionStorage.getItem("vng-review-filters-v1") || "null");
+      if (saved && typeof saved === "object") {
+        if ("filter" in saved && typeof saved.filter === "string" && ["pending", "knowledge", "all"].includes(saved.filter)) setFilter(saved.filter);
+        if ("origin" in saved && typeof saved.origin === "string" && ["support", "verify", "all"].includes(saved.origin)) setOrigin(saved.origin);
+        if ("queue" in saved && typeof saved.queue === "string" && ["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"].includes(saved.queue)) setQueue(saved.queue);
+        if ("search" in saved && typeof saved.search === "string") setSearch(saved.search.slice(0, 200));
+      }
+    } catch { /* Storage may be disabled; filtering still works in memory. */ }
+    setFiltersReady(true);
+  }, []);
+  useEffect(() => {
+    if (!filtersReady || requestId) return;
+    try { sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ filter, origin, queue, search })); }
+    catch { /* Do not block the queue when session storage is unavailable. */ }
+  }, [filter, origin, queue, search, filtersReady, requestId]);
+  function clearFilters() {
+    setSearch(""); setFilter("all"); setOrigin("all"); setQueue("all");
+  }
+  const quickQueues = [
+    { label: "Chờ xử lý", filter: "pending", queue: "all", icon: Inbox },
+    { label: "Ngoài quy định", filter: "pending", queue: "OUT_OF_POLICY", icon: ShieldAlert },
+    { label: "Cần thẩm quyền", filter: "pending", queue: "AUTHORITY_REQUIRED", icon: UserCheck },
+    { label: "Gợi ý tri thức", filter: "knowledge", queue: "all", icon: BookOpen },
+  ];
   const refresh = useCallback(
     async (cursor: string | null = null) => {
       const current = ++sequence.current;
       setLoading(true);
+      if (!cursor) { setRequests([]); setTotal(0); setNextCursor(null); }
       try {
         const params = new URLSearchParams({
           view: "page",
@@ -73,14 +106,17 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     [search, filter, origin, queue],
   );
   useEffect(() => {
-    if (requestId) return;
+    if (requestId || !filtersReady) return;
+    setLoading(true);
+    setRequests([]);
+    setNextCursor(null);
     const tracker = sequence;
     const timer = setTimeout(() => void refresh(), 250);
     return () => {
       clearTimeout(timer);
       tracker.current++;
     };
-  }, [refresh, requestId]);
+  }, [refresh, requestId, filtersReady]);
   const loadSelected = useCallback(async () => {
     if (!requestId) return;
     const current = ++detailSequence.current;
@@ -158,6 +194,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
             <ShieldCheck size={18} />
             Lịch sử xử lý
           </Link>
+          <Link href="/verify"><FlaskConical size={18} />Kiểm thử</Link>
         </nav>
         <div className="it-demo-note">
           <ShieldCheck size={18} />
@@ -175,9 +212,9 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
             <header className="it-page-heading">
               <div>
                 <h1>Tiếp nhận hỗ trợ</h1>
-                <p>Tìm yêu cầu, đối chiếu thông tin và chọn cách xử lý.</p>
               </div>
               <Button
+                aria-label="Tải lại danh sách"
                 variant="secondary"
                 onClick={() => void refresh()}
                 disabled={loading || pending}
@@ -186,9 +223,17 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                   size={16}
                   className={loading ? "animate-spin" : ""}
                 />
-                Tải lại danh sách
+                <span className="it-reload-label">Tải lại danh sách</span>
               </Button>
             </header>
+            <div className="it-quick-queues" role="group" aria-label="Chọn nhanh hàng đợi">
+              {quickQueues.map(({ label, filter: nextFilter, queue: nextQueue, icon: Icon }) => (
+                <button key={label} type="button" aria-pressed={filter === nextFilter && queue === nextQueue}
+                  onClick={() => { setFilter(nextFilter); setQueue(nextQueue); }}>
+                  <Icon size={19} aria-hidden="true" />{label}
+                </button>
+              ))}
+            </div>
             <section
               className="it-queue"
               aria-label="Danh sách yêu cầu"
@@ -201,6 +246,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                     <Search size={18} aria-hidden="true" />
                     <input
                       type="search"
+                      maxLength={200}
                       placeholder="Tìm nội dung hoặc mã HT-…"
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
@@ -216,7 +262,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                   >
                     <option value="pending">Đang chờ xử lý</option>
                     <option value="knowledge">
-                      Gợi ý tri thức cần rà soát
+                      Gợi ý tri thức
                     </option>
                     <option value="all">Tất cả trạng thái</option>
                   </select>
@@ -240,10 +286,10 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                   >
                     <option value="all">Tất cả lý do</option>
                     <option value="OUT_OF_POLICY">
-                      Ngoài quy định — chủ chính sách / Security
+                      Ngoài quy định
                     </option>
                     <option value="AUTHORITY_REQUIRED">
-                      Cần thẩm quyền — người phê duyệt / team xử lý
+                      Cần thẩm quyền
                     </option>
                   </select>
                 </label>
@@ -252,11 +298,14 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                 <h2>
                   Yêu cầu phù hợp <span>{total}</span>
                 </h2>
-                <span>
+                <span role="status" aria-live="polite">
                   {loading
                     ? "Đang tải danh sách…"
                     : `Đang hiển thị ${requests.length}/${total} yêu cầu.`}
                 </span>
+                {(search || filter !== "all" || origin !== "all" || queue !== "all") && (
+                  <Button variant="quiet" onClick={clearFilters}><X size={14} />Xóa bộ lọc</Button>
+                )}
               </div>
               <div data-guide={!requests.length ? "reviewer-list" : undefined}>
                 {!loading && !requests.length && !error && (
@@ -264,11 +313,15 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                     <Inbox size={36} />
                     <h3>Chưa có yêu cầu phù hợp</h3>
                     <p>Thử đổi bộ lọc hoặc tìm bằng mã yêu cầu.</p>
+                    <Button variant="secondary" onClick={clearFilters}>Xem tất cả yêu cầu</Button>
                     <Link className="button secondary" href="/send-help">
                       Tạo yêu cầu demo
                     </Link>
                   </div>
                 )}
+                {loading && !requests.length && <div className="it-loading" aria-hidden="true">
+                  {[0, 1, 2].map((row) => <div key={row}><span /><span /><span /></div>)}
+                </div>}
                 {error && (
                   <div className="it-empty">
                     <p>Không thể tải danh sách. Hãy thử tải lại.</p>

@@ -77,11 +77,13 @@ export default function AuditPage() {
       </p>
       {metrics && (
         <Card>
-          <p>
-            Tổng hồ sơ: {metrics.total} · Đã tự giải quyết:{" "}
-            {metrics.resolvedFeedback} · Chuyển người: {metrics.handoffs} · Lỗi
-            trợ lý: {metrics.modelFailures} · Chờ xử lý: {metrics.pendingReview}
-          </p>
+          <dl className="audit-metrics" aria-label="Tổng quan hồ sơ demo">
+            {[
+              ["Tổng hồ sơ", metrics.total], ["Đã tự giải quyết", metrics.resolvedFeedback],
+              ["Chuyển người", metrics.handoffs], ["Lỗi trợ lý", metrics.modelFailures],
+              ["Chờ xử lý", metrics.pendingReview],
+            ].map(([label, count]) => <div key={label}><dt>{label}</dt><dd>{count}</dd></div>)}
+          </dl>
           <p className="text-sm">
             Tổng số dữ liệu demo đã lưu, gồm Verify; không phải kết quả đo trên
             người dùng thật.
@@ -93,11 +95,12 @@ export default function AuditPage() {
           e.preventDefault();
           void load();
         }}
-        className="space-y-3"
+        className="audit-filters"
       >
         <label>
           Nội dung hoặc mã yêu cầu
           <Input
+            maxLength={200}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ví dụ: VPN hoặc mã yêu cầu"

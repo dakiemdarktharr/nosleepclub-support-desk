@@ -14,8 +14,9 @@ export function GET(request: Request) {
     }
 
     return successResponse(getEmployees());
-  } catch (error) {
-    console.error("Unable to load the mock employee directory.", error);
+  } catch {
+    // Parser/filesystem exceptions can include directory contents or local paths.
+    console.error("Unable to load the mock employee directory.");
     return errorResponse("EMPLOYEE_DIRECTORY_UNAVAILABLE", "The employee directory is unavailable.", 500);
   }
 }

@@ -11,7 +11,11 @@ import { supportDatabase, listSupportRequests } from "./support-repository";
 const querySchema = z.object({
   cursor: z.coerce.number().int().min(0).max(1000000).default(0),
   limit: z.coerce.number().int().min(1).max(100).default(30),
-  q: z.string().trim().max(200).default(""),
+  // The UI displays HT- plus the first eight UUID characters. Search the same
+  // identifier in both Mongo and memory instead of treating HT- as raw text.
+  q: z.string().trim().max(200).default("").transform((value) =>
+    /^HT-[a-f0-9]{8}$/i.test(value) ? value.slice(3) : value,
+  ),
   status: z.enum(["all", "pending", "knowledge"]).default("all"),
   origin: z.enum(["all", "support", "verify"]).default("all"),
   queue: z.enum(["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"]).default("all"),

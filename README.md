@@ -41,6 +41,8 @@ Mũi tên hướng dẫn sẽ chỉ các nút và ô cần thao tác khi bạn v
 4. Chọn thao tác phù hợp đang hiển thị: hỏi thêm thông tin, duyệt, từ chối, dừng hoặc điều chỉnh quyết định. Điền lý do khi giao diện yêu cầu.
 5. Mở **Lịch sử xử lý** để xem diễn biến và các quyết định đã được ghi nhận.
 
+Dashboard có nút chọn nhanh **Chờ xử lý**, **Ngoài quy định**, **Cần thẩm quyền** và **Gợi ý tri thức**. Có thể tìm bằng mã ngắn `HT-…` đang hiển thị hoặc nội dung. **Xóa bộ lọc** mở lại tất cả trạng thái/nguồn; bộ lọc và từ khóa được giữ trong session của tab khi quay lại từ chi tiết. Nếu trình duyệt chặn session storage, thao tác lọc vẫn hoạt động nhưng không được khôi phục sau điều hướng. Chỉ dùng dữ liệu demo đã ẩn danh trong ô tìm kiếm.
+
 ### Kiểm tra các tính năng
 
 1. Trong không gian nhân viên, mở **Kiểm thử**.

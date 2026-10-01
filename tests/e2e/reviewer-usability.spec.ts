@@ -1,0 +1,57 @@
+import { test, expect } from "./fixtures";
+import { employeeIdentity } from "./intake-helpers";
+
+test("quick queues, displayed ID search, return and reset work together", async ({ page, request }, info) => {
+  const result = await request.post("/api/support/requests", { data: { ...employeeIdentity, rawText: "Open port 3389 public", confirmed: true, idempotencyKey: crypto.randomUUID() } });
+  expect(result.ok()).toBe(true);
+  const row = (await result.json()).data;
+  const code = `HT-${row.id.slice(0, 8).toUpperCase()}`;
+  await page.goto("/review");
+  await expect(page.getByRole("link", { name: "Lịch sử xử lý", exact: true })).toHaveCount(1);
+  await page.getByRole("button", { name: "Ngoài quy định", exact: true }).click();
+  await expect(page.getByLabel("Hàng đợi chuyển tiếp")).toHaveValue("OUT_OF_POLICY");
+  await page.getByLabel("Tìm theo nội dung hoặc mã yêu cầu").fill(code);
+  const link = page.locator(`.review-list a[href='/review?requestId=${row.id}']`);
+  await expect(link).toBeVisible();
+  await expect(page.locator(".review-list li")).toHaveCount(1);
+  await page.screenshot({ path: `test-results/vng-queue-${info.project.name}.png`, fullPage: true });
+  await link.click();
+  await page.getByRole("link", { name: "← Danh sách yêu cầu" }).click();
+  await expect(page.getByLabel("Tìm theo nội dung hoặc mã yêu cầu")).toHaveValue(code);
+  await expect(page.getByLabel("Hàng đợi chuyển tiếp")).toHaveValue("OUT_OF_POLICY");
+  await expect(link).toBeVisible();
+  await page.getByLabel("Tìm theo nội dung hoặc mã yêu cầu").fill("synthetic-no-match-000000");
+  await expect(page.getByText("Chưa có yêu cầu phù hợp")).toBeVisible();
+  await page.getByRole("button", { name: "Xem tất cả yêu cầu" }).click();
+  await expect(page.getByLabel("Hiển thị", { exact: true })).toHaveValue("all");
+  await expect(page.getByLabel("Nguồn yêu cầu")).toHaveValue("all");
+  await expect(page.getByLabel("Tìm theo nội dung hoặc mã yêu cầu")).toHaveValue("");
+  await expect(link).toBeVisible();
+  await page.screenshot({ path: `test-results/vng-dashboard-${info.project.name}.png`, fullPage: true });
+  await page.goto("/audit");
+  await page.getByLabel("Nội dung hoặc mã yêu cầu").fill(code);
+  await expect(page.locator(".support-timeline li").first()).toBeVisible();
+  await page.screenshot({ path: `test-results/vng-audit-${info.project.name}.png`, fullPage: true });
+});
+
+test("failed filter refresh removes stale results and can recover without session storage", async ({ page, request }) => {
+  await page.addInitScript(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key: string, value: string) {
+      if (key === "vng-review-filters-v1") throw new Error("Synthetic storage unavailable");
+      original.call(this, key, value);
+    };
+  });
+  const result = await request.post("/api/support/requests", { data: { ...employeeIdentity, rawText: "Open port 3389 public", confirmed: true, idempotencyKey: crypto.randomUUID() } });
+  expect(result.ok()).toBe(true);
+  await page.goto("/review");
+  await expect(page.locator(".review-list li").first()).toBeVisible();
+  await page.route("**/api/support/requests?*", (route) => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: { code: "SERVER_ERROR", message: "Synthetic temporary failure" } }) }));
+  await page.getByLabel("Hàng đợi chuyển tiếp").selectOption("AUTHORITY_REQUIRED");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Synthetic temporary failure");
+  await expect(page.locator(".review-list li")).toHaveCount(0);
+  await page.unroute("**/api/support/requests?*");
+  await page.getByRole("button", { name: "Xóa bộ lọc" }).click();
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+  await expect(page.locator(".review-list li").first()).toBeVisible();
+});
