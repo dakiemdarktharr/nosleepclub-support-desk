@@ -106,7 +106,7 @@ Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees
 
 | ID mock | Họ tên mock | Level | Chức danh mô phỏng | Phòng ban mô phỏng |
 | --- | --- | --- | --- | --- |
-| hoapqm | Phạm Quang Minh Hòa | 36 | Chief Executive Officer (CEO) | Executive Board |
+| alphanvgl | Nhân Viên Giả Lập Alpha | 36 | Chief Executive Officer (CEO) | Executive Board |
 | anhtn | Trần Ngọc Anh | 35 | Chief Technology Officer (CTO) | Executive Board |
 | dunglv | Lê Văn Dũng | 34 | Managing Director | VNGGames |
 | linhth | Trần Hoàng Linh | 33 | Vice President | ZaloPay |
@@ -166,7 +166,7 @@ Phản hồi thành công chứa mảng 36 hồ sơ trong `data`, với `level` 
 
 Header được trim và chuyển thành chữ thường, nên `TRANGTT` cũng khớp `trangtt`. Chạy các ví dụ trên server local; không dùng header tự khai báo này làm xác thực production.
 
-ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ `Phạm Quang Minh Hòa` → `hoapqm`, `Trần Ngọc Anh` → `anhtn`. Tên có thể sinh trùng ID; bộ đọc CSV từ chối ID trùng, không tự phân biệt người trùng tên. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
+ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ hoàn toàn giả lập: `Nhân Viên Giả Lập Alpha` → `alphanvgl`. Tên có thể sinh trùng ID; bộ đọc CSV từ chối ID trùng, không tự phân biệt người trùng tên. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
 
 Hiện chỉ `GET /api/employees` gắn guard này, với ngưỡng `management=21`. Chưa có scope theo người được giao task, project, phòng ban hoặc quyền duyệt tài chính. Các mốc level không tự cấp quyền cho workflow IT/reviewer, không thay deterministic policy và không thay SSO. Mã nguồn: [bộ đọc CSV và sinh ID](src/domain/employees.ts), [guard level](src/lib/employee-rbac.ts), [route danh bạ](src/app/api/employees/route.ts).
 
