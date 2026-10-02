@@ -8,6 +8,14 @@ const request = (id?: string) => new Request("http://localhost/api/employees", {
 it("validates explicitly synthetic directory profiles and enforces level 21", async () => {
   const rows = employees.getEmployees();
   expect(rows).toHaveLength(36);
+  expect(rows.map((employee) => employee.id)).toEqual([
+    "alphanvgl", "anhtn", "dunglv", "linhth", "minhnd", "haonv",
+    "huongtt", "phuongnt", "khanhnd", "tuanha", "trangtt", "namhp",
+    "bachnt", "longvt", "maivt", "quanhm", "thuynt", "hieupm",
+    "sonnv", "vynt", "ducna", "yenph", "khoanm", "binhnt", "tamnt",
+    "cuongnv", "oanhnt", "hungpv", "dungtt", "lanht", "kienvd",
+    "ngocpt", "haidv", "nhannt", "quynhnt", "thangnv",
+  ]);
   expect(rows.map((employee) => employee.level)).toEqual(
     expect.arrayContaining([0, 20, 21, 36]),
   );
@@ -15,7 +23,6 @@ it("validates explicitly synthetic directory profiles and enforces level 21", as
     expect(employee.name).toMatch(/^Synthetic Demo \d{2}$/);
     expect(employee.title).toMatch(/^Synthetic role \d{2}$/);
     expect(employee.department).toMatch(/^Synthetic unit \d{2}$/);
-    expect(employee.id).toBe(employees.generateEmployeeId(employee.name));
     const response = GET(request(employee.id.toUpperCase()));
     expect(response.status).toBe(employee.level >= 21 ? 200 : 403);
     expect(response.headers.get("cache-control")).toBe("no-store");

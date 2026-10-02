@@ -106,14 +106,46 @@ Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees
 
 ### Hồ sơ employee mock
 
-Cả 36 dòng trong CSV đều dùng tên `Synthetic Demo NN`, chức danh `Synthetic role NN`, đơn vị `Synthetic unit NN` và ID được sinh từ tên. Những nhãn này giúp nhận ra dữ liệu giả lập ngay khi xem API. Level, số lượng dòng và các mốc quanh ngưỡng 21 được giữ để kiểm tra UI và guard demo.
+Cả 36 dòng trong CSV đều dùng tên `Synthetic Demo NN`, chức danh `Synthetic role NN` và đơn vị `Synthetic unit NN`. Các mã mock được giữ nguyên theo danh bạ trước đó để không làm hỏng những ví dụ và liên kết đã dùng. Những nhãn synthetic giúp nhận ra dữ liệu giả lập khi xem API. Level, số lượng dòng và các mốc quanh ngưỡng 21 được giữ để kiểm tra UI và guard demo.
 
-| ID mock | Tên mock | Level | Chức danh | Đơn vị |
+| ID mock giữ nguyên | Tên mock | Level | Chức danh | Đơn vị |
 | --- | --- | --- | --- | --- |
-| `01sd` | Synthetic Demo 01 | 36 | Synthetic role 01 | Synthetic unit 01 |
-| `12sd` | Synthetic Demo 12 | 21 | Synthetic role 12 | Synthetic unit 12 |
-| `13sd` | Synthetic Demo 13 | 20 | Synthetic role 13 | Synthetic unit 13 |
-| `25sd` | Synthetic Demo 25 | 00 | Synthetic role 25 | Synthetic unit 25 |
+| `alphanvgl` | Synthetic Demo 01 | 36 | Synthetic role 01 | Synthetic unit 01 |
+| `anhtn` | Synthetic Demo 02 | 35 | Synthetic role 02 | Synthetic unit 02 |
+| `dunglv` | Synthetic Demo 03 | 34 | Synthetic role 03 | Synthetic unit 03 |
+| `linhth` | Synthetic Demo 04 | 33 | Synthetic role 04 | Synthetic unit 04 |
+| `minhnd` | Synthetic Demo 05 | 32 | Synthetic role 05 | Synthetic unit 05 |
+| `haonv` | Synthetic Demo 06 | 31 | Synthetic role 06 | Synthetic unit 06 |
+| `huongtt` | Synthetic Demo 07 | 30 | Synthetic role 07 | Synthetic unit 07 |
+| `phuongnt` | Synthetic Demo 08 | 28 | Synthetic role 08 | Synthetic unit 08 |
+| `khanhnd` | Synthetic Demo 09 | 26 | Synthetic role 09 | Synthetic unit 09 |
+| `tuanha` | Synthetic Demo 10 | 24 | Synthetic role 10 | Synthetic unit 10 |
+| `trangtt` | Synthetic Demo 11 | 22 | Synthetic role 11 | Synthetic unit 11 |
+| `namhp` | Synthetic Demo 12 | 21 | Synthetic role 12 | Synthetic unit 12 |
+| `bachnt` | Synthetic Demo 13 | 20 | Synthetic role 13 | Synthetic unit 13 |
+| `longvt` | Synthetic Demo 14 | 18 | Synthetic role 14 | Synthetic unit 14 |
+| `maivt` | Synthetic Demo 15 | 17 | Synthetic role 15 | Synthetic unit 15 |
+| `quanhm` | Synthetic Demo 16 | 16 | Synthetic role 16 | Synthetic unit 16 |
+| `thuynt` | Synthetic Demo 17 | 15 | Synthetic role 17 | Synthetic unit 17 |
+| `hieupm` | Synthetic Demo 18 | 12 | Synthetic role 18 | Synthetic unit 18 |
+| `sonnv` | Synthetic Demo 19 | 09 | Synthetic role 19 | Synthetic unit 19 |
+| `vynt` | Synthetic Demo 20 | 06 | Synthetic role 20 | Synthetic unit 20 |
+| `ducna` | Synthetic Demo 21 | 05 | Synthetic role 21 | Synthetic unit 21 |
+| `yenph` | Synthetic Demo 22 | 03 | Synthetic role 22 | Synthetic unit 22 |
+| `khoanm` | Synthetic Demo 23 | 02 | Synthetic role 23 | Synthetic unit 23 |
+| `binhnt` | Synthetic Demo 24 | 01 | Synthetic role 24 | Synthetic unit 24 |
+| `tamnt` | Synthetic Demo 25 | 00 | Synthetic role 25 | Synthetic unit 25 |
+| `cuongnv` | Synthetic Demo 26 | 15 | Synthetic role 26 | Synthetic unit 26 |
+| `oanhnt` | Synthetic Demo 27 | 12 | Synthetic role 27 | Synthetic unit 27 |
+| `hungpv` | Synthetic Demo 28 | 09 | Synthetic role 28 | Synthetic unit 28 |
+| `dungtt` | Synthetic Demo 29 | 24 | Synthetic role 29 | Synthetic unit 29 |
+| `lanht` | Synthetic Demo 30 | 22 | Synthetic role 30 | Synthetic unit 30 |
+| `kienvd` | Synthetic Demo 31 | 17 | Synthetic role 31 | Synthetic unit 31 |
+| `ngocpt` | Synthetic Demo 32 | 16 | Synthetic role 32 | Synthetic unit 32 |
+| `haidv` | Synthetic Demo 33 | 12 | Synthetic role 33 | Synthetic unit 33 |
+| `nhannt` | Synthetic Demo 34 | 06 | Synthetic role 34 | Synthetic unit 34 |
+| `quynhnt` | Synthetic Demo 35 | 05 | Synthetic role 35 | Synthetic unit 35 |
+| `thangnv` | Synthetic Demo 36 | 00 | Synthetic role 36 | Synthetic unit 36 |
 
 CSV là nguồn dữ liệu duy nhất; khi thay đổi, cập nhật CSV và kiểm tra lại parser cùng API.
 
@@ -123,7 +155,7 @@ CSV là nguồn dữ liệu duy nhất; khi thay đổi, cập nhật CSV và ki
 
 ```powershell
 Invoke-RestMethod http://localhost:3000/api/employees -Headers @{
-  "X-Employee-ID" = "12sd"
+  "X-Employee-ID" = "trangtt"
 }
 ```
 
@@ -131,14 +163,14 @@ Phản hồi thành công chứa mảng 36 hồ sơ trong `data`, với `level` 
 
 | Header `X-Employee-ID` | Kết quả | Ý nghĩa |
 | --- | --- | --- |
-| `12sd` (level 21) | `200` | Đủ ngưỡng xem danh bạ mock |
-| `13sd` (20) hoặc `25sd` (00) | `403` | ID tồn tại nhưng dưới ngưỡng 21 |
+| `namhp` (level 21) hoặc `trangtt` (22) | `200` | Đủ ngưỡng xem danh bạ mock |
+| `bachnt` (20) hoặc `tamnt` (00) | `403` | ID tồn tại nhưng dưới ngưỡng 21 |
 | Bỏ header hoặc `synthetic_unknown_employee` | `401` | Chưa cung cấp ID hoặc không có trong CSV |
 | ID hợp lệ khi CSV không đọc/validate được | `500` | Danh bạ không khả dụng; không trả nội dung lỗi nội bộ |
 
-Header được trim và chuyển thành chữ thường, nên `12SD` cũng khớp `12sd`. Chạy các ví dụ trên server local; không dùng header tự khai báo này làm xác thực production.
+Header được trim và chuyển thành chữ thường, nên `TRANGTT` cũng khớp `trangtt`. Chạy các ví dụ trên server local; không dùng header tự khai báo này làm xác thực production.
 
-ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ: `Synthetic Demo 01` → `01sd`. Tên có thể sinh trùng ID; bộ đọc CSV từ chối ID trùng, không tự phân biệt hồ sơ trùng tên. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
+`generateEmployeeId(fullName)` là helper để tạo mã mới từ tên: bỏ dấu tiếng Việt, lấy phần cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước. Các mã đã có trong CSV là khóa mock ổn định và không bị tính lại từ tên hiển thị synthetic. Bộ đọc CSV kiểm tra định dạng và từ chối ID trùng. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
 
 Hiện chỉ `GET /api/employees` gắn guard này, với ngưỡng `management=21`. Chưa có scope theo người được giao task, project, phòng ban hoặc quyền duyệt tài chính. Các mốc level không tự cấp quyền cho workflow IT/reviewer, không thay deterministic policy và không thay SSO. Mã nguồn: [bộ đọc CSV và sinh ID](src/domain/employees.ts), [guard level](src/lib/employee-rbac.ts), [route danh bạ](src/app/api/employees/route.ts).
 
