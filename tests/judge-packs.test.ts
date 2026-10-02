@@ -14,13 +14,18 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-it("offers exactly the two requested judge datasets with distinct case IDs", async () => {
-  expect(judgePackIds).toEqual(["de-a-v3", "judge-15"]);
-  for (const [pack, count] of [["de-a-v3", 5], ["judge-15", 15]] as const) {
+it("offers the four, five, and fifteen case judge packs with distinct case IDs", async () => {
+  expect(judgePackIds).toEqual(["de-a-v3", "submission-4", "judge-15"]);
+  for (const [pack, count] of [["de-a-v3", 5], ["submission-4", 4], ["judge-15", 15]] as const) {
     const run = await createVerifyRun({ pack });
     expect(run.cases).toHaveLength(count);
     expect(new Set(run.cases.map(row => row.caseId)).size).toBe(count);
   }
+  const submission = supportVerifyCases.filter(row => row.pack === "submission-4");
+  expect(submission.filter(row => row.expected_action === "AUTO_APPROVE")).toHaveLength(2);
+  expect(submission.filter(row => row.expected_action === "NEEDS_INFORMATION")).toHaveLength(1);
+  expect(submission.filter(row => row.expected_action === "ESCALATE")).toHaveLength(1);
+  expect(submission.some(row => row.expected_bucket === "SECURITY_RISK")).toBe(true);
   const cases = supportVerifyCases.filter(row => row.pack === "judge-15");
   expect(cases.some(row => row.expected_bucket === "MISSING_INFO")).toBe(true);
   expect(cases.some(row => row.expected_bucket === "SECURITY_RISK")).toBe(true);
@@ -37,7 +42,7 @@ it.each(supportVerifyCases.filter(row => row.pack === "judge-15"))("$id follows 
   }
 });
 
-it.each(["all", "submission-4", "extended-v3", "official-original", "ground-truth-original"])("rejects new or resumed runs for retired pack %s", async (pack) => {
+it.each(["all", "extended-v3", "official-original", "ground-truth-original"])("rejects new or resumed runs for retired pack %s", async (pack) => {
   await expect(createVerifyRun({ pack })).rejects.toMatchObject({code:"UNKNOWN_PACK"});
   const now = new Date().toISOString();
   const row = await insertVerifyRun({id:crypto.randomUUID(),version:0,pack,createdAt:now,updatedAt:now,status:"STOPPED",cases:[],results:[]});

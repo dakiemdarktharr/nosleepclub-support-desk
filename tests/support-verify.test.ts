@@ -49,6 +49,30 @@ it.each(supportVerifyCases.filter((item) => item.pack.endsWith("v3")))(
     expect(result.requestId).toBeTruthy();
   },
 );
+it.each(supportVerifyCases.filter((item) => item.pack === "submission-4"))(
+  "$id verifies the submission case through the decision API and persistence readback",
+  async (item) => {
+    const result = await runSupportCase(employeeFixture(item), productionApi);
+    expect(result.pass, JSON.stringify(result)).toBe(true);
+    expect(result.actual).toMatchObject({
+      action: item.expected_action,
+      bucket: item.expected_bucket,
+    });
+    expect(result.actual?.ruleIds).toContain(item.expected_rule);
+    expect(result.timestamp).toBeTruthy();
+    expect(result.requestId).toBeTruthy();
+    expect(result.persistence).toMatchObject({
+      pass: true,
+      checks: ["detail:pass", "audit:pass", "queue:pass", "metrics:pass"],
+    });
+    if (item.expected_action !== "AUTO_APPROVE") {
+      expect(
+        (result.actual?.questions?.length ?? 0) +
+          (result.actual?.reviewerQuestions?.length ?? 0),
+      ).toBeGreaterThan(0);
+    }
+  },
+);
 it("original fixtures and policy sources match their pre-migration hashes", () => {
   const manifest = JSON.parse(
     readFileSync("artifacts/migration-baseline-manifest.json", "utf8").replace(

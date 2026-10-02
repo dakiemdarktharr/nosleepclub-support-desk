@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { createVerifyRun, executeVerifyCase } from "@/services/verification";
+import { changeVerifyRun, createVerifyRun, executeVerifyCase } from "@/services/verification";
 import { getVerifyRun } from "@/lib/verify-repository";
 import { resetSupportTestStore } from "@/lib/support-repository";
 import { POST, GET as list } from "@/app/api/support/requests/route";
@@ -40,4 +40,64 @@ it("retains deterministic validation failures and does not silently retry them",
   const never = vi.fn();
   await executeVerifyCase(run.id, { caseId: run.cases[0].caseId }, never);
   expect(never).not.toHaveBeenCalled();
+});
+it("runs the submission four-case pack through the decision API and resumes without duplicate requests", async () => {
+  const run = await createVerifyRun({ pack: "submission-4" });
+  expect(run.cases).toHaveLength(4);
+  expect(new Set(run.cases.map((entry) => entry.caseId)).size).toBe(4);
+
+  await changeVerifyRun(run.id, { action: "stop" });
+  const calls = vi.fn(api);
+  await expect(
+    executeVerifyCase(run.id, { caseId: run.cases[0].caseId }, calls),
+  ).rejects.toMatchObject({ code: "RUN_NOT_ACTIVE" });
+  expect(calls).not.toHaveBeenCalled();
+
+  await changeVerifyRun(run.id, { action: "resume" });
+  const first = await executeVerifyCase(
+    run.id,
+    { caseId: run.cases[0].caseId },
+    calls,
+  );
+  expect(first.results[0]).toMatchObject({
+    caseId: run.cases[0].caseId,
+    requestId: run.cases[0].requestId,
+    pass: true,
+    persistence: {
+      pass: true,
+      checks: ["detail:pass", "audit:pass", "queue:pass", "metrics:pass"],
+    },
+  });
+  expect(Date.parse(first.results[0].timestamp)).not.toBeNaN();
+  const callsAfterFirst = calls.mock.calls.length;
+  const duplicate = await executeVerifyCase(
+    run.id,
+    { caseId: run.cases[0].caseId },
+    calls,
+  );
+  expect(duplicate.results).toHaveLength(1);
+  expect(calls).toHaveBeenCalledTimes(callsAfterFirst);
+
+  await changeVerifyRun(run.id, { action: "stop" });
+  await expect(
+    executeVerifyCase(run.id, { caseId: run.cases[1].caseId }, calls),
+  ).rejects.toMatchObject({ code: "RUN_NOT_ACTIVE" });
+  expect(calls).toHaveBeenCalledTimes(callsAfterFirst);
+
+  await changeVerifyRun(run.id, { action: "resume" });
+  let completed = duplicate;
+  for (const entry of run.cases.slice(1)) {
+    completed = await executeVerifyCase(
+      run.id,
+      { caseId: entry.caseId },
+      calls,
+    );
+  }
+  expect(completed.status).toBe("COMPLETE");
+  expect(completed.results).toHaveLength(4);
+  expect(completed.results.every((result) => result.pass)).toBe(true);
+  expect(completed.results.map((result) => result.requestId)).toEqual(
+    run.cases.map((entry) => entry.requestId),
+  );
+  expect(completed.results.every((result) => result.timestamp)).toBe(true);
 });

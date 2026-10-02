@@ -209,7 +209,31 @@ test("one click Verify and a new judge input use live decision API", async ({
     "5/5 · Pass: 5 · Fail: 0",
   );
   await expect(page.getByRole("table")).toBeVisible();
-  await expect(page.getByLabel("Bộ kiểm thử").locator("option")).toHaveCount(2);
+  await expect(page.getByLabel("Bộ kiểm thử").locator("option")).toHaveCount(3);
+  await page.getByLabel("Bộ kiểm thử").selectOption("submission-4");
+  await page
+    .getByRole("button", { name: "Chạy toàn bộ test (4)", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "4/4 · Pass: 4 · Fail: 0",
+  );
+  const fourCaseDecisions = page
+    .getByRole("table")
+    .locator("tbody tr td:nth-child(3)");
+  await expect(
+    fourCaseDecisions.filter({ hasText: "AUTO_APPROVE" }),
+  ).toHaveCount(2);
+  await expect(
+    fourCaseDecisions.filter({ hasText: "NEEDS_INFORMATION" }),
+  ).toHaveCount(1);
+  await expect(fourCaseDecisions.filter({ hasText: "ESCALATE" })).toHaveCount(
+    1,
+  );
+  await expect(page.getByText("Expected: NEEDS_INFORMATION · MISSING_INFO")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Mở request / audit" }),
+  ).toHaveCount(4);
+
   await page.getByLabel("Bộ kiểm thử").selectOption("judge-15");
   await page
     .getByRole("button", { name: "Chạy toàn bộ test (15)", exact: true })

@@ -157,10 +157,11 @@ export default function VerifyPage() {
         <h1>Đối chiếu, không đoán.</h1>
       </div>
       <Alert>
-        Hai bộ dữ liệu mô phỏng: 15 tình huống gồm thiếu thông tin, ngoài quy
-        định và vượt thẩm quyền; 5 trường hợp Đề A gồm 3 tự động xử lý và 2
-        chuyển tiếp. Mỗi bộ chạy bằng một nút, qua cùng API xử lý yêu cầu và
-        kiểm tra lại nhật ký. Đây không phải kết quả thử nghiệm người dùng thật.
+        Ba bộ dữ liệu mô phỏng: 4 trường hợp kiểm thử chung, 5 trường hợp Đề A
+        gồm 3 tự động xử lý và 2 chuyển tiếp, cùng 15 tình huống gồm thiếu
+        thông tin, ngoài quy định và vượt thẩm quyền. Mỗi bộ chạy bằng một nút,
+        qua cùng API xử lý yêu cầu và kiểm tra lại nhật ký. Đây không phải kết
+        quả thử nghiệm người dùng thật.
       </Alert>
       <fieldset disabled={busy} className="flex flex-wrap items-end gap-3">
         <label>
@@ -175,6 +176,9 @@ export default function VerifyPage() {
           >
             <option value="de-a-v3">
               Đề A — 5 trường hợp (3 tự động / 2 chuyển tiếp)
+            </option>
+            <option value="submission-4">
+              Bộ kiểm thử chung — 4 trường hợp
             </option>
             <option value="judge-15">
               Bộ dữ liệu kiểm thử — 15 tình huống

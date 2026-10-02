@@ -35,7 +35,11 @@ const originals = (
     expected_action: row.expected_action,
     expected_bucket: row.expected_bucket,
   }));
-export const judgePackIds: readonly string[] = ["de-a-v3", "judge-15"];
+export const judgePackIds: readonly string[] = [
+  "de-a-v3",
+  "submission-4",
+  "judge-15",
+];
 export const supportVerifyCases: VerifyCase[] = [
   ...judge.map((row) => ({
     ...row,

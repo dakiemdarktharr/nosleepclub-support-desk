@@ -34,7 +34,7 @@ export async function createVerifyRun(value: unknown) {
 }
 function requireJudgePack(pack: string) {
   if (!judgePackIds.includes(pack))
-    throw new SupportError("UNKNOWN_PACK", "Chỉ chạy bộ 15 tình huống hoặc bộ Đề A 5 trường hợp. Kết quả cũ chỉ dùng để đối chiếu lịch sử.", 422);
+    throw new SupportError("UNKNOWN_PACK", "Chỉ chạy bộ chung 4 trường hợp, bộ Đề A 5 trường hợp hoặc bộ 15 tình huống. Kết quả cũ chỉ dùng để đối chiếu lịch sử.", 422);
 }
 export async function validateVerificationInput(input: SupportInput) {
   if (!input.verifyRunId) return;
