@@ -5,10 +5,16 @@ import { checkAuthorityLevel } from "@/lib/employee-rbac";
 
 afterEach(() => vi.restoreAllMocks());
 const request = (id?: string) => new Request("http://localhost/api/employees", { headers: id ? { "X-Employee-ID": id } : {} });
-it("validates the existing mock CSV and enforces directory level 21 for every record", async () => {
+it("validates explicitly synthetic directory profiles and enforces level 21", async () => {
   const rows = employees.getEmployees();
   expect(rows).toHaveLength(36);
+  expect(rows.map((employee) => employee.level)).toEqual(
+    expect.arrayContaining([0, 20, 21, 36]),
+  );
   for (const employee of rows) {
+    expect(employee.name).toMatch(/^Synthetic Demo \d{2}$/);
+    expect(employee.title).toMatch(/^Synthetic role \d{2}$/);
+    expect(employee.department).toMatch(/^Synthetic unit \d{2}$/);
     expect(employee.id).toBe(employees.generateEmployeeId(employee.name));
     const response = GET(request(employee.id.toUpperCase()));
     expect(response.status).toBe(employee.level >= 21 ? 200 : 403);
