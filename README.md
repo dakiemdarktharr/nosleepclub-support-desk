@@ -6,7 +6,7 @@ Sản phẩm tham gia **MLAI 2026 · Track VNG · Đề A: The Escalation Refere
 
 **[Mở VNG Support](https://vng-support.vercel.app)** · **[Mã nguồn](https://github.com/dakiemdarktharr/DOCRELAY_MLAI2026)**
 
-README này mô tả mã nguồn sau commit [`878448f`](https://github.com/dakiemdarktharr/DOCRELAY_MLAI2026/commit/878448f9460f831d015faa6e0f0d720be3b79504): dashboard nhân viên cam–trắng theo VNG, lọc nhanh hàng đợi, tìm mã `HT-…`, khôi phục bộ lọc khi quay lại và API danh bạ mock đã sửa lỗi đọc dữ liệu. Phiên bản trên website cần được đối chiếu riêng theo [runbook](RUNBOOK.md#đối-chiếu-bản-triển-khai).
+README này mô tả các luồng trong repository hiện tại. Bản trên website có thể chạy commit khác; đối chiếu `sourceRevision` theo [runbook](RUNBOOK.md#đối-chiếu-bản-triển-khai) trước khi dùng làm bằng chứng cho một bản phát hành.
 
 ## Bạn có thể làm gì?
 
@@ -48,10 +48,12 @@ Dashboard có nút chọn nhanh **Chờ xử lý**, **Ngoài quy định**, **C�
 ### Kiểm tra các tính năng
 
 1. Trong không gian nhân viên, mở **Kiểm thử**.
-2. Chọn bộ **Đề A — 5 trường hợp** hoặc bộ **15 tình huống**, rồi chạy kiểm thử.
+2. Chọn bộ kiểm thử chung **4 trường hợp**, bộ **Đề A — 5 trường hợp**, hoặc bộ **15 tình huống**, rồi bấm **Chạy toàn bộ test** một lần.
 3. Xem kết quả thực tế, kết quả kỳ vọng và phần giải thích của từng trường hợp.
 4. Mở yêu cầu tương ứng để kiểm tra hội thoại, quyết định và lịch sử. Trong danh sách reviewer, chọn nguồn **Case Verify** để tìm các yêu cầu này.
 5. Có thể nhập tình huống riêng trên trang Kiểm thử để xem hệ thống xử lý.
+
+Bộ 4 case theo challenge brief gồm hai hướng dẫn tự động, một câu hỏi bổ sung và một yêu cầu RDP public cần dừng vì rủi ro bảo mật. Bộ Đề A giữ riêng 3 case tự động và 2 case chuyển tiếp.
 
 ### Mở trên điện thoại bằng QR
 
@@ -102,48 +104,18 @@ Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees
 
 Đây là dataset mô phỏng của dự án, không phải danh sách nhân viên thật hoặc cơ cấu quyền chính thức của VNG. Ô **ID nhân viên (đang phát triển)** trên form hỗ trợ có thể để trống; điền ID không xác thực danh tính và không mở quyền reviewer. API danh bạ dùng header riêng, không tự lấy ID từ form.
 
-### Dataset ID nhân viên
+### Hồ sơ employee mock
 
-| ID mock | Họ tên mock | Level | Chức danh mô phỏng | Phòng ban mô phỏng |
+Cả 36 dòng trong CSV đều dùng tên `Synthetic Demo NN`, chức danh `Synthetic role NN`, đơn vị `Synthetic unit NN` và ID được sinh từ tên. Những nhãn này giúp nhận ra dữ liệu giả lập ngay khi xem API. Level, số lượng dòng và các mốc quanh ngưỡng 21 được giữ để kiểm tra UI và guard demo.
+
+| ID mock | Tên mock | Level | Chức danh | Đơn vị |
 | --- | --- | --- | --- | --- |
-| alphanvgl | Nhân Viên Giả Lập Alpha | 36 | Chief Executive Officer (CEO) | Executive Board |
-| anhtn | Trần Ngọc Anh | 35 | Chief Technology Officer (CTO) | Executive Board |
-| dunglv | Lê Văn Dũng | 34 | Managing Director | VNGGames |
-| linhth | Trần Hoàng Linh | 33 | Vice President | ZaloPay |
-| minhnd | Nguyễn Đăng Minh | 32 | Senior Director | AI Cloud |
-| haonv | Nguyễn Văn Hào | 31 | Director | Data platform |
-| huongtt | Trịnh Thị Hương | 30 | Head of Department | Human Resources |
-| phuongnt | Nguyễn Thành Phương | 28 | Deputy Head | Legal |
-| khanhnd | Nguyễn Duy Khánh | 26 | Senior Manager | ZaloPay Operations |
-| tuanha | Hoàng Anh Tuấn | 24 | Project Manager | VNGGames |
-| trangtt | Trần Thu Trang | 22 | Team Leader | Frontend Engineering |
-| namhp | Hoàng Phan Nam | 21 | Assistant Team Leader | Backend Engineering |
-| bachnt | Nguyễn Thành Bách | 20 | Principal Engineer | AI Cloud |
-| longvt | Vũ Tiến Long | 18 | Lead Architect | Data platform |
-| maivt | Vũ Thị Mai | 17 | Senior Level II | UI/UX Design |
-| quanhm | Hoàng Minh Quân | 16 | Senior Level I | DevOps |
-| thuynt | Nguyễn Thị Thủy | 15 | Engineer Level III | Backend Engineering |
-| hieupm | Phạm Minh Hiếu | 12 | Engineer Level II | Frontend Engineering |
-| sonnv | Nguyễn Văn Sơn | 09 | Engineer Level I | QC/QA |
-| vynt | Nguyễn Thảo Vy | 06 | Junior Developer | Mobile Engineering |
-| ducna | Nguyễn Anh Đức | 05 | Fresher Developer | AI Cloud |
-| yenph | Phạm Hoàng Yến | 03 | Long-term Intern | Data platform |
-| khoanm | Nguyễn Minh Khoa | 02 | Short-term Intern | Frontend Engineering |
-| binhnt | Nguyễn Thành Bình | 01 | Contractor | IT Support |
-| tamnt | Nguyễn Thanh Tâm | 00 | Collaborator | Game Localization |
-| cuongnv | Nguyễn Văn Cường | 15 | Specialist Level III | Finance & Accounting |
-| oanhnt | Nguyễn Thị Oanh | 12 | Specialist Level II | Human Resources |
-| hungpv | Phan Văn Hùng | 09 | Specialist Level I | Marketing |
-| dungtt | Trần Tiến Dũng | 24 | Product Owner | ZaloPay |
-| lanht | Hoàng Thị Lan | 22 | Team Leader | Customer Service |
-| kienvd | Vũ Đăng Kiên | 17 | Senior Artist II | VNGGames |
-| ngocpt | Phạm Thị Ngọc | 16 | Senior Specialist I | Legal |
-| haidv | Đinh Văn Hải | 12 | Business Analyst II | ZaloPay |
-| nhannt | Nguyễn Thành Nhân | 06 | Junior Specialist | Marketing |
-| quynhnt | Nguyễn Thị Quỳnh | 05 | Fresher Specialist | Human Resources |
-| thangnv | Nguyễn Văn Thắng | 00 | Collaborator | Creator Management |
+| `01sd` | Synthetic Demo 01 | 36 | Synthetic role 01 | Synthetic unit 01 |
+| `12sd` | Synthetic Demo 12 | 21 | Synthetic role 12 | Synthetic unit 12 |
+| `13sd` | Synthetic Demo 13 | 20 | Synthetic role 13 | Synthetic unit 13 |
+| `25sd` | Synthetic Demo 25 | 00 | Synthetic role 25 | Synthetic unit 25 |
 
-Khi cần thay đổi hồ sơ, cập nhật CSV và kiểm tra lại bảng này. ID `oanhnt` và `nhannt` là các ID đã sửa trong phiên bản `878448f`; không dùng các ID cũ `oanhtn` hoặc `nhant`.
+CSV là nguồn dữ liệu duy nhất; khi thay đổi, cập nhật CSV và kiểm tra lại parser cùng API.
 
 ### Thử API danh bạ ở local
 
@@ -151,7 +123,7 @@ Khi cần thay đổi hồ sơ, cập nhật CSV và kiểm tra lại bảng nà
 
 ```powershell
 Invoke-RestMethod http://localhost:3000/api/employees -Headers @{
-  "X-Employee-ID" = "trangtt"
+  "X-Employee-ID" = "12sd"
 }
 ```
 
@@ -159,14 +131,14 @@ Phản hồi thành công chứa mảng 36 hồ sơ trong `data`, với `level` 
 
 | Header `X-Employee-ID` | Kết quả | Ý nghĩa |
 | --- | --- | --- |
-| `namhp` (level 21) hoặc `trangtt` (22) | `200` | Đủ ngưỡng xem danh bạ mock |
-| `bachnt` (20) hoặc `tamnt` (00) | `403` | ID tồn tại nhưng dưới ngưỡng 21 |
+| `12sd` (level 21) | `200` | Đủ ngưỡng xem danh bạ mock |
+| `13sd` (20) hoặc `25sd` (00) | `403` | ID tồn tại nhưng dưới ngưỡng 21 |
 | Bỏ header hoặc `synthetic_unknown_employee` | `401` | Chưa cung cấp ID hoặc không có trong CSV |
 | ID hợp lệ khi CSV không đọc/validate được | `500` | Danh bạ không khả dụng; không trả nội dung lỗi nội bộ |
 
-Header được trim và chuyển thành chữ thường, nên `TRANGTT` cũng khớp `trangtt`. Chạy các ví dụ trên server local; không dùng header tự khai báo này làm xác thực production.
+Header được trim và chuyển thành chữ thường, nên `12SD` cũng khớp `12sd`. Chạy các ví dụ trên server local; không dùng header tự khai báo này làm xác thực production.
 
-ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ hoàn toàn giả lập: `Nhân Viên Giả Lập Alpha` → `alphanvgl`. Tên có thể sinh trùng ID; bộ đọc CSV từ chối ID trùng, không tự phân biệt người trùng tên. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
+ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ: `Synthetic Demo 01` → `01sd`. Tên có thể sinh trùng ID; bộ đọc CSV từ chối ID trùng, không tự phân biệt hồ sơ trùng tên. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
 
 Hiện chỉ `GET /api/employees` gắn guard này, với ngưỡng `management=21`. Chưa có scope theo người được giao task, project, phòng ban hoặc quyền duyệt tài chính. Các mốc level không tự cấp quyền cho workflow IT/reviewer, không thay deterministic policy và không thay SSO. Mã nguồn: [bộ đọc CSV và sinh ID](src/domain/employees.ts), [guard level](src/lib/employee-rbac.ts), [route danh bạ](src/app/api/employees/route.ts).
 
