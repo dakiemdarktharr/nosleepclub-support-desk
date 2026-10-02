@@ -3,7 +3,7 @@ import path from "node:path";
 import { z } from "zod";
 
 const employeeRowSchema = z.object({
-  id: z.string().regex(/^[a-z0-9]+$/),
+  id: z.string().min(1),
   name: z.string().min(1),
   level: z.string().regex(/^\d{2}$/),
   title: z.string().min(1),
@@ -102,6 +102,11 @@ export function getEmployees(): Employee[] {
     const level = Number(parsedRow.level);
     if (level > 36) {
       throw new Error(`Employee CSV row ${index + 2} has an invalid authority level.`);
+    }
+
+    const generatedId = generateEmployeeId(parsedRow.name);
+    if (parsedRow.id !== generatedId) {
+      throw new Error(`Employee CSV row ${index + 2} has an ID that does not match its name.`);
     }
 
     return { ...parsedRow, level };
