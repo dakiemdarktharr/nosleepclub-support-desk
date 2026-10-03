@@ -47,6 +47,14 @@ export function parseSupportQuery(url: string) {
     ),
   );
 }
+export function parseEmployeeSuggestionPrefix(url: string): string {
+  const prefix = normalizeEmployeeId(
+    new URL(url).searchParams.get("employeePrefix")?.trim() ?? "",
+  );
+  return prefix.length >= 2 && prefix.length <= 32 && employeeIdPattern.test(prefix)
+    ? prefix
+    : "";
+}
 export type SupportQuery = z.infer<typeof querySchema>;
 type Row = { _id: string; data: SupportRequest };
 const pending = ["ESCALATED", "APPROVED_BY_HUMAN"];
@@ -165,6 +173,47 @@ export async function supportPage(
         ? String(query.cursor + rows.length)
         : null,
   };
+}
+export async function employeeIdSuggestions(prefix: string): Promise<string[]> {
+  const normalized = normalizeEmployeeId(prefix);
+  if (
+    normalized.length < 2 ||
+    normalized.length > 32 ||
+    !employeeIdPattern.test(normalized)
+  )
+    return [];
+
+  const db = supportDatabase();
+  if (db) {
+    await ensureSupportRequestIndexes(db);
+    const literal = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rows = await db
+      .collection<Row>("v3_support_requests")
+      .aggregate<{ _id: string }>([
+        { $match: { "data.input.fields.employeeId": { $regex: `^${literal}` } } },
+        { $group: { _id: "$data.input.fields.employeeId" } },
+        { $sort: { _id: 1 } },
+        { $limit: 8 },
+      ])
+      .toArray();
+    return rows
+      .map((row) => row._id)
+      .filter(
+        (employeeId) =>
+          typeof employeeId === "string" &&
+          employeeIdPattern.test(employeeId) &&
+          employeeId.startsWith(normalized),
+      )
+      .slice(0, 8);
+  }
+
+  const employeeIds = (await listSupportRequests(true))
+    .map((row) => normalizeEmployeeId(row.input.fields.employeeId ?? ""))
+    .filter(
+      (employeeId) =>
+        employeeIdPattern.test(employeeId) && employeeId.startsWith(normalized),
+    );
+  return [...new Set(employeeIds)].sort((a, b) => a.localeCompare(b)).slice(0, 8);
 }
 export async function auditPage(
   query: SupportQuery,

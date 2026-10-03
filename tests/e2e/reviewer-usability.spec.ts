@@ -97,6 +97,41 @@ test("review, audit and verify share one employee workspace", async ({ page }) =
   }
 });
 
+test("employee filter suggests matching codes and supports keyboard selection", async ({ page }) => {
+  let filteredEmployeeId = "";
+  await page.route("**/api/support/requests?*", (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    if (params.get("view") === "employee-suggestions") {
+      return route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ success: true, data: ["emp-001", "emp-010"] }),
+      });
+    }
+    filteredEmployeeId = params.get("employeeId") ?? "";
+    return route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: { items: [], nextCursor: null, total: 0 } }),
+    });
+  });
+
+  await page.goto("/review");
+  const employeeFilter = page.getByLabel("Mã nhân viên", { exact: true });
+  await employeeFilter.fill("emp-0");
+  const suggestions = page.getByRole("listbox", { name: "Mã nhân viên gợi ý" });
+  await expect(suggestions.getByRole("option")).toHaveText(["emp-001", "emp-010"]);
+
+  await employeeFilter.press("ArrowDown");
+  await employeeFilter.press("Enter");
+  await expect(employeeFilter).toHaveValue("emp-001");
+  await expect(suggestions).toHaveCount(0);
+  await expect.poll(() => filteredEmployeeId).toBe("emp-001");
+
+  await employeeFilter.fill("emp-0");
+  await suggestions.getByRole("option", { name: "emp-010" }).click();
+  await expect(employeeFilter).toHaveValue("emp-010");
+  await expect.poll(() => filteredEmployeeId).toBe("emp-010");
+});
+
 test("quick queues, displayed ID search, return and reset work together", async ({ page, request }, info) => {
   const result = await request.post("/api/support/requests", { data: { ...employeeIdentity, rawText: "Open port 3389 public", confirmed: true, idempotencyKey: crypto.randomUUID() } });
   expect(result.ok()).toBe(true);

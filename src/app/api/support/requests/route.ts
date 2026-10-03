@@ -1,4 +1,9 @@
-import { supportPage, parseSupportQuery } from "@/lib/support-query";
+import {
+  employeeIdSuggestions,
+  parseEmployeeSuggestionPrefix,
+  supportPage,
+  parseSupportQuery,
+} from "@/lib/support-query";
 import {
   supportApi,
   supportBody,
@@ -23,7 +28,10 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   return supportApi(async () => {
     requireDemoReviewer();
-    if (request && new URL(request.url).searchParams.get("view") === "page")
+    const view = new URL(request.url).searchParams.get("view");
+    if (view === "employee-suggestions")
+      return employeeIdSuggestions(parseEmployeeSuggestionPrefix(request.url));
+    if (view === "page")
       return supportPage(parseSupportQuery(request.url));
     return request &&
       new URL(request.url).searchParams.get("view") === "summary"

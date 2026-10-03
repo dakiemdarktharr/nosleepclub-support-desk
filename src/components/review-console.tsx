@@ -28,6 +28,7 @@ import { StaffWorkspace } from "@/components/staff-workspace";
 export function ReviewConsole({ requestId }: { requestId?: string }) {
   const sequence = useRef(0);
   const detailSequence = useRef(0);
+  const employeeSuggestionSequence = useRef(0);
   const [requests, setRequests] = useState<SupportSummary[]>([]),
     [selected, setSelected] = useState<SupportRequest | null>(null);
   const [reason, setReason] = useState(""),
@@ -37,6 +38,10 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
   const [filter, setFilter] = useState("pending");
   const [search, setSearch] = useState("");
   const [employeeId, setEmployeeId] = useState("");
+  const [employeeSuggestions, setEmployeeSuggestions] = useState<string[]>([]);
+  const [employeeSuggestionsOpen, setEmployeeSuggestionsOpen] = useState(false);
+  const [activeEmployeeSuggestion, setActiveEmployeeSuggestion] = useState(-1);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [origin, setOrigin] = useState("support");
   const [queue, setQueue] = useState("all");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -63,6 +68,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
   }, [filter, origin, queue, search, employeeId, filtersReady, requestId]);
   function clearFilters() {
     setSearch(""); setEmployeeId(""); setFilter("all"); setOrigin("all"); setQueue("all");
+    setSelectedEmployeeId(""); setEmployeeSuggestions([]); setEmployeeSuggestionsOpen(false);
   }
   const quickQueues = [
     { label: "Chờ xử lý", filter: "pending", queue: "all", icon: Inbox },
@@ -119,6 +125,36 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
       tracker.current++;
     };
   }, [refresh, requestId, filtersReady]);
+  useEffect(() => {
+    const current = ++employeeSuggestionSequence.current;
+    const prefix = employeeId.trim();
+    if (prefix.length < 2 || prefix === selectedEmployeeId) {
+      setEmployeeSuggestions([]);
+      setEmployeeSuggestionsOpen(false);
+      setActiveEmployeeSuggestion(-1);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        view: "employee-suggestions",
+        employeePrefix: prefix,
+      });
+      void browserApi<string[]>(`/api/support/requests?${params}`)
+        .then((suggestions) => {
+          if (current !== employeeSuggestionSequence.current) return;
+          setEmployeeSuggestions(suggestions);
+          setEmployeeSuggestionsOpen(suggestions.length > 0);
+          setActiveEmployeeSuggestion(-1);
+        })
+        .catch(() => {
+          if (current !== employeeSuggestionSequence.current) return;
+          setEmployeeSuggestions([]);
+          setEmployeeSuggestionsOpen(false);
+        });
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [employeeId, selectedEmployeeId]);
   const loadSelected = useCallback(async () => {
     if (!requestId) return;
     const current = ++detailSequence.current;
@@ -176,6 +212,12 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
       setPending(false);
     }
   }
+  function chooseEmployeeSuggestion(suggestion: string) {
+    setEmployeeId(suggestion);
+    setSelectedEmployeeId(suggestion);
+    setEmployeeSuggestionsOpen(false);
+    setActiveEmployeeSuggestion(-1);
+  }
   return (
     <StaffWorkspace active="review">
       <main
@@ -229,19 +271,81 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                     />
                   </div>
                 </label>
-                <label className="it-search">
-                  Mã nhân viên
-                  <div>
-                    <Search size={18} aria-hidden="true" />
-                    <input
-                      type="search"
-                      maxLength={32}
-                      placeholder="Ví dụ: anhtn"
-                      value={employeeId}
-                      onChange={(event) => setEmployeeId(event.target.value)}
-                    />
-                  </div>
-                </label>
+                <div className="it-employee-filter">
+                  <label className="it-search" htmlFor="review-employee-id">
+                    Mã nhân viên
+                    <div>
+                      <Search size={18} aria-hidden="true" />
+                      <input
+                        id="review-employee-id"
+                        type="search"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-expanded={employeeSuggestionsOpen}
+                        aria-controls={employeeSuggestionsOpen ? "review-employee-suggestions" : undefined}
+                        aria-activedescendant={
+                          employeeSuggestionsOpen && activeEmployeeSuggestion >= 0
+                            ? `review-employee-suggestion-${activeEmployeeSuggestion}`
+                            : undefined
+                        }
+                        maxLength={32}
+                        autoComplete="off"
+                        placeholder="Ví dụ: anhtn"
+                        value={employeeId}
+                        onFocus={() => {
+                          if (employeeSuggestions.length) setEmployeeSuggestionsOpen(true);
+                        }}
+                        onChange={(event) => {
+                          setEmployeeId(event.target.value);
+                          setSelectedEmployeeId("");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "ArrowDown" && employeeSuggestions.length) {
+                            event.preventDefault();
+                            setEmployeeSuggestionsOpen(true);
+                            setActiveEmployeeSuggestion((active) =>
+                              (active + 1) % employeeSuggestions.length,
+                            );
+                          } else if (event.key === "ArrowUp" && employeeSuggestions.length) {
+                            event.preventDefault();
+                            setEmployeeSuggestionsOpen(true);
+                            setActiveEmployeeSuggestion((active) =>
+                              active <= 0 ? employeeSuggestions.length - 1 : active - 1,
+                            );
+                          } else if (event.key === "Enter" && employeeSuggestionsOpen && activeEmployeeSuggestion >= 0) {
+                            event.preventDefault();
+                            chooseEmployeeSuggestion(employeeSuggestions[activeEmployeeSuggestion]);
+                          } else if (event.key === "Escape") {
+                            setEmployeeSuggestionsOpen(false);
+                            setActiveEmployeeSuggestion(-1);
+                          }
+                        }}
+                      />
+                    </div>
+                  </label>
+                  {employeeSuggestionsOpen && employeeSuggestions.length > 0 && (
+                    <ul
+                      id="review-employee-suggestions"
+                      className="it-employee-suggestions"
+                      role="listbox"
+                      aria-label="Mã nhân viên gợi ý"
+                    >
+                      {employeeSuggestions.map((suggestion, index) => (
+                        <li
+                          id={`review-employee-suggestion-${index}`}
+                          key={suggestion}
+                          role="option"
+                          aria-selected={index === activeEmployeeSuggestion}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onMouseEnter={() => setActiveEmployeeSuggestion(index)}
+                          onClick={() => chooseEmployeeSuggestion(suggestion)}
+                        >
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 <label>
                   Hiển thị
                   <select
