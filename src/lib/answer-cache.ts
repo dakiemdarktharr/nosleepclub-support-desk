@@ -24,7 +24,7 @@ export function answerCacheKey(context: ConversationContext, model: string) {
   return createHash("sha256")
     .update(
       JSON.stringify([
-        "answer-v3-evidence-workflow",
+        "answer-v4-evidence-workflow-response-style",
         text,
         context.label,
         model,

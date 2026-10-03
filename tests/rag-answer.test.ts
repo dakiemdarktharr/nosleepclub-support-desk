@@ -86,6 +86,26 @@ it("requires exact evidence for claimed article IDs, not merely a plausible URL"
     ),
   ).toThrow();
 });
+it("sends tone-sensitive wording guidance with the answer request", async () => {
+  const canonical = (await analyze(input("bạn tên gì"), [])).canonical;
+  const run = vi.fn(async (call) => {
+    expect(call.purpose).toBe("assistance");
+    expect(call.instructions).toContain(
+      "Adjust wording only to tone clearly expressed in the user's words.",
+    );
+    expect(call.instructions).toContain(
+      "Tone must not change facts, evidence, uncertainty, recommended actions, safety, routing, urgency, priority, authority, or policy.",
+    );
+    return {
+      label: canonical.conversation!.label,
+      text: "Mình là VNG Support, trợ lý hỗ trợ bạn.",
+      knowledgeIds: [],
+      evidence: [],
+    };
+  });
+  await createConversationAnswer(canonical, { run });
+  expect(run).toHaveBeenCalledOnce();
+});
 it("does not display unrelated candidate sources as evidence", async () => {
   const canonical = (await analyze(input("bạn tên gì"), [])).canonical;
   const result = await createConversationAnswer(canonical, {
