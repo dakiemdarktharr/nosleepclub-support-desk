@@ -379,6 +379,20 @@ fieldset {
 }
 .support-timeline li::before { content: ""; position: absolute; left: -5px; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 4px var(--accent-soft); }
 .support-timeline time { font-variant-numeric: tabular-nums; }
+.audit-event-scroll {
+  max-height: min(68vh, 760px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  padding-right: 10px;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+.audit-event-scroll:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
 .review-list {
   list-style: none;
   padding: 0;

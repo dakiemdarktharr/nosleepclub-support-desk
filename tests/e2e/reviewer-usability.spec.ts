@@ -1,6 +1,50 @@
 import { test, expect } from "./fixtures";
 import { employeeIdentity } from "./intake-helpers";
 
+test("audit events scroll inside their panel without scrolling the page", async ({ page }) => {
+  const events = Array.from({ length: 40 }, (_, index) => ({
+    id: `event-${index}`,
+    requestId: `request-${index}`,
+    timestamp: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
+    actor: "employee-demo",
+    beforeStatus: "RECEIVED",
+    afterStatus: "NEEDS_INFORMATION",
+    action: "DECISION",
+    requestKind: "OTHER",
+    riskLevel: "LOW",
+    bucket: "BEYOND_AUTHORITY",
+    ruleIds: ["AUTH-001"],
+    safeEvidence: [],
+    missingFields: [],
+    questions: [],
+    targetedQuestions: [],
+    nextStep: "Chờ nhân viên hỗ trợ.",
+    policyVersion: "test",
+    redactions: [],
+    approvalStatus: "UNVERIFIED",
+    subrequestOutcomes: [],
+    explanation: `Sự kiện kiểm thử số ${index + 1}.`,
+  }));
+  await page.route("**/api/support/events?*", (route) => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({
+      success: true,
+      data: { items: events, nextCursor: null, total: events.length },
+    }),
+  }));
+
+  await page.goto("/audit");
+  const panel = page.getByRole("region", { name: "Danh sách sự kiện xử lý" });
+  await expect(panel).toHaveCSS("overflow-y", "auto");
+  await expect(panel).toHaveCSS("overscroll-behavior-y", "contain");
+  await expect.poll(() => panel.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+  await panel.hover();
+  const pageScrollBefore = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 450);
+  await expect.poll(() => panel.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect(page.evaluate(() => window.scrollY)).resolves.toBe(pageScrollBefore);
+});
+
 test("review, audit and verify share one employee workspace", async ({ page }) => {
   const pages = [
     ["/review", "Yêu cầu cần xử lý"],

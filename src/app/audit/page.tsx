@@ -137,7 +137,14 @@ export default function AuditPage() {
             {pending ? "Đang tải lịch sử…" : `${events.length}/${total} sự kiện`}
           </p>
           {events.length ? (
-            <AuditTimeline events={events} />
+            <div
+              className="audit-event-scroll"
+              role="region"
+              aria-label="Danh sách sự kiện xử lý"
+              tabIndex={0}
+            >
+              <AuditTimeline events={events} />
+            </div>
           ) : (
             !pending && <p>Chưa có sự kiện phù hợp.</p>
           )}
