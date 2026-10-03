@@ -13,7 +13,7 @@ beforeEach(() => {
   resetSupportTestStore();
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
-const input = (rawText: string) => ({ rawText, fields: { department: "engineering" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
+const input = (rawText: string) => ({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
 const hidden = "SYNTHETIC_HIDDEN_987";
 
 it.each(["client_secret", "access_token", "refresh_token", "aws_session_token", "private_key"])("masks JSON %s before model extraction, stored input and audit", async (key) => {
@@ -24,6 +24,16 @@ it.each(["client_secret", "access_token", "refresh_token", "aws_session_token", 
   expect(JSON.stringify(await getSupportRequest(request.id))).not.toContain(hidden);
   expect(request.input.rawText).toContain("[REDACTED]");
   expect(request.events.length).toBeGreaterThan(0);
+});
+it("uses employee code for record lookup only and excludes it from model facts", async () => {
+  const extraction = vi.spyOn(model, "extractWithModel");
+  const request = await submitSupport(input("An unusual internal tool is not responding"));
+  expect(extraction).toHaveBeenCalled();
+  expect(extraction.mock.calls[0][0].fields).not.toHaveProperty("employeeId");
+  expect(extraction.mock.calls[0][0].fields).not.toHaveProperty("department");
+  expect(request.input.fields.employeeId).toBe("emp-test-01");
+  expect(request.canonical?.entities).not.toHaveProperty("employeeId");
+  expect(request.canonical?.entities).not.toHaveProperty("department");
 });
 it("normalizes decomposed/fullwidth labels and zero-width characters before masking", () => {
   for (const text of [`mật khẩu: ${hidden}`.normalize("NFD"), `ｔｏｋｅｎ: ${hidden}`, `client_\u200bsecret: ${hidden}`]) {
@@ -36,7 +46,7 @@ it.each([
   ["số điện thoại: 090 000 0000", "090 000 0000", "LABELED_PHONE_NUMBER"],
   ["phone number = +84 90-000-0000", "+84 90-000-0000", "LABELED_PHONE_NUMBER"],
 ])("masks explicitly labelled synthetic identifiers: %s", (text, value, marker) => {
-  const safe = prepareInput({ ...input(text), fields: { reason: text } });
+  const safe = prepareInput({ ...input(text), fields: { department: "engineering", employeeId: "EMP-TEST-01", reason: text } });
   expect(JSON.stringify(safe.input)).not.toContain(value);
   expect(safe.markers).toContain(marker);
 });

@@ -71,7 +71,7 @@ async function run() {
   const db = client.db(database);
   assert.equal((await db.listCollections().toArray()).length, 0);
   await start(uri, database, revision);
-  const payload = { rawText: "VPN lỗi; client_secret: SYNTHETIC_RESTART_ONLY", fields: { department: "engineering" }, confirmed: true, idempotencyKey: randomUUID() };
+  const payload = { rawText: "VPN lỗi; client_secret: SYNTHETIC_RESTART_ONLY", fields: { department: "engineering", employeeId: "EMP-SMOKE-01" }, confirmed: true, idempotencyKey: randomUUID() };
   const before = await api("/api/support/requests", payload);
   assert.equal(before.status, 201);
   const request = before.body.data;

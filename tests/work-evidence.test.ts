@@ -6,7 +6,7 @@ import { parseSupportQuery, supportPage } from "@/lib/support-query";
 import { callModel, type ModelCall } from "@/lib/support-model";
 import { pendingReview, type SupportInput } from "@/domain/contracts";
 
-const input = (rawText: string): SupportInput => ({ rawText, fields: {}, mode: "freeform", serviceGroup: "OTHER", confirmed: true, idempotencyKey: crypto.randomUUID() });
+const input = (rawText: string): SupportInput => ({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, mode: "freeform", serviceGroup: "OTHER", confirmed: true, idempotencyKey: crypto.randomUUID() });
 beforeEach(() => {
   vi.stubEnv("AI_PROVIDER", "mock");
   vi.stubEnv("MONGODB_URI", "");

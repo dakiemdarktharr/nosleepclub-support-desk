@@ -41,7 +41,7 @@ beforeEach(() => {
   });
 });
 afterEach(() => { delete runtime.supportV3Mongo; vi.unstubAllEnvs(); });
-const create = () => submitSupport({ rawText: "Restart laptop", confirmed: true, idempotencyKey: crypto.randomUUID() });
+const create = () => submitSupport({ rawText: "Restart laptop", fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
 
 describe.each(["memory", "mongo-mock"])("repository contract: %s", (mode) => {
   beforeEach(() => vi.stubEnv("MONGODB_URI", mode === "mongo-mock" ? "mongodb://synthetic.invalid" : ""));

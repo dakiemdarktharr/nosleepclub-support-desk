@@ -278,6 +278,7 @@ export type SupportSummary = Pick<
   SupportRequest,
   "id" | "version" | "status" | "createdAt" | "updatedAt"
 > & {
+  employeeId?: string;
   title: string;
   serviceGroup: ServiceGroup;
   action: Action | null;

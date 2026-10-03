@@ -18,7 +18,7 @@ const request = (body: unknown) =>
     body: JSON.stringify(body),
   });
 const identity = {
-  fields: { department: "engineering", employeeId: "EMP-42" },
+  fields: { department: "engineering", employeeId: "emp-42" },
 };
 
 it.each([
@@ -43,7 +43,7 @@ it.each([
   }
 });
 
-it.each([undefined, "", "  \t "])("allows preview and submission without employee ID: %j", async (employeeId) => {
+it.each([undefined, "", "  \t "])("requires an employee ID before preview or submission: %j", async (employeeId) => {
   for (const mode of ["freeform", "structured"]) {
     const input = {
       mode,
@@ -51,13 +51,42 @@ it.each([undefined, "", "  \t "])("allows preview and submission without employe
       rawText: "Restart my laptop",
       idempotencyKey: crypto.randomUUID(),
     };
-    const before = await preview(request(input));
-    expect(before.status).toBe(200);
-    const { data } = await before.json();
-    const saved = await submit(request({ ...data.input, confirmed: true }));
-    expect(saved.status).toBe(201);
-    expect((await saved.json()).data.input.fields.department).toBe("engineering");
+    for (const route of [preview, submit]) {
+      const response = await route(request(input));
+      expect(response.status).toBe(422);
+      expect((await response.json()).error.code).toBe("IDENTITY_REQUIRED");
+    }
+    expect(await getSupportRequest(input.idempotencyKey)).toBeNull();
   }
+});
+
+it("normalizes employee codes and saves them for reviewer lookup", async () => {
+  const input = {
+    fields: { department: "engineering", employeeId: " ANHTN " },
+    rawText: "Restart my laptop",
+    idempotencyKey: crypto.randomUUID(),
+  };
+  const before = await preview(request(input));
+  expect(before.status).toBe(200);
+  const { data } = await before.json();
+  expect(data.input.fields.employeeId).toBe("anhtn");
+  const saved = await submit(request({ ...data.input, confirmed: true }));
+  expect(saved.status).toBe(201);
+  expect((await saved.json()).data.input.fields.employeeId).toBe("anhtn");
+});
+
+it.each(["bad id", "../employee", "a".repeat(33)])("rejects a malformed employee code: %s", async (employeeId) => {
+  const input = {
+    fields: { department: "engineering", employeeId },
+    rawText: "Restart my laptop",
+    idempotencyKey: crypto.randomUUID(),
+  };
+  for (const route of [preview, submit]) {
+    const response = await route(request(input));
+    expect(response.status).toBe(422);
+    expect((await response.json()).error.code).toBe("IDENTITY_REQUIRED");
+  }
+  expect(await getSupportRequest(input.idempotencyKey)).toBeNull();
 });
 
 it("rejects an unknown department and identity without issue details", async () => {

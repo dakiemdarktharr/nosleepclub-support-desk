@@ -6,7 +6,12 @@ import type {
   SupportRequest,
   SupportSummary,
 } from "@/domain/contracts";
-import { supportDatabase, listSupportRequests } from "./support-repository";
+import {
+  ensureSupportRequestIndexes,
+  supportDatabase,
+  listSupportRequests,
+} from "./support-repository";
+import { employeeIdPattern, normalizeEmployeeId } from "@/domain/employee-identity";
 
 const querySchema = z.object({
   cursor: z.coerce.number().int().min(0).max(1000000).default(0),
@@ -15,6 +20,17 @@ const querySchema = z.object({
   // identifier in both Mongo and memory instead of treating HT- as raw text.
   q: z.string().trim().max(200).default("").transform((value) =>
     /^HT-[a-f0-9]{8}$/i.test(value) ? value.slice(3) : value,
+  ),
+  employeeId: z.preprocess(
+    (value) =>
+      typeof value === "string" && !value.trim() ? undefined : value,
+    z
+      .string()
+      .trim()
+      .max(32)
+      .transform(normalizeEmployeeId)
+      .pipe(z.string().regex(employeeIdPattern))
+      .optional(),
   ),
   status: z.enum(["all", "pending", "knowledge"]).default("all"),
   origin: z.enum(["all", "support", "verify"]).default("all"),
@@ -25,7 +41,7 @@ export function parseSupportQuery(url: string) {
   const params = new URL(url).searchParams;
   return querySchema.parse(
     Object.fromEntries(
-      ["cursor", "limit", "q", "status", "origin", "requestId", "queue"]
+      ["cursor", "limit", "q", "employeeId", "status", "origin", "requestId", "queue"]
         .filter((key) => params.has(key))
         .map((key) => [key, params.get(key)]),
     ),
@@ -37,6 +53,8 @@ const pending = ["ESCALATED", "APPROVED_BY_HUMAN"];
 function filterFor(query: SupportQuery): Filter<Row> {
   const filter: Filter<Row> = {};
   if (query.requestId) filter._id = query.requestId;
+  if (query.employeeId)
+    filter["data.input.fields.employeeId"] = query.employeeId;
   if (query.queue !== "all") filter["data.decision.uncertaintyClass"] = query.queue;
   if (query.status === "pending") filter["data.status"] = { $in: pending };
   if (query.status === "knowledge")
@@ -45,9 +63,18 @@ function filterFor(query: SupportQuery): Filter<Row> {
     filter["data.input.verifyRunId"] = { $exists: query.origin === "verify" };
   if (query.q) {
     const literal = query.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    filter.$or = ["data.id", "data.originalQuestion", "data.input.rawText"].map(
-      (field) => ({ [field]: { $regex: literal, $options: "i" } }),
-    );
+    const fields = [
+      "data.id",
+      "data.originalQuestion",
+      "data.input.rawText",
+      "data.input.fields.employeeId",
+    ];
+    filter.$or = fields.map((field) => ({
+      [field]: { $regex: literal, $options: "i" },
+    }));
+    const employeeId = normalizeEmployeeId(query.q);
+    if (employeeIdPattern.test(employeeId))
+      filter.$or.push({ "data.input.fields.employeeId": employeeId });
   }
   return filter;
 }
@@ -57,6 +84,9 @@ async function memoryRows(query: SupportQuery) {
   return rows.filter(
     (row) =>
       (!query.requestId || row.id === query.requestId) &&
+      (!query.employeeId ||
+        normalizeEmployeeId(row.input.fields.employeeId ?? "") ===
+          query.employeeId) &&
       (query.queue === "all" || row.decision?.uncertaintyClass === query.queue) &&
       (query.status === "all" ||
         (query.status === "pending"
@@ -64,7 +94,7 @@ async function memoryRows(query: SupportQuery) {
           : row.knowledgeCandidate?.status === "PENDING_REVIEW")) &&
       (query.origin === "all" ||
         Boolean(row.input.verifyRunId) === (query.origin === "verify")) &&
-      `${row.id} ${row.originalQuestion || row.input.rawText}`
+      `${row.id} ${row.originalQuestion || row.input.rawText} ${row.input.fields.employeeId ?? ""}`
         .toLocaleLowerCase()
         .includes(query.q.toLocaleLowerCase()),
   );
@@ -73,6 +103,7 @@ export async function supportPage(
   query: SupportQuery,
 ): Promise<ResultPage<SupportSummary>> {
   const db = supportDatabase();
+  if (db) await ensureSupportRequestIndexes(db);
   const collection = db?.collection<Row>("v3_support_requests");
   const filter = filterFor(query);
   const rows = collection
@@ -86,6 +117,7 @@ export async function supportPage(
             "data.updatedAt": 1,
             "data.originalQuestion": 1,
             "data.input.rawText": 1,
+            "data.input.fields.employeeId": 1,
             "data.canonical.serviceGroup": 1,
             "data.decision.action": 1,
             "data.decision.uncertaintyClass": 1,
@@ -119,6 +151,7 @@ export async function supportPage(
         row.input.rawText ||
         "Yêu cầu theo danh mục"
       ).slice(0, 140),
+      employeeId: row.input.fields.employeeId,
       serviceGroup: row.canonical?.serviceGroup ?? "OTHER",
       action: row.decision?.action ?? null,
       uncertaintyClass: row.decision?.uncertaintyClass,
@@ -138,6 +171,7 @@ export async function auditPage(
 ): Promise<ResultPage<AuditEvent>> {
   const db = supportDatabase();
   if (db) {
+    await ensureSupportRequestIndexes(db);
     const rows = await db
       .collection<Row>("v3_support_requests")
       .aggregate<{ items: AuditEvent[]; count: { total: number }[] }>([

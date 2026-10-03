@@ -6,5 +6,5 @@ export const employeeIdentity = {
 
 export async function fillEmployeeIdentity(page: Page) {
   await page.getByLabel("Phòng ban", { exact: true }).selectOption("engineering");
-  await page.getByLabel("ID nhân viên (đang phát triển)", { exact: true }).fill("EMP-E2E-001");
+  await page.getByLabel("Mã nhân viên", { exact: true }).fill("EMP-E2E-001");
 }

@@ -4,7 +4,7 @@ import { employeeIdentity, fillEmployeeIdentity } from "./intake-helpers";
 async function departmentGuideGeometry(page: Page) {
   return page.evaluate(() => {
     const department = document.querySelector('select[aria-label="Phòng ban"]');
-    const employeeId = document.querySelector('input[aria-label="ID nhân viên (đang phát triển)"]');
+    const employeeId = document.querySelector('input[aria-label="Mã nhân viên"]');
     const ring = document.querySelector(".guide-target-ring");
     const arrow = document.querySelector<SVGPathElement>(".guide-arrow > path");
     const matrix = arrow?.getScreenCTM();
@@ -40,7 +40,7 @@ for (const mode of ["Mô tả vấn đề", "Chọn theo danh mục"]) {
     await page.getByRole("button", { name: mode, exact: true }).click();
     const tip = page.getByRole("region", { name: "Hướng dẫn thao tác" });
     const department = page.getByLabel("Phòng ban", { exact: true });
-    const employeeId = page.getByLabel("ID nhân viên (đang phát triển)", { exact: true });
+    const employeeId = page.getByLabel("Mã nhân viên", { exact: true });
     await expect(tip).toContainText("Chọn phòng ban");
     const originalViewport = page.viewportSize()!;
     for (const viewport of [originalViewport, { width: 320, height: 568 }, { width: 844, height: 390 }]) {

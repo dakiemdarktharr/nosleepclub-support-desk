@@ -27,6 +27,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 const input = (rawText: string) => ({
   rawText,
+  fields: { department: "engineering", employeeId: "EMP-TEST-01" },
   confirmed: true,
   idempotencyKey: crypto.randomUUID(),
 });
@@ -274,6 +275,8 @@ it("operation cannot launder access intent or bypass approval", async () => {
     mode: "structured",
     serviceGroup: "DATABASE",
     fields: {
+      department: "engineering",
+      employeeId: "EMP-TEST-01",
       intentLabel: "DATABASE_READ_ACCESS",
       system: "postgresql",
       resourceScope: "demo_inventory",
@@ -370,6 +373,8 @@ it("structured cluster-admin intent still requires verified authority", async ()
     mode: "structured",
     serviceGroup: "KUBERNETES",
     fields: {
+      department: "engineering",
+      employeeId: "EMP-TEST-01",
       intentLabel: "K8S_CLUSTER_ADMIN",
       cluster: "demo",
       namespace: "demo",

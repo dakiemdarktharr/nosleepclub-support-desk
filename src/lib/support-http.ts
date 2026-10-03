@@ -2,7 +2,7 @@ import { z } from "zod";
 import { errorResponse, successResponse } from "./api-response";
 import { SupportError } from "./support-repository";
 import { supportInputSchema } from "@/domain/input";
-import { hasEmployeeIdentity, identityRequiredMessage } from "@/domain/employee-identity";
+import { employeeIdentityError } from "@/domain/employee-identity";
 import { safeInput } from "@/domain/text";
 import { validateVerificationInput } from "@/services/verification";
 
@@ -100,10 +100,11 @@ export async function requireEmployeeIdentity(value: unknown) {
     await validateVerificationInput(safeInput(input).input);
     return input;
   }
-  if (!hasEmployeeIdentity(input.fields))
+  const identityError = employeeIdentityError(input.fields);
+  if (identityError)
     throw new SupportError(
       "IDENTITY_REQUIRED",
-      identityRequiredMessage,
+      identityError,
       422,
     );
   return input;

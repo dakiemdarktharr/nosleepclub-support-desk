@@ -34,7 +34,7 @@ it("offers the four, five, and fifteen case judge packs with distinct case IDs",
 });
 
 it.each(supportVerifyCases.filter(row => row.pack === "judge-15"))("$id follows the documented policy without a special judge decision path", async (item) => {
-  const row = await submitSupport({ rawText: item.rawText, fields: item.fields ?? {}, confirmed: true, idempotencyKey: crypto.randomUUID() });
+  const row = await submitSupport({ rawText: item.rawText, fields: { department: "engineering", employeeId: "VERIFY-EMP-42", ...item.fields }, confirmed: true, idempotencyKey: crypto.randomUUID() });
   expect(row.decision).toMatchObject({action:item.expected_action, bucket:item.expected_bucket});
   expect(row.decision?.ruleIds).toContain(item.expected_rule);
   if (item.expected_action !== "AUTO_APPROVE") {

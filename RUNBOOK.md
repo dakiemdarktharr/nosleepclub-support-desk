@@ -74,7 +74,7 @@ Trong terminal khác, tạo duy nhất dữ liệu synthetic rồi giữ lại c
 
 ```powershell
 $baseUrl = 'http://127.0.0.1:3227'
-$body = @{rawText='Restart synthetic laptop'; fields=@{department='engineering'}; confirmed=$true; idempotencyKey=[guid]::NewGuid().ToString()} | ConvertTo-Json
+$body = @{rawText='Restart synthetic laptop'; fields=@{department='engineering'; employeeId='EMP-SMOKE-01'}; confirmed=$true; idempotencyKey=[guid]::NewGuid().ToString()} | ConvertTo-Json
 $before = (Invoke-RestMethod "$baseUrl/api/support/requests" -Method Post -ContentType 'application/json' -Body $body).data
 $requestId = $before.id
 if (-not $requestId) { throw 'Create failed' }

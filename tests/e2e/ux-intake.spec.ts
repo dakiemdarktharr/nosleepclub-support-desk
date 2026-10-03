@@ -18,13 +18,13 @@ test("reselecting a mode preserves input; blank input has an actionable error", 
   await fillEmployeeIdentity(page);
   await page.getByLabel("Nhóm hỗ trợ", { exact: true }).selectOption("DEVICE_BOOT");
   await expect(page.getByLabel("Phòng ban", { exact: true })).toHaveValue("engineering");
-  await expect(page.getByLabel("ID nhân viên (đang phát triển)", { exact: true })).toHaveValue("EMP-E2E-001");
+  await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveValue("EMP-E2E-001");
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Nhập mô tả yêu cầu hoặc chọn một nhu cầu cụ thể");
   await page.getByLabel("Nhu cầu cụ thể", { exact: true }).selectOption("DEVICE_RESTART_GUIDANCE");
   await expect(page.getByLabel("Phòng ban", { exact: true })).toHaveCount(1);
-  await expect(page.getByLabel("ID nhân viên (đang phát triển)", { exact: true })).toHaveCount(1);
-  await expect(page.getByLabel("ID nhân viên (đang phát triển)", { exact: true })).toHaveValue("EMP-E2E-001");
+  await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveCount(1);
+  await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveValue("EMP-E2E-001");
   await page.getByRole("button", { name: "Chọn theo danh mục", exact: true }).click();
   await expect(page.getByLabel("Nhu cầu cụ thể", { exact: true })).toHaveValue("DEVICE_RESTART_GUIDANCE");
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
@@ -32,20 +32,20 @@ test("reselecting a mode preserves input; blank input has an actionable error", 
   await expect(page.getByLabel("Nhu cầu cụ thể", { exact: true })).toHaveValue("DEVICE_RESTART_GUIDANCE");
   await page.getByRole("button", { name: "Mô tả vấn đề", exact: true }).click();
   await expect(page.getByLabel("Phòng ban", { exact: true })).toHaveValue("engineering");
-  await expect(page.getByLabel("ID nhân viên (đang phát triển)", { exact: true })).toHaveValue("EMP-E2E-001");
+  await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveValue("EMP-E2E-001");
   await page.getByLabel("Mô tả yêu cầu", { exact: true }).fill("   ");
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Nhập mô tả yêu cầu");
 });
 
 for (const mode of ["Mô tả vấn đề", "Chọn theo danh mục"]) {
-  test(`requires a department but allows an empty employee ID from ${mode}`, async ({ page }) => {
+  test(`requires department and employee code from ${mode}`, async ({ page }) => {
     await page.goto("/send-help");
     await page.getByRole("button", { name: mode, exact: true }).click();
     await page.getByLabel("Mô tả yêu cầu", { exact: true }).fill("VPN không kết nối");
     const department = page.getByLabel("Phòng ban", { exact: true });
-    const employeeId = page.getByLabel("ID nhân viên (đang phát triển)", { exact: true });
-    await expect(employeeId).not.toHaveAttribute("required", "");
+    const employeeId = page.getByLabel("Mã nhân viên", { exact: true });
+    await expect(employeeId).toHaveAttribute("required", "");
     let posts = 0;
     page.on("request", (request) => {
       if (request.method() === "POST" && /\/api\/support\/(preview|requests)$/.test(request.url())) posts++;
@@ -60,6 +60,10 @@ for (const mode of ["Mô tả vấn đề", "Chọn theo danh mục"]) {
     }
     await department.selectOption("engineering");
     await employeeId.fill("");
+    await page.getByRole("button", { name: "Gửi", exact: true }).click();
+    await expect(page.getByRole("main").getByRole("alert")).toContainText("Nhập mã nhân viên");
+    expect(posts).toBe(0);
+    await employeeId.fill("EMP-E2E-001");
     const previewResponse = page.waitForResponse((response) => response.url().endsWith("/api/support/preview"));
     await page.getByRole("button", { name: "Gửi", exact: true }).click();
     expect((await previewResponse).status()).toBe(200);
@@ -67,7 +71,7 @@ for (const mode of ["Mô tả vấn đề", "Chọn theo danh mục"]) {
     await page.getByRole("button", { name: "Xác nhận và gửi yêu cầu" }).click();
     const saved = await savedResponse;
     expect(saved.status()).toBe(201);
-    expect((await saved.json()).data.input.fields).toMatchObject({ department: "engineering", employeeId: "" });
+    expect((await saved.json()).data.input.fields).toMatchObject({ department: "engineering", employeeId: "emp-e2e-001" });
     await expect(page).toHaveURL(/\/requests\/[a-f0-9-]+$/);
   });
 }

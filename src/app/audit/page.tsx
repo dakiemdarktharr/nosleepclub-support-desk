@@ -8,6 +8,7 @@ export default function AuditPage() {
   const sequence = useRef(0),
     [events, setEvents] = useState<AuditEvent[]>([]),
     [query, setQuery] = useState(""),
+    [employeeId, setEmployeeId] = useState(""),
     [origin, setOrigin] = useState("support"),
     [error, setError] = useState(""),
     [pending, setPending] = useState(false),
@@ -30,6 +31,7 @@ export default function AuditPage() {
           q: query,
           origin,
           limit: "30",
+          ...(employeeId.trim() ? { employeeId: employeeId.trim() } : {}),
           ...(next ? { cursor: next } : {}),
         });
         const page = await browserApi<ResultPage<AuditEvent>>(
@@ -50,7 +52,7 @@ export default function AuditPage() {
         if (current === sequence.current) setPending(false);
       }
     },
-    [query, origin],
+    [query, employeeId, origin],
   );
   useEffect(() => {
     const tracker = sequence;
@@ -72,7 +74,7 @@ export default function AuditPage() {
         <h1>Mỗi quyết định, một dấu vết.</h1>
       </div>
       <p>
-        Tìm bằng nội dung hoặc mã yêu cầu. Các trang tiếp theo giữ lại khả năng
+        Tìm bằng mã nhân viên, nội dung hoặc mã yêu cầu. Các trang tiếp theo giữ lại khả năng
         tìm hồ sơ cũ; case Verify có bộ lọc riêng.
       </p>
       {metrics && (
@@ -104,6 +106,15 @@ export default function AuditPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ví dụ: VPN hoặc mã yêu cầu"
+          />
+        </label>
+        <label>
+          Mã nhân viên
+          <Input
+            maxLength={32}
+            value={employeeId}
+            onChange={(e) => setEmployeeId(e.target.value)}
+            placeholder="Ví dụ: anhtn"
           />
         </label>
         <label>

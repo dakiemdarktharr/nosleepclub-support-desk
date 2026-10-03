@@ -29,7 +29,7 @@ Mũi tên hướng dẫn sẽ chỉ các nút và ô cần thao tác khi bạn v
 
 1. Chọn **Tôi cần hỗ trợ**.
 2. Chọn **Mô tả vấn đề** hoặc **Chọn theo danh mục**.
-3. Chọn **Phòng ban**, điền ID nhân viên nếu có, rồi nhập vấn đề và các thông tin liên quan.
+3. Chọn **Phòng ban**, nhập **Mã nhân viên** (bắt buộc), rồi nhập vấn đề và các thông tin liên quan.
 4. Bấm **Gửi** để nhận phản hồi. Đọc hướng dẫn hoặc câu hỏi bổ sung; có thể quay lại sửa nội dung.
 5. Bấm **Xác nhận và gửi yêu cầu** để lưu yêu cầu. Với luồng trò chuyện, chọn **Lưu và tiếp tục trò chuyện**.
 6. Sau câu trả lời đầu tiên, nhập phản hồi tự do. Sentiment positive hoàn tất yêu cầu và tạo gợi ý tri thức chờ người phụ trách biên tập; neutral tiếp tục hội thoại; negative hoặc yêu cầu người hỗ trợ chuyển reviewer cùng lịch sử. Có thể dùng nút **Tôi đã làm được** hoặc **Chuyển cho nhân viên** thay cho câu tự do.
@@ -38,12 +38,12 @@ Mũi tên hướng dẫn sẽ chỉ các nút và ô cần thao tác khi bạn v
 ### Human reviewer
 
 1. Từ trang đầu, chọn **Dành cho nhân viên**.
-2. Trong **Yêu cầu cần xử lý**, tìm theo mã hoặc nội dung. Dùng bộ lọc trạng thái và nguồn yêu cầu để chọn danh sách cần xem.
+2. Trong **Yêu cầu cần xử lý**, tìm theo mã nhân viên, mã yêu cầu hoặc nội dung. Dùng bộ lọc trạng thái và nguồn yêu cầu để chọn danh sách cần xem.
 3. Mở một yêu cầu để đọc nội dung, hội thoại, thông tin đã thu thập và lý do chuyển tiếp.
 4. Chọn thao tác phù hợp đang hiển thị: hỏi thêm thông tin, duyệt, từ chối, dừng hoặc điều chỉnh quyết định. Điền lý do khi giao diện yêu cầu.
 5. Mở **Lịch sử xử lý** để xem diễn biến và các quyết định đã được ghi nhận.
 
-Dashboard có nút chọn nhanh **Chờ xử lý**, **Ngoài quy định**, **Cần thẩm quyền** và **Gợi ý tri thức**. Có thể tìm bằng mã ngắn `HT-…` đang hiển thị hoặc nội dung. **Xóa bộ lọc** mở lại tất cả trạng thái/nguồn; bộ lọc và từ khóa được giữ trong session của tab khi quay lại từ chi tiết. Nếu trình duyệt chặn session storage, thao tác lọc vẫn hoạt động nhưng không được khôi phục sau điều hướng. Chỉ dùng dữ liệu demo đã ẩn danh trong ô tìm kiếm.
+Dashboard có nút chọn nhanh **Chờ xử lý**, **Ngoài quy định**, **Cần thẩm quyền** và **Gợi ý tri thức**. Có thể tìm bằng mã nhân viên, mã ngắn `HT-…` đang hiển thị hoặc nội dung. **Xóa bộ lọc** mở lại tất cả trạng thái/nguồn; bộ lọc và từ khóa được giữ trong session của tab khi quay lại từ chi tiết. Nếu trình duyệt chặn session storage, thao tác lọc vẫn hoạt động nhưng không được khôi phục sau điều hướng. Chỉ dùng dữ liệu demo đã ẩn danh trong ô tìm kiếm.
 
 ### Kiểm tra các tính năng
 
@@ -102,7 +102,7 @@ Reviewer có bộ lọc **Hàng đợi chuyển tiếp**: **Ngoài quy định**
 
 Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees.csv). CSV là nguồn dữ liệu duy nhất cho API và tra cứu danh tính RBAC; API kiểm tra ID trong CSV theo ID sinh từ họ tên trước khi dùng hồ sơ. Level là số nguyên từ `00` đến `36` (miền giá trị có 37 level); các level không xuất hiện trong 36 hồ sơ vẫn hợp lệ cho policy.
 
-Đây là dataset mô phỏng của dự án, không phải danh sách nhân viên thật hoặc cơ cấu quyền chính thức của VNG. Ô **ID nhân viên (đang phát triển)** trên form hỗ trợ có thể để trống; điền ID không xác thực danh tính và không mở quyền reviewer. API danh bạ dùng header riêng, không tự lấy ID từ form.
+Đây là dataset mô phỏng của dự án, không phải danh sách nhân viên thật hoặc cơ cấu quyền chính thức của VNG. Form hỗ trợ bắt buộc nhập **Mã nhân viên** để nhóm các yêu cầu khai cùng mã và cho reviewer/audit tra cứu theo mã. Mã được bỏ khoảng trắng ngoài và chuẩn hóa chữ thường khi lưu; mã phải dài tối đa 32 ký tự, bắt đầu bằng chữ hoặc số, các ký tự còn lại gồm chữ, số, `_` hoặc `-`. Đây là mã do người gửi khai báo, chưa được xác thực với danh bạ nhân sự và không cấp quyền reviewer. Mã và phòng ban chỉ dùng làm metadata quản lý, không đi vào phân tích/model. API danh bạ và RBAC vẫn dùng header riêng, không tự lấy ID từ form. Khi triển khai với nhân sự thật, cần nối trường này với SSO/danh bạ HR để xác minh người gửi.
 
 ### Dataset ID nhân viên
 

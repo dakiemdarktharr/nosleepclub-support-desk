@@ -4,7 +4,10 @@ import {
 } from "@/domain/conversation";
 import { createConversationAnswer } from "@/lib/conversation-model";
 import { workEvidencePlan } from "@/domain/work-evidence";
-import { isEmployeeIdentityField } from "@/domain/employee-identity";
+import {
+  employeeIdentityError,
+  isEmployeeIdentityField,
+} from "@/domain/employee-identity";
 import { retrieveKnowledge } from "@/lib/support-knowledge";
 import { validateVerificationInput } from "./verification";
 import { createHash, randomUUID } from "node:crypto";
@@ -81,12 +84,26 @@ export function prepareInput(value: unknown) {
   const parsed = supportInputSchema.parse(value);
   return safeInput(parsed);
 }
+function requireIntakeIdentity(fields: Record<string, string>) {
+  const identityError = employeeIdentityError(fields);
+  if (identityError)
+    throw new SupportError("IDENTITY_REQUIRED", identityError, 422);
+}
 export async function analyze(
   input: SupportInput,
   markers: string[],
   options: ModelOptions = {},
 ): Promise<{ canonical: CanonicalRequest; decision: Decision }> {
-  const baseline = extractIntake(input, markers);
+  // Sender identity is metadata for record management, not a support fact.
+  const analysisInput = {
+    ...input,
+    fields: Object.fromEntries(
+      Object.entries(input.fields).filter(
+        ([field]) => !isEmployeeIdentityField(field),
+      ),
+    ),
+  };
+  const baseline = extractIntake(analysisInput, markers);
   const workEvidence = input.mode === "freeform" &&
     !Object.entries(input.fields).some(([field, value]) => !isEmployeeIdentityField(field) && Boolean(value)) &&
     !baseline.riskSignals.length &&
@@ -116,10 +133,10 @@ export async function analyze(
     const canonical = { ...baseline, workEvidence };
     return { canonical, decision: evaluatePolicy(canonical, verifyApproval) };
   }
-  const conversation = conversationRoute(input, baseline);
+  const conversation = conversationRoute(analysisInput, baseline);
   const canonical = conversation
     ? conversationalCanonical(baseline, conversation)
-    : await extractWithModel(input, baseline, options);
+    : await extractWithModel(analysisInput, baseline, options);
   return {
     canonical,
     decision: evaluatePolicy(canonical, verifyApproval),
@@ -166,6 +183,7 @@ export async function completeAnalysis(
 }
 export async function previewSupport(value: unknown) {
   const safe = prepareInput(value);
+  requireIntakeIdentity(safe.input.fields);
   const preview: SupportPreview = {
     id: randomUUID(),
     fingerprint: fingerprintOf(safe.input),
@@ -201,6 +219,7 @@ export async function submitSupport(
 ): Promise<SupportRequest> {
   const safe = prepareInput(value);
   const input = safe.input;
+  requireIntakeIdentity(input.fields);
   if (!input.confirmed)
     throw new SupportError(
       "CONFIRMATION_REQUIRED",

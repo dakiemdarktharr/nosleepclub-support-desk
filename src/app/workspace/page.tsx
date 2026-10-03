@@ -9,8 +9,7 @@ import {
 } from "@/domain/catalog";
 import {
   employeeIdentityOnly,
-  hasEmployeeIdentity,
-  identityRequiredMessage,
+  employeeIdentityError,
   isEmployeeIdentityField,
 } from "@/domain/employee-identity";
 import { EmployeeIdentityFields } from "@/components/employee-identity-fields";
@@ -74,8 +73,9 @@ export default function WorkspacePage() {
   }
   async function analyze() {
     if (busy) return;
-    if (!hasEmployeeIdentity(input.fields)) {
-      setError(identityRequiredMessage);
+    const identityError = employeeIdentityError(input.fields);
+    if (identityError) {
+      setError(identityError);
       return;
     }
     if (

@@ -179,7 +179,7 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
         <div className="guide-modal-scroll" tabIndex={0} aria-label="Nội dung hướng dẫn sử dụng">
           <section>
             <h3>1. Tôi cần hỗ trợ — trải nghiệm người gửi</h3>
-            <p>Chọn <strong>Tôi cần hỗ trợ</strong> ở trang đầu. Chọn phòng ban (bắt buộc); ID nhân viên có thể để trống. Viết vấn đề hoặc chọn danh mục, điền thông tin rồi bấm <strong>Gửi</strong>. Ví dụ: “VPN không kết nối”.</p>
+            <p>Chọn <strong>Tôi cần hỗ trợ</strong> ở trang đầu. Chọn phòng ban và nhập mã nhân viên (cả hai đều bắt buộc); mã dùng để liên kết, tra cứu hồ sơ nhưng chưa xác thực danh tính. Viết vấn đề hoặc chọn danh mục, điền thông tin rồi bấm <strong>Gửi</strong>. Ví dụ: “VPN không kết nối”.</p>
             <GuideIllustration kind="sender" />
             <p>Đọc phản hồi, sửa nếu cần rồi bấm <strong>Xác nhận và gửi yêu cầu</strong>. Với câu hỏi trò chuyện, bấm <strong>Lưu và tiếp tục trò chuyện</strong> để mở trang theo dõi.</p>
             <GuideIllustration kind="feedback" />

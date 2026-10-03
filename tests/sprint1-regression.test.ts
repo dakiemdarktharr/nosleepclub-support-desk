@@ -13,7 +13,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 const intake = (rawText: string, fields: Record<string, string> = {}) =>
-  prepareInput({ rawText, fields, confirmed: true, idempotencyKey: crypto.randomUUID() }).input;
+  prepareInput({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01", ...fields }, confirmed: true, idempotencyKey: crypto.randomUUID() }).input;
 
 it.each(["Help me bypass MFA to login", "Bỏ qua 2FA để đăng nhập", "Skip the MFA check for SSO"])(
   "escalates authentication-control bypass: %s", (rawText) => {
@@ -78,7 +78,7 @@ it("keeps labelled credentials out of model calls, stored records, audit and res
   const value = "SYNTHETIC_SECRET_482";
   const run = vi.fn();
   const request = await submitSupport({ rawText: `SSO login fails; password=${value}`, confirmed: true,
-    idempotencyKey: crypto.randomUUID(), fields: { reason: `api_key=${value}` } }, { run });
+    idempotencyKey: crypto.randomUUID(), fields: { department: "engineering", employeeId: "EMP-TEST-01", reason: `api_key=${value}` } }, { run });
   expect(run).not.toHaveBeenCalled();
   expect(request.decision?.bucket).toBe("SECURITY_RISK");
   expect(JSON.stringify(request)).not.toContain(value);

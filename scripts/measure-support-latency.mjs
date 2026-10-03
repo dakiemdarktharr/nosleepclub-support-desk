@@ -15,7 +15,7 @@ async function measure() {
     const start = performance.now();
     const response = await fetch(new URL("/api/support/preview", base), {
       method: "POST", headers: { "content-type": "application/json" }, signal: AbortSignal.timeout(15000),
-      body: JSON.stringify({ rawText: "How do I restart my laptop?", fields: { department: "engineering" }, idempotencyKey: randomUUID() }),
+      body: JSON.stringify({ rawText: "How do I restart my laptop?", fields: { department: "engineering", employeeId: "EMP-LATENCY-01" }, idempotencyKey: randomUUID() }),
     });
     const body = await response.json();
     if (!response.ok || body.data?.decision?.action !== "AUTO_APPROVE")

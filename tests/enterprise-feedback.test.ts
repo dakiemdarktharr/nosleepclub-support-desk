@@ -16,7 +16,7 @@ beforeEach(() => {
   resetSupportTestStore();
 });
 afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks(); });
-const input = (rawText: string) => ({ rawText, confirmed: true, idempotencyKey: crypto.randomUUID() });
+const input = (rawText: string) => ({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
 
 it.each([
   "tôi không vào acc youtube được",
@@ -108,6 +108,7 @@ it.each([["cảm ơn, đã làm được", "COMPLETED"], ["hãy chuyển tôi ch
 });
 it("separates policy gaps, authority and missing facts without losing security priority", async () => {
   const policy = await submitSupport({ ...input("Synthetic unsupported workflow"), mode: "structured", serviceGroup: "OTHER", fields: {
+    department: "engineering", employeeId: "EMP-TEST-01",
     summary: "Synthetic unsupported workflow", targetServiceOrDevice: "unlisted-service", environmentIfKnown: "development", desiredOutcome: "Check allowed procedure", reason: "Synthetic business need", urgency: "normal",
   } });
   const authority = await submitSupport(input("Cấp quyền admin production"));
@@ -126,7 +127,7 @@ it("separates policy gaps, authority and missing facts without losing security p
 it.each(["OUT_OF_POLICY", "AUTHORITY_REQUIRED"])("Mongo queue and count use the same server filter: %s", async (queue) => {
   const cursor = { sort: vi.fn(), skip: vi.fn(), limit: vi.fn(), toArray: vi.fn(async () => []) };
   cursor.sort.mockReturnValue(cursor); cursor.skip.mockReturnValue(cursor); cursor.limit.mockReturnValue(cursor);
-  const collection = { find: vi.fn(() => cursor), countDocuments: vi.fn(async () => 0) };
+  const collection = { createIndex: vi.fn(async () => "synthetic-index"), find: vi.fn(() => cursor), countDocuments: vi.fn(async () => 0) };
   vi.spyOn(repository, "supportDatabase").mockReturnValue({ collection: () => collection } as unknown as ReturnType<typeof repository.supportDatabase>);
   await supportPage(parseSupportQuery(`http://local?status=pending&queue=${queue}`));
   const filter = { "data.status": { $in: ["ESCALATED", "APPROVED_BY_HUMAN"] }, "data.decision.uncertaintyClass": queue };

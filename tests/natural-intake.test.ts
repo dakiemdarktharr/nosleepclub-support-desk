@@ -10,7 +10,7 @@ beforeEach(() => {
   vi.stubEnv("MONGODB_URI", "");
   resetSupportTestStore();
 });
-const submit = (rawText: string) => submitSupport({ rawText, confirmed: true, idempotencyKey: crypto.randomUUID() });
+const submit = (rawText: string) => submitSupport({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
 
 it("identity does not create a conflict between multiple support needs", () => {
   const input = supportInputSchema.parse({
@@ -38,7 +38,7 @@ it("keeps department and employee ID from structured intake", async () => {
   });
   expect(row.input.fields).toMatchObject({
     department: "engineering",
-    employeeId: "EMP-42",
+    employeeId: "emp-42",
   });
 });
 

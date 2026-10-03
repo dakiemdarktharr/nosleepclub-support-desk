@@ -54,9 +54,21 @@ export function supportDatabase() {
 function supportRequests(db: Db) {
   return db.collection<Document>("v3_support_requests");
 }
-async function ensureSupportRequestIndex(db: Db) {
+export async function ensureSupportRequestIndexes(db: Db) {
   if (!runtime.supportV3IndexReady) {
-    const creating = supportRequests(db).createIndex({ "data.updatedAt": -1 });
+    const collection = supportRequests(db);
+    const creating = Promise.all([
+      collection.createIndex({ "data.updatedAt": -1 }),
+      collection.createIndex(
+        { "data.input.fields.employeeId": 1, "data.createdAt": -1 },
+        {
+          name: "employee_id_created_at",
+          partialFilterExpression: {
+            "data.input.fields.employeeId": { $type: "string" },
+          },
+        },
+      ),
+    ]).then(([index]) => index);
     runtime.supportV3IndexReady = creating.catch((error) => {
       runtime.supportV3IndexReady = undefined;
       throw error;
@@ -81,7 +93,7 @@ export async function listSupportRequests(
 ): Promise<SupportRequest[]> {
   const db = supportDatabase();
   if (db) {
-    await ensureSupportRequestIndex(db);
+    await ensureSupportRequestIndexes(db);
     return (
       await supportRequests(db)
         .find()

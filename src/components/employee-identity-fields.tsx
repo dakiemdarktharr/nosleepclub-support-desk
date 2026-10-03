@@ -32,18 +32,23 @@ export function EmployeeIdentityFields({
         <span className="field-hint">Bắt buộc trước khi gửi yêu cầu.</span>
       </label>
       <label>
-        ID nhân viên (đang phát triển)
+        Mã nhân viên <span aria-hidden="true">*</span>
         <input
-          aria-label="ID nhân viên (đang phát triển)"
+          aria-label="Mã nhân viên"
           type="text"
-          maxLength={100}
+          maxLength={32}
+          pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}"
+          autoCapitalize="none"
+          autoComplete="off"
+          aria-required="true"
+          required
           value={fields.employeeId ?? ""}
           onChange={(event) =>
             onChange({ ...fields, employeeId: event.target.value })
           }
-          placeholder="Nhập ID của bạn"
+          placeholder="Ví dụ: anhtn"
         />
-        <span className="field-hint">Không bắt buộc.</span>
+        <span className="field-hint">Bắt buộc. Dùng để nhóm và tra cứu các yêu cầu khai cùng mã; mã chưa được xác thực với danh bạ nhân sự.</span>
       </label>
     </div>
   );

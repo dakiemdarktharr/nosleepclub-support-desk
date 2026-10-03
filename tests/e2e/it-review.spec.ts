@@ -151,7 +151,7 @@ test("queue search opens the matching request and missing information still prev
   await page.goto("/review");
   await page.getByLabel("Hiển thị", { exact: true }).selectOption("all");
   await page
-    .getByLabel("Tìm theo nội dung hoặc mã yêu cầu")
+    .getByLabel("Tìm nội dung hoặc mã yêu cầu", { exact: true })
     .fill(text.slice(0, 26));
   const match = page.locator(`a[href="/review?requestId=${row.id}"]`);
   await expect(match).toBeVisible();

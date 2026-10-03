@@ -8,7 +8,7 @@ import { browserApi } from "@/lib/browser-api";
 import type { SupportRequest } from "@/domain/contracts";
 import { SupportResult } from "@/components/support-result";
 import { EmployeeIdentityFields } from "@/components/employee-identity-fields";
-import { hasEmployeeIdentity, identityRequiredMessage } from "@/domain/employee-identity";
+import { employeeIdentityError } from "@/domain/employee-identity";
 
 export default function VerifyPage() {
   const [pack, setPack] = useState("de-a-v3"),
@@ -123,8 +123,9 @@ export default function VerifyPage() {
   }
   async function runJudge() {
     if (activeOperation.current || loadingRun.current) return;
-    if (!hasEmployeeIdentity(identity)) {
-      setError(identityRequiredMessage);
+    const identityError = employeeIdentityError(identity);
+    if (identityError) {
+      setError(identityError);
       return;
     }
     activeOperation.current = true;

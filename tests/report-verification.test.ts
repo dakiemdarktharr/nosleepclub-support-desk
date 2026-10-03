@@ -94,6 +94,7 @@ it("Verify provenance cannot hide arbitrary requests or accept forged expected o
   await expect(
     submitSupport({
       rawText: "Grant production admin",
+      fields: { department: "engineering", employeeId: "EMP-TEST-01" },
       confirmed: true,
       idempotencyKey: run.cases[0].requestId,
       verifyRunId: run.id,
@@ -112,6 +113,7 @@ it("E18 pagination/search/audit and metrics include records older than the summa
   for (let i = 0; i < 205; i++)
     await submitSupport({
       rawText: `Restart my laptop. Reference ${i === 0 ? "old-record-target" : i}`,
+      fields: { department: "engineering", employeeId: "EMP-TEST-01" },
       confirmed: true,
       idempotencyKey: crypto.randomUUID(),
     });

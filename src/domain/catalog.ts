@@ -230,7 +230,7 @@ export const fieldOptions: Record<string, string[]> = {
 };
 export const fieldLabels: Record<string, string> = {
   department: "Phòng ban",
-  employeeId: "ID nhân viên (đang phát triển)",
+  employeeId: "Mã nhân viên",
   impact: "Mức độ ảnh hưởng",
   urgency: "Mức độ khẩn cấp",
   desiredOutcome: "Bạn muốn đạt được điều gì",

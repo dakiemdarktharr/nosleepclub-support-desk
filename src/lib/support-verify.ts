@@ -109,7 +109,11 @@ export async function runSupportCase(
       },
       body: JSON.stringify({
         rawText: item.rawText,
-        fields: item.fields ?? {},
+        fields: {
+          department: "engineering",
+          employeeId: "verify-emp-42",
+          ...item.fields,
+        },
         confirmed: true,
         idempotencyKey: provenance?.requestId ?? crypto.randomUUID(),
         ...(provenance

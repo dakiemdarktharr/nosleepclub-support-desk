@@ -222,7 +222,12 @@ it("redacts JSON credentials, Vietnamese labels, URIs and keys through the activ
       new Request("http://localhost/api/support/requests", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(intake(text, { department: "engineering" })),
+        body: JSON.stringify(
+          intake(text, {
+            department: "engineering",
+            employeeId: "EMP-PRIVACY-TEST",
+          }),
+        ),
       }),
     );
     expect(await response.text()).not.toContain(value);

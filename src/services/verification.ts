@@ -48,7 +48,11 @@ export async function validateVerificationInput(input: SupportInput) {
     fixture &&
     supportInputSchema.parse({
       rawText: fixture.rawText,
-      fields: fixture.fields ?? {},
+      fields: {
+        department: "engineering",
+        employeeId: "verify-emp-42",
+        ...fixture.fields,
+      },
       confirmed: true,
       idempotencyKey: entry?.requestId,
       verifyRunId: run.id,

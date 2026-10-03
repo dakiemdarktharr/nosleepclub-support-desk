@@ -20,6 +20,7 @@ afterEach(() => vi.unstubAllEnvs());
 const create = (rawText: string) =>
   submitSupport({
     rawText,
+    fields: { department: "engineering", employeeId: "EMP-TEST-01" },
     confirmed: true,
     idempotencyKey: crypto.randomUUID(),
   });
@@ -29,6 +30,8 @@ const createCompleteEscalation = () =>
     mode: "structured",
     serviceGroup: "DATABASE",
     fields: {
+      department: "engineering",
+      employeeId: "EMP-TEST-01",
       intentLabel: "DATABASE_EXPORT",
       system: "postgresql",
       resourceScope: "demo_inventory",

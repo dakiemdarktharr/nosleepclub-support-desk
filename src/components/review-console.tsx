@@ -37,6 +37,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     [error, setError] = useState("");
   const [filter, setFilter] = useState("pending");
   const [search, setSearch] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
   const [origin, setOrigin] = useState("support");
   const [queue, setQueue] = useState("all");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -51,17 +52,18 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
         if ("origin" in saved && typeof saved.origin === "string" && ["support", "verify", "all"].includes(saved.origin)) setOrigin(saved.origin);
         if ("queue" in saved && typeof saved.queue === "string" && ["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"].includes(saved.queue)) setQueue(saved.queue);
         if ("search" in saved && typeof saved.search === "string") setSearch(saved.search.slice(0, 200));
+        if ("employeeId" in saved && typeof saved.employeeId === "string") setEmployeeId(saved.employeeId.slice(0, 32));
       }
     } catch { /* Storage may be disabled; filtering still works in memory. */ }
     setFiltersReady(true);
   }, []);
   useEffect(() => {
     if (!filtersReady || requestId) return;
-    try { sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ filter, origin, queue, search })); }
+    try { sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ filter, origin, queue, search, employeeId })); }
     catch { /* Do not block the queue when session storage is unavailable. */ }
-  }, [filter, origin, queue, search, filtersReady, requestId]);
+  }, [filter, origin, queue, search, employeeId, filtersReady, requestId]);
   function clearFilters() {
-    setSearch(""); setFilter("all"); setOrigin("all"); setQueue("all");
+    setSearch(""); setEmployeeId(""); setFilter("all"); setOrigin("all"); setQueue("all");
   }
   const quickQueues = [
     { label: "Chờ xử lý", filter: "pending", queue: "all", icon: Inbox },
@@ -82,6 +84,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
           origin,
           queue,
           limit: "30",
+          ...(employeeId.trim() ? { employeeId: employeeId.trim() } : {}),
           ...(cursor ? { cursor } : {}),
         });
         const page = await browserApi<ResultPage<SupportSummary>>(
@@ -103,7 +106,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
         if (current === sequence.current) setLoading(false);
       }
     },
-    [search, filter, origin, queue],
+    [search, employeeId, filter, origin, queue],
   );
   useEffect(() => {
     if (requestId || !filtersReady) return;
@@ -241,15 +244,28 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
             >
               <div className="it-filters" data-guide="reviewer-filters">
                 <label className="it-search">
-                  Tìm theo nội dung hoặc mã yêu cầu
+                  Tìm nội dung hoặc mã yêu cầu
                   <div>
                     <Search size={18} aria-hidden="true" />
                     <input
                       type="search"
                       maxLength={200}
-                      placeholder="Tìm nội dung hoặc mã HT-…"
+                      placeholder="Nội dung hoặc mã HT-…"
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
+                    />
+                  </div>
+                </label>
+                <label className="it-search">
+                  Mã nhân viên
+                  <div>
+                    <Search size={18} aria-hidden="true" />
+                    <input
+                      type="search"
+                      maxLength={32}
+                      placeholder="Ví dụ: anhtn"
+                      value={employeeId}
+                      onChange={(event) => setEmployeeId(event.target.value)}
                     />
                   </div>
                 </label>
@@ -303,7 +319,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                     ? "Đang tải danh sách…"
                     : `Đang hiển thị ${requests.length}/${total} yêu cầu.`}
                 </span>
-                {(search || filter !== "all" || origin !== "all" || queue !== "all") && (
+                {(search || employeeId || filter !== "all" || origin !== "all" || queue !== "all") && (
                   <Button variant="quiet" onClick={clearFilters}><X size={14} />Xóa bộ lọc</Button>
                 )}
               </div>
@@ -312,7 +328,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                   <div className="it-empty">
                     <Inbox size={36} />
                     <h3>Chưa có yêu cầu phù hợp</h3>
-                    <p>Thử đổi bộ lọc hoặc tìm bằng mã yêu cầu.</p>
+                    <p>Thử đổi bộ lọc hoặc tìm bằng mã nhân viên, nội dung hay mã yêu cầu.</p>
                     <Button variant="secondary" onClick={clearFilters}>Xem tất cả yêu cầu</Button>
                     <Link className="button secondary" href="/send-help">
                       Tạo yêu cầu demo
@@ -347,6 +363,9 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                         <div className="it-row-subject">
                           <strong>{request.title}</strong>
                           <small>{catalog[request.serviceGroup].label}</small>
+                          {request.employeeId && (
+                            <small>Mã nhân viên: {request.employeeId}</small>
+                          )}
                           {request.assignedTeam && (
                             <small>Nơi tiếp nhận: {request.assignedTeam}</small>
                           )}

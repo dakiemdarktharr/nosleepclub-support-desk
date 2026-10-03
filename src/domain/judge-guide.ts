@@ -11,7 +11,7 @@ export const guideStages: Record<string, { role: GuideRole; steps: GuideStep[] }
     role: "sender",
     steps: [
       { target: "sender-mode", title: "1. Chọn cách gửi", text: "Bấm “Mô tả vấn đề” để viết tự do, hoặc “Chọn theo danh mục” để chọn nhu cầu cụ thể.", advanceOn: "click" },
-      { target: "sender-department", title: "Chọn phòng ban", text: "Chọn phòng ban để gửi yêu cầu. ID nhân viên là mục đang phát triển, có thể để trống; khi thử nghiệm chỉ dùng dữ liệu minh họa.", advanceOn: "change" },
+      { target: "sender-department", title: "Chọn phòng ban", text: "Chọn phòng ban và nhập mã nhân viên bắt buộc để liên kết, tra cứu yêu cầu. Mã khai báo chưa xác thực danh tính; khi thử nghiệm chỉ dùng dữ liệu minh họa.", advanceOn: "change" },
       { target: "sender-group", title: "2. Chọn nhóm hỗ trợ", text: "Chọn nhóm phù hợp. Chưa rõ thì giữ “Tôi chưa biết nhóm nào” và bấm Tiếp theo.", advanceOn: "change" },
       { target: "sender-intent", title: "3. Chọn nhu cầu", text: "Chọn việc cần hỗ trợ rồi điền các ô xuất hiện bên dưới. Chỉ nhập dữ liệu minh họa, không nhập mật khẩu.", advanceOn: "change" },
       { target: "sender-fields", title: "Điền thông tin theo danh mục", text: "Điền các ô bạn biết trong khung được chỉ. Không cần bịa thông tin còn thiếu. Khi xong, bấm Tiếp theo để thêm mô tả hoặc gửi yêu cầu." },
@@ -39,7 +39,7 @@ export const guideStages: Record<string, { role: GuideRole; steps: GuideStep[] }
   "reviewer-list": {
     role: "reviewer",
     steps: [
-      { target: "reviewer-filters", title: "1. Tìm yêu cầu cần xử lý", text: "Dùng bộ lọc trạng thái, nguồn hoặc ô tìm kiếm. Mục chờ xử lý gồm yêu cầu cần người phụ trách xem xét.", advanceOn: "change" },
+      { target: "reviewer-filters", title: "1. Tìm yêu cầu cần xử lý", text: "Dùng bộ lọc trạng thái và nguồn. Tra chính xác mã nhân viên bằng ô riêng; dùng ô nội dung để tìm mã yêu cầu hoặc nội dung ticket. Mục chờ xử lý gồm yêu cầu cần người phụ trách xem xét.", advanceOn: "change" },
       { target: "reviewer-list", title: "2. Mở một hồ sơ", text: "Bấm một yêu cầu để xem chi tiết. Nếu danh sách trống, bấm Tạo yêu cầu demo, gửi một tình huống rồi quay lại đây.", advanceOn: "click" },
     ],
   },

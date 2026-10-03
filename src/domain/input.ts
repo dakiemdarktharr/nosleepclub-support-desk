@@ -7,7 +7,7 @@ import {
   validIntent,
 } from "./catalog";
 import { requestKinds, serviceGroups } from "./contracts";
-import { isEmployeeIdentityField } from "./employee-identity";
+import { isEmployeeIdentityField, normalizeEmployeeId } from "./employee-identity";
 
 export const supportInputSchema = z
   .object({
@@ -15,7 +15,15 @@ export const supportInputSchema = z
     serviceGroup: z.enum(serviceGroups).default("OTHER"),
     requestKind: z.enum(requestKinds).optional(),
     rawText: z.string().trim().max(6000).default(""),
-    fields: z.record(z.string().trim().max(300)).default({}),
+    fields: z
+      .record(z.string().trim().max(300))
+      .default({})
+      .transform((fields): Record<string, string> => {
+        const normalized = { ...fields };
+        if (normalized.employeeId)
+          normalized.employeeId = normalizeEmployeeId(normalized.employeeId);
+        return normalized;
+      }),
     confirmed: z.boolean().default(false),
     idempotencyKey: z.string().uuid(),
     previewId: z.string().uuid().optional(),

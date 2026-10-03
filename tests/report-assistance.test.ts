@@ -13,7 +13,7 @@ const input = (rawText: string): SupportInput => ({
   rawText,
   mode: "freeform",
   serviceGroup: "OTHER",
-  fields: {},
+  fields: { department: "engineering", employeeId: "EMP-TEST-01" },
   confirmed: true,
   idempotencyKey: crypto.randomUUID(),
 });
