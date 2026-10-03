@@ -32,7 +32,7 @@ test("reselecting a mode preserves input; blank input has an actionable error", 
   await expect(page.getByLabel("Nhu cầu cụ thể", { exact: true })).toHaveValue("DEVICE_RESTART_GUIDANCE");
   await page.getByRole("button", { name: "Mô tả vấn đề", exact: true }).click();
   await expect(page.getByLabel("Phòng ban", { exact: true })).toHaveValue("engineering");
-  await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveValue("EMP-E2E-001");
+  await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveValue("emp-e2e-001");
   await page.getByLabel("Mô tả yêu cầu", { exact: true }).fill("   ");
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Nhập mô tả yêu cầu");

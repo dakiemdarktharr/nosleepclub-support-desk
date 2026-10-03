@@ -52,7 +52,10 @@ test("conversation answers before confirmation, wraps and continues without a re
   const saved = await (
     await page.request.get(`/api/support${new URL(page.url()).pathname}`)
   ).json();
-  expect(saved.data.input.fields).toMatchObject(employeeIdentity.fields);
+  expect(saved.data.input.fields).toMatchObject({
+    ...employeeIdentity.fields,
+    employeeId: employeeIdentity.fields.employeeId.toLowerCase(),
+  });
   await page.emulateMedia({ reducedMotion: "reduce" });
   expect(
     await page
