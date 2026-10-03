@@ -15,35 +15,10 @@ export function Header() {
         </span>
         VNG Support
       </Link>
-      {path !== "/" && path !== "/review" && (
+      {path !== "/" && !staff && (
         <nav aria-label="Điều hướng chính">
-          {staff ? (
-            <>
-              <Link
-                href="/review"
-                aria-current={path === "/review" ? "page" : undefined}
-              >
-                Yêu cầu cần xử lý
-              </Link>
-              <Link
-                href="/audit"
-                aria-current={path === "/audit" ? "page" : undefined}
-              >
-                Lịch sử xử lý
-              </Link>
-              <Link
-                href="/verify"
-                aria-current={path === "/verify" ? "page" : undefined}
-              >
-                Kiểm thử
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/send-help" aria-current={path === "/send-help" || path === "/workspace" ? "page" : undefined}>Gửi yêu cầu</Link>
-              <Link href="/track" aria-current={path === "/track" ? "page" : undefined}>Theo dõi yêu cầu</Link>
-            </>
-          )}
+          <Link href="/send-help" aria-current={path === "/send-help" || path === "/workspace" ? "page" : undefined}>Gửi yêu cầu</Link>
+          <Link href="/track" aria-current={path === "/track" ? "page" : undefined}>Theo dõi yêu cầu</Link>
         </nav>
       )}
     </header>

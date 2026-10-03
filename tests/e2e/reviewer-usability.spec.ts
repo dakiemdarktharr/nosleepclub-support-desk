@@ -1,6 +1,23 @@
 import { test, expect } from "./fixtures";
 import { employeeIdentity } from "./intake-helpers";
 
+test("review, audit and verify share one employee workspace", async ({ page }) => {
+  const pages = [
+    ["/review", "Yêu cầu cần xử lý"],
+    ["/audit", "Lịch sử xử lý"],
+    ["/verify", "Kiểm thử"],
+  ] as const;
+  for (const [path, currentLabel] of pages) {
+    await page.goto(path);
+    const nav = page.getByRole("navigation", { name: "Điều hướng hỗ trợ" });
+    await expect(page.locator(".it-workspace")).toBeVisible();
+    await expect(page.locator(".it-content")).toBeVisible();
+    await expect(nav.getByRole("link", { name: currentLabel, exact: true }))
+      .toHaveAttribute("aria-current", "page");
+    await expect(page.locator(".it-header nav")).toHaveCount(0);
+  }
+});
+
 test("quick queues, displayed ID search, return and reset work together", async ({ page, request }, info) => {
   const result = await request.post("/api/support/requests", { data: { ...employeeIdentity, rawText: "Open port 3389 public", confirmed: true, idempotencyKey: crypto.randomUUID() } });
   expect(result.ok()).toBe(true);

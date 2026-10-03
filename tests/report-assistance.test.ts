@@ -173,6 +173,9 @@ it("model budget exhaustion is explicit and never exposes provider errors", asyn
     failure,
   );
   expect(result.model.failureReason).toBe("BUDGET_EXHAUSTED");
+  expect(evaluatePolicy(result).userReason).toBe(
+    "Lý do: Trợ lý AI chưa sẵn sàng hoặc chưa kịp phản hồi. Vì vậy, yêu cầu sẽ được chuyển cho người phụ trách xem xét.",
+  );
   expect(JSON.stringify(result)).not.toContain("synthetic-unused-key");
 });
 

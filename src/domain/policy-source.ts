@@ -158,7 +158,7 @@ export const riskRules: Array<{
     bucket: "BEYOND_AUTHORITY",
     uncertaintyClass: "AUTHORITY_REQUIRED",
     reason:
-      "Model chưa sẵn sàng hoặc không trả lời đúng hạn; chuyển người xử lý.",
+      "Lý do: Trợ lý AI chưa sẵn sàng hoặc chưa kịp phản hồi. Vì vậy, yêu cầu sẽ được chuyển cho người phụ trách xem xét.",
     question:
       "Reviewer có thể phân loại request từ evidence đã redact này không?",
   },

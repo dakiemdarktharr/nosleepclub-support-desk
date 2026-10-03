@@ -5,11 +5,9 @@ import {
   Search,
   RefreshCw,
   ChevronRight,
-  ShieldCheck,
   ShieldAlert,
   UserCheck,
   BookOpen,
-  FlaskConical,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -25,6 +23,7 @@ import { type ReviewAction } from "@/domain/transitions";
 import { browserApi } from "@/lib/browser-api";
 import { Alert, Badge, Button } from "@/components/ui";
 import { ReviewDetail } from "@/components/review-detail";
+import { StaffWorkspace } from "@/components/staff-workspace";
 
 export function ReviewConsole({ requestId }: { requestId?: string }) {
   const sequence = useRef(0);
@@ -178,37 +177,11 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     }
   }
   return (
-    <main
-      className="it-workspace"
-      data-guide-stage={requestId ? "reviewer-detail" : "reviewer-list"}
-    >
-      <aside className="it-rail" aria-label="Không gian IT">
-        <div className="it-rail-title">
-          <Inbox size={22} />
-          <strong>Không gian IT</strong>
-        </div>
-        <p>Tiếp nhận và xử lý hỗ trợ</p>
-        <nav aria-label="Điều hướng hỗ trợ">
-          <Link href="/review" aria-current="page">
-            <Inbox size={18} />
-            Yêu cầu cần xử lý
-          </Link>
-          <Link href="/audit">
-            <ShieldCheck size={18} />
-            Lịch sử xử lý
-          </Link>
-          <Link href="/verify"><FlaskConical size={18} />Kiểm thử</Link>
-        </nav>
-        <div className="it-demo-note">
-          <ShieldCheck size={18} />
-          <span>
-            Môi trường mô phỏng
-            <br />
-            Mọi quyết định đều có nhật ký.
-          </span>
-        </div>
-      </aside>
-      <div className="it-content">
+    <StaffWorkspace active="review">
+      <main
+        className="it-content"
+        data-guide-stage={requestId ? "reviewer-detail" : "reviewer-list"}
+      >
         {error && <Alert tone="error">{error}</Alert>}
         {!requestId && (
           <>
@@ -439,7 +412,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
             <p role="status">Đang tải yêu cầu…</p>
           )
         ) : null}
-      </div>
-    </main>
+      </main>
+    </StaffWorkspace>
   );
 }
