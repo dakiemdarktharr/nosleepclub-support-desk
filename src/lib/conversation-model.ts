@@ -372,17 +372,19 @@ export async function createConversationAnswer(
   const context = request.conversation!;
   let retrieval: "mongodb" | "memory" | "unavailable" = "unavailable";
   let articles = rankKnowledge(knowledgeSeed, context.question, context.label);
-  try {
-    const result = await retrieveKnowledge(context.question, context.label);
-    retrieval = result.storage;
-    articles = result.articles;
-  } catch {
-    /* Read-only response can use the same reviewed local corpus during a retrieval outage. */
-  }
   const internalOnly = needsInternalPolicy(context);
-  const web = internalOnly
-    ? { text: "", sources: [], state: "not_needed" as const }
-    : await retrievePublicWeb(context, options);
+  // These lookups use separate read-only sources; overlap their I/O. Model output
+  // validation still runs only after both sources are ready.
+  const [retrieved, web] = await Promise.all([
+    retrieveKnowledge(context.question, context.label).catch(() => null),
+    internalOnly
+      ? Promise.resolve({ text: "", sources: [], state: "not_needed" as const })
+      : retrievePublicWeb(context, options),
+  ]);
+  if (retrieved) {
+    retrieval = retrieved.storage;
+    articles = retrieved.articles;
+  }
   const sources = [
     ...new Map(
       [...articles.flatMap((article) => article.sources), ...web.sources].map(
