@@ -138,7 +138,7 @@ export default function AuditPage() {
           </p>
           {events.length ? (
             <div
-              className="audit-event-scroll"
+              className="it-contained-scroll"
               role="region"
               aria-label="Danh sách sự kiện xử lý"
               tabIndex={0}

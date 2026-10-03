@@ -296,7 +296,13 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                   <Button variant="quiet" onClick={clearFilters}><X size={14} />Xóa bộ lọc</Button>
                 )}
               </div>
-              <div data-guide={!requests.length ? "reviewer-list" : undefined}>
+              <div
+                className="it-contained-scroll"
+                data-guide={!requests.length ? "reviewer-list" : undefined}
+                role="region"
+                aria-label="Danh sách yêu cầu phù hợp"
+                tabIndex={0}
+              >
                 {!loading && !requests.length && !error && (
                   <div className="it-empty">
                     <Inbox size={36} />
