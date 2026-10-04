@@ -104,7 +104,7 @@ test("employee filter suggests matching codes and supports keyboard selection", 
     if (params.get("view") === "employee-suggestions") {
       return route.fulfill({
         contentType: "application/json",
-        body: JSON.stringify({ success: true, data: ["emp-001", "emp-010"] }),
+        body: JSON.stringify({ success: true, data: ["khoadt", "thanhdt"] }),
       });
     }
     filteredEmployeeId = params.get("employeeId") ?? "";
@@ -116,20 +116,20 @@ test("employee filter suggests matching codes and supports keyboard selection", 
 
   await page.goto("/review");
   const employeeFilter = page.getByLabel("Mã nhân viên", { exact: true });
-  await employeeFilter.fill("emp-0");
+  await employeeFilter.fill("dt");
   const suggestions = page.getByRole("listbox", { name: "Mã nhân viên gợi ý" });
-  await expect(suggestions.getByRole("option")).toHaveText(["emp-001", "emp-010"]);
+  await expect(suggestions.getByRole("option")).toHaveText(["khoadt", "thanhdt"]);
 
   await employeeFilter.press("ArrowDown");
   await employeeFilter.press("Enter");
-  await expect(employeeFilter).toHaveValue("emp-001");
+  await expect(employeeFilter).toHaveValue("khoadt");
   await expect(suggestions).toHaveCount(0);
-  await expect.poll(() => filteredEmployeeId).toBe("emp-001");
+  await expect.poll(() => filteredEmployeeId).toBe("khoadt");
 
-  await employeeFilter.fill("emp-0");
-  await suggestions.getByRole("option", { name: "emp-010" }).click();
-  await expect(employeeFilter).toHaveValue("emp-010");
-  await expect.poll(() => filteredEmployeeId).toBe("emp-010");
+  await employeeFilter.fill("dt");
+  await suggestions.getByRole("option", { name: "thanhdt" }).click();
+  await expect(employeeFilter).toHaveValue("thanhdt");
+  await expect.poll(() => filteredEmployeeId).toBe("thanhdt");
 });
 
 test("quick queues, displayed ID search, return and reset work together", async ({ page, request }, info) => {

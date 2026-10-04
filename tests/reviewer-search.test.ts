@@ -66,7 +66,7 @@ it("keeps free text and malformed codes literal instead of changing their meanin
 it("treats an empty employee filter as no filter", () => {
   expect(parseSupportQuery("http://local?employeeId=%20%20").employeeId).toBeUndefined();
 });
-it("suggests distinct employee codes by normalized prefix in memory", async () => {
+it("suggests distinct employee codes containing the normalized search text", async () => {
   for (const employeeId of ["anhtn", "anhpt", "anhtn", "khoadt"]) {
     await submitSupport({
       rawText: "Open port 3389 public",
@@ -78,21 +78,21 @@ it("suggests distinct employee codes by normalized prefix in memory", async () =
 
   expect(parseEmployeeSuggestionPrefix("http://local?employeePrefix=ANH")).toBe("anh");
   expect(parseEmployeeSuggestionPrefix("http://local?employeePrefix=a")).toBe("");
-  expect(await employeeIdSuggestions("ANH")).toEqual(["anhpt", "anhtn"]);
+  expect(await employeeIdSuggestions("DT")).toEqual(["khoadt"]);
   expect(await employeeIdSuggestions(".")).toEqual([]);
 });
-it("uses a bounded anchored prefix query for Mongo employee suggestions", async () => {
-  const cursor = { toArray: vi.fn().mockResolvedValue([{ _id: "anhtn" }, { _id: "anhpt" }]) };
+it("uses a bounded substring query for Mongo employee suggestions", async () => {
+  const cursor = { toArray: vi.fn().mockResolvedValue([{ _id: "khoadt" }]) };
   const collection = {
     createIndex: vi.fn().mockResolvedValue("synthetic-index"),
     aggregate: vi.fn().mockReturnValue(cursor),
   };
   vi.spyOn(repository, "supportDatabase").mockReturnValue({ collection: () => collection } as unknown as Db);
 
-  expect(await employeeIdSuggestions("ANH")).toEqual(["anhtn", "anhpt"]);
+  expect(await employeeIdSuggestions("DT")).toEqual(["khoadt"]);
   const pipeline = collection.aggregate.mock.calls[0][0];
   expect(pipeline).toEqual([
-    { $match: { "data.input.fields.employeeId": { $regex: "^anh" } } },
+    { $match: { "data.input.fields.employeeId": { $regex: "dt" } } },
     { $group: { _id: "$data.input.fields.employeeId" } },
     { $sort: { _id: 1 } },
     { $limit: 8 },

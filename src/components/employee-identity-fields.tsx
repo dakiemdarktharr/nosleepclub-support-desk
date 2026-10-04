@@ -46,9 +46,8 @@ export function EmployeeIdentityFields({
           onChange={(event) =>
             onChange({ ...fields, employeeId: event.target.value })
           }
-          placeholder="Ví dụ: anhtn"
         />
-        <span className="field-hint">Bắt buộc. Dùng để nhóm và tra cứu các yêu cầu khai cùng mã; mã chưa được xác thực với danh bạ nhân sự.</span>
+        <span className="field-hint">Bắt buộc trước khi gửi yêu cầu.</span>
       </label>
     </div>
   );

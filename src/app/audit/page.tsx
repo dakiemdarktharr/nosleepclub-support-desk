@@ -118,7 +118,7 @@ export default function AuditPage() {
               maxLength={32}
               value={employeeId}
               onChange={(e) => setEmployeeId(e.target.value)}
-              placeholder="Ví dụ: anhtn"
+              placeholder="Nhập mã nhân viên"
             />
           </label>
           <label>

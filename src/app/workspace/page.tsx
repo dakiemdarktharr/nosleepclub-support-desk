@@ -162,8 +162,8 @@ export default function WorkspacePage() {
     <main className="page page-narrow page-enter" data-guide-stage={preview ? "sender-preview" : "sender-form"}>
       <h1>Tôi cần hỗ trợ</h1>
       <p className="page-description">
-        Bạn có thể hỏi chuyện thường ngày hoặc mô tả điều đang gặp. Không cần
-        biết thuật ngữ kỹ thuật.
+        Bạn cứ mô tả vấn đề bằng lời của mình. Chúng tôi sẽ giúp bạn tìm hướng
+        xử lý phù hợp.
       </p>
       <ol className="flow-steps" aria-label="Các bước gửi yêu cầu">
         <li aria-current={!preview ? "step" : undefined}>1. Mô tả</li>

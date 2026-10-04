@@ -190,7 +190,7 @@ export async function employeeIdSuggestions(prefix: string): Promise<string[]> {
     const rows = await db
       .collection<Row>("v3_support_requests")
       .aggregate<{ _id: string }>([
-        { $match: { "data.input.fields.employeeId": { $regex: `^${literal}` } } },
+        { $match: { "data.input.fields.employeeId": { $regex: literal } } },
         { $group: { _id: "$data.input.fields.employeeId" } },
         { $sort: { _id: 1 } },
         { $limit: 8 },
@@ -202,7 +202,7 @@ export async function employeeIdSuggestions(prefix: string): Promise<string[]> {
         (employeeId) =>
           typeof employeeId === "string" &&
           employeeIdPattern.test(employeeId) &&
-          employeeId.startsWith(normalized),
+          employeeId.includes(normalized),
       )
       .slice(0, 8);
   }
@@ -211,7 +211,7 @@ export async function employeeIdSuggestions(prefix: string): Promise<string[]> {
     .map((row) => normalizeEmployeeId(row.input.fields.employeeId ?? ""))
     .filter(
       (employeeId) =>
-        employeeIdPattern.test(employeeId) && employeeId.startsWith(normalized),
+        employeeIdPattern.test(employeeId) && employeeId.includes(normalized),
     );
   return [...new Set(employeeIds)].sort((a, b) => a.localeCompare(b)).slice(0, 8);
 }

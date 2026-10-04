@@ -290,7 +290,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                         }
                         maxLength={32}
                         autoComplete="off"
-                        placeholder="Ví dụ: anhtn"
+                        placeholder="Nhập mã nhân viên"
                         value={employeeId}
                         onFocus={() => {
                           if (employeeSuggestions.length) setEmployeeSuggestionsOpen(true);
