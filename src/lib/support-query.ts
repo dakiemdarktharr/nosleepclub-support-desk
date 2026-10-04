@@ -102,9 +102,10 @@ async function memoryRows(query: SupportQuery) {
           : row.knowledgeCandidate?.status === "PENDING_REVIEW")) &&
       (query.origin === "all" ||
         Boolean(row.input.verifyRunId) === (query.origin === "verify")) &&
-      `${row.id} ${row.originalQuestion || row.input.rawText} ${row.input.fields.employeeId ?? ""}`
-        .toLocaleLowerCase()
-        .includes(query.q.toLocaleLowerCase()),
+      [row.id, row.originalQuestion, row.input.rawText, row.input.fields.employeeId]
+        .some((value) =>
+          (value ?? "").toLocaleLowerCase().includes(query.q.toLocaleLowerCase()),
+        ),
   );
 }
 export async function supportPage(

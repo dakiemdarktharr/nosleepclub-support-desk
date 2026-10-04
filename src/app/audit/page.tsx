@@ -12,7 +12,8 @@ export default function AuditPage() {
     [employeeId, setEmployeeId] = useState(""),
     [origin, setOrigin] = useState("support"),
     [error, setError] = useState(""),
-    [pending, setPending] = useState(false),
+    [metricsError, setMetricsError] = useState(""),
+    [pending, setPending] = useState(true),
     [cursor, setCursor] = useState<string | null>(null),
     [total, setTotal] = useState(0);
   const [metrics, setMetrics] = useState<{
@@ -26,6 +27,12 @@ export default function AuditPage() {
     async (next: string | null = null) => {
       const current = ++sequence.current;
       setPending(true);
+      setError("");
+      if (!next) {
+        setEvents([]);
+        setCursor(null);
+        setTotal(0);
+      }
       try {
         const params = new URLSearchParams({
           view: "page",
@@ -57,6 +64,13 @@ export default function AuditPage() {
   );
   useEffect(() => {
     const tracker = sequence;
+    // A cursor belongs to its original filter. Clear it before the debounce so
+    // a new filter cannot append a later page onto results from the old one.
+    setPending(true);
+    setEvents([]);
+    setCursor(null);
+    setTotal(0);
+    setError("");
     const timer = setTimeout(() => void load(), 250);
     return () => {
       clearTimeout(timer);
@@ -66,7 +80,7 @@ export default function AuditPage() {
   useEffect(() => {
     void browserApi<typeof metrics>("/api/support/metrics")
       .then(setMetrics)
-      .catch(() => setError("Không tải được số liệu."));
+      .catch(() => setMetricsError("Không tải được số liệu."));
   }, []);
   return (
     <StaffWorkspace active="audit">
@@ -131,6 +145,7 @@ export default function AuditPage() {
           </label>
           <Button disabled={pending}>Lọc / tải lại</Button>
         </form>
+        {metricsError && <Alert tone="error">{metricsError}</Alert>}
         {error && <Alert tone="error">{error}</Alert>}
         <Card aria-busy={pending}>
           <p role="status">
@@ -146,7 +161,7 @@ export default function AuditPage() {
               <AuditTimeline events={events} />
             </div>
           ) : (
-            !pending && <p>Chưa có sự kiện phù hợp.</p>
+            !pending && !error && <p>Chưa có sự kiện phù hợp.</p>
           )}
           {cursor && (
             <Button

@@ -66,6 +66,24 @@ it("keeps free text and malformed codes literal instead of changing their meanin
 it("treats an empty employee filter as no filter", () => {
   expect(parseSupportQuery("http://local?employeeId=%20%20").employeeId).toBeUndefined();
 });
+it("finds follow-up text as well as the original question in memory queue and audit", async () => {
+  const request = await submitSupport({
+    rawText: "Open port 3389 public",
+    fields: { department: "engineering", employeeId: "synthetic-search-01" },
+    confirmed: true,
+    idempotencyKey: crypto.randomUUID(),
+  });
+  await repository.updateSupportRequest(request.id, request.version, (draft) => {
+    draft.input.rawText = "Synthetic follow-up search marker";
+  });
+  for (const q of ["3389", "follow-up search marker"]) {
+    const query = parseSupportQuery(`http://local?q=${encodeURIComponent(q)}`);
+    expect((await supportPage(query)).items.map((row) => row.id)).toEqual([request.id]);
+    const events = (await auditPage(query)).items;
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((event) => event.requestId === request.id)).toBe(true);
+  }
+});
 it("suggests distinct employee codes containing the normalized search text", async () => {
   for (const employeeId of ["anhtn", "anhpt", "anhtn", "khoadt"]) {
     await submitSupport({

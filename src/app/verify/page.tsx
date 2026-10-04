@@ -132,6 +132,8 @@ export default function VerifyPage() {
     activeOperation.current = true;
     setRunning(true);
     setError("");
+    setJudged(null);
+    setReadback("");
     try {
       const row = await browserApi<SupportRequest>("/api/support/requests", {
         rawText: judge,
@@ -140,10 +142,16 @@ export default function VerifyPage() {
         idempotencyKey: crypto.randomUUID(),
       });
       setJudged(row);
-      const persistence = await verifyPersistence(row);
-      setReadback(
-        `${persistence.pass ? "PASS" : "FAIL"}: ${persistence.checks.join(" · ")}`,
-      );
+      setReadback("Đang kiểm tra…");
+      try {
+        const persistence = await verifyPersistence(row);
+        setReadback(
+          `${persistence.pass ? "PASS" : "FAIL"}: ${persistence.checks.join(" · ")}`,
+        );
+      } catch (error) {
+        setReadback("Chưa xác minh: không đọc lại được hồ sơ qua API.");
+        throw error;
+      }
       setJudge("");
     } catch (error) {
       setError(error instanceof Error ? error.message : "API error");
