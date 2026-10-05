@@ -5,6 +5,7 @@ import { supportInputSchema } from "@/domain/input";
 import { employeeIdentityError } from "@/domain/employee-identity";
 import { safeInput } from "@/domain/text";
 import { validateVerificationInput } from "@/services/verification";
+import { requireIdentitySession, sessionToken } from "./identity-auth";
 
 type RateWindow = { startedAt: number; count: number };
 type SupportHttpRuntime = { supportRateLimits?: Map<string, RateWindow> };
@@ -92,13 +93,19 @@ export function requireDemoReviewer() {
     );
   return "public-demo-reviewer";
 }
-export async function requireEmployeeIdentity(value: unknown) {
+export async function requireEmployeeIdentity(value: unknown, request?: Request) {
   const input = supportInputSchema.parse(value);
   // Only an exact fixture in a server-created Verify run can use the synthetic path.
   // Validate here too: preview does not go through submitSupport's Verify guard.
   if (input.verifyRunId) {
     await validateVerificationInput(safeInput(input).input);
     return input;
+  }
+  if (request && sessionToken(request)) {
+    const { employee } = await requireIdentitySession(request);
+    if (input.fields.employeeId?.trim().toLowerCase() !== employee.id)
+      throw new SupportError("IDENTITY_MISMATCH", "ID trong yêu cầu khác phiên hiện tại. Tải lại hoặc đăng xuất để dùng demo.", 403);
+    input.fields.employeeId = employee.id;
   }
   const identityError = employeeIdentityError(input.fields);
   if (identityError)

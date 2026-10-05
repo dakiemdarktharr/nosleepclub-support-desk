@@ -5,7 +5,7 @@ import { Files } from "lucide-react";
 import { SiteAccess } from "./site-access";
 export function Header() {
   const path = usePathname();
-  const staff = /^\/(review|audit|verify)/.test(path);
+  const staff = /^\/(review|audit|verify|identity\/review)/.test(path);
   return (
     <header className={`site-header${staff ? " it-header" : ""}`}>
       <SiteAccess />
@@ -19,6 +19,8 @@ export function Header() {
         <nav aria-label="Điều hướng chính">
           <Link href="/send-help" aria-current={path === "/send-help" || path === "/workspace" ? "page" : undefined}>Gửi yêu cầu</Link>
           <Link href="/track" aria-current={path === "/track" ? "page" : undefined}>Theo dõi yêu cầu</Link>
+          <Link href="/" >Đăng nhập</Link>
+          <Link href="/help" aria-current={path === "/help" ? "page" : undefined}>Hướng dẫn</Link>
         </nav>
       )}
     </header>

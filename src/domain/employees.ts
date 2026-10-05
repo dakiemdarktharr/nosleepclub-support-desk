@@ -18,36 +18,8 @@ export type Employee = {
   department: string;
 };
 
-function removeVietnameseAccents(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D");
-}
-
-/** Generates an ID from the final name part and initials of the preceding parts. */
-export function generateEmployeeId(fullName: string): string {
-  const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (nameParts.length === 0) {
-    throw new TypeError("Employee name must contain at least one name part.");
-  }
-
-  const normalizedParts = nameParts.map((part) =>
-    removeVietnameseAccents(part).toLowerCase(),
-  );
-  const lastName = normalizedParts.at(-1);
-  if (!lastName) {
-    throw new TypeError("Employee name must contain at least one name part.");
-  }
-
-  const precedingInitials = normalizedParts
-    .slice(0, -1)
-    .map((part) => part[0])
-    .join("");
-
-  return `${lastName}${precedingInitials}`;
-}
+import { generateEmployeeId } from "./identity";
+export { generateEmployeeId } from "./identity";
 
 function parseCsvRow(row: string): string[] {
   const values: string[] = [];
@@ -78,7 +50,7 @@ function parseCsvRow(row: string): string[] {
   return values;
 }
 
-/** Reads and validates the CSV so it remains the single source of employee IDs. */
+/** Validates legacy synthetic fixtures for controlled seed/import; never used for runtime accounts. */
 export function getEmployees(): Employee[] {
   const csvPath = path.join(process.cwd(), "data", "employees.csv");
   const csv = readFileSync(csvPath, "utf8").replace(/^\uFEFF/, "");

@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { identityApi } from "@/components/identity-ui";
 import { useRouter } from "next/navigation";
 import {
   catalog,
@@ -55,6 +56,14 @@ const familiar: ServiceGroup[] = [
 ];
 export default function WorkspacePage() {
   const router = useRouter();
+  const [account, setAccount] = useState<{ id: string; assurance: string } | null>(null);
+  useEffect(() => {
+    let active = true;
+    void identityApi<{ id: string; assurance: string }>("session").then((session) => {
+      if (active) { setAccount(session); setInput((current) => ({ ...current, fields: { ...current.fields, employeeId: session.id } })); }
+    }).catch(() => { /* Public judge demo remains available without an account. */ });
+    return () => { active = false; };
+  }, []);
   const [input, setInput] = useState<SupportInput>({
     mode: "freeform",
     serviceGroup: "OTHER",
@@ -161,6 +170,7 @@ export default function WorkspacePage() {
   return (
     <main className="page page-narrow page-enter" data-guide-stage={preview ? "sender-preview" : "sender-form"}>
       <h1>Tôi cần hỗ trợ</h1>
+      {account && <Alert>ID {account.id} · {account.assurance === "verified" ? "Đã xác minh OTP" : "Truy cập demo, chưa xác minh danh tính"}. <button type="button" className="identity-text-link" onClick={async () => { try { await identityApi("logout", {}); setAccount(null); edit({ fields: { ...input.fields, employeeId: "" } }); } catch (cause) { setError((cause as Error).message); } }}>Đăng xuất</button></Alert>}
       <p className="page-description">
         Bạn cứ mô tả vấn đề bằng lời của mình. Chúng tôi sẽ giúp bạn tìm hướng
         xử lý phù hợp.
@@ -208,6 +218,7 @@ export default function WorkspacePage() {
             hidden={!!preview}
           >
             <EmployeeIdentityFields
+              lockedId={account?.id}
               fields={input.fields}
               onChange={(fields) => edit({ fields })}
             />

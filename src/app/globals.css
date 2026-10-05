@@ -902,3 +902,55 @@ body:has(.it-workspace) { background: var(--paper); }
   .it-tabs small { display: none; }
   .it-evidence-grid { grid-template-columns: 1fr; gap: 14px; }
 }
+
+/* Identity uses the existing VNG palette and native accessible controls. */
+.account-welcome { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:clamp(2rem,6vw,6rem); align-items:start; max-width:1150px; margin:auto; padding:3rem 1.5rem; }
+.identity-login { padding:2.25rem; border:1px solid var(--line); border-radius:24px; background:white; box-shadow:0 12px 40px #20212408; }
+.identity-login h1,.identity-card h1,.identity-review h1 { font-size:clamp(1.8rem,3vw,2.5rem); font-weight:800; line-height:1.2; margin:.6rem 0 1rem; }
+.account-welcome .welcome-copy { padding-top:1.5rem; }
+.account-welcome .welcome-copy h2 { font-size:clamp(1.7rem,3vw,2.5rem); font-weight:800; line-height:1.2; margin-bottom:1rem; }
+.account-welcome .welcome-art { max-width:220px; margin:1.5rem auto 0; min-height:0; }
+.account-welcome .welcome-art img { width:100%; height:auto; }
+.identity-form { display:grid; gap:1rem; margin:1.5rem 0; }
+.identity-form label,.identity-card > label,.identity-grid label { display:grid; gap:.45rem; font-weight:700; }
+.identity-form input,.identity-form select,.identity-form textarea,.identity-card > label input { width:100%; min-width:0; }
+.identity-form p,.identity-note { font-size:.875rem; line-height:1.6; color:var(--muted); }
+.identity-form details { font-size:.875rem; }
+.identity-form summary,.identity-card summary { cursor:pointer; padding:.5rem 0; font-weight:700; }
+.identity-text-link { color:var(--accent-ink); text-decoration:underline; text-underline-offset:3px; }
+.identity-links { display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; margin-top:1rem; font-size:.875rem; text-decoration:underline; }
+.identity-note { margin:1rem 0; }
+.identity-page { max-width:860px; margin:2rem auto 5rem; padding:0 1rem; }
+.identity-card { background:white; border:1px solid var(--line); border-radius:20px; padding:clamp(1.25rem,3vw,2.25rem); margin-bottom:1.25rem; overflow-wrap:anywhere; }
+.identity-card h2 { font-size:1.3rem; font-weight:800; }
+.identity-card h3 { font-weight:800; margin-top:1rem; }
+.identity-steps { display:flex; gap:.5rem; padding:1.25rem 0; margin-top:.75rem; border-bottom:1px solid var(--line); }
+.identity-steps li { flex:1; padding:.5rem; border-radius:8px; font-size:.85rem; background:#f2f3f4; color:var(--muted); }
+.identity-steps [aria-current=step] { background:var(--accent-soft); color:var(--accent-ink); font-weight:800; }
+.identity-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0; }
+.scope-editor { border:1px solid var(--line); border-radius:12px; padding:1rem; min-width:0; }
+.scope-editor legend { font-weight:800; padding:0 .3rem; }
+.scope-list { display:grid; gap:.65rem; margin:1rem 0; }
+.scope-list li { display:flex; flex-direction:column; gap:.3rem; border:1px solid var(--line); background:#fafaf8; padding:.8rem 1rem; border-radius:10px; font-size:.875rem; overflow-wrap:anywhere; }
+.risk-label { color:#8c390b; font-weight:700; }
+.identity-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:.75rem; }
+.identity-summary { display:grid; grid-template-columns:6rem 1fr; gap:.6rem; }
+.identity-summary dt { color:var(--muted); }
+.identity-summary dd { font-weight:700; }
+.identity-result { border-top:1px solid var(--line); margin-top:2rem; padding-top:1.5rem; animation:identity-enter 160ms ease-out; }
+.issued-id { font-size:2rem; font-weight:800; color:var(--accent-ink); padding:1rem 0; }
+.identity-review { padding:2rem; min-width:0; width:100%; }
+.identity-review-heading { display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between; align-items:start; margin-bottom:1rem; }
+.identity-filter { display:flex; align-items:center; gap:1rem; margin:1rem 0; }
+.identity-filter select { width:auto; }
+.identity-form .check-row { display:flex; align-items:flex-start; gap:.7rem; padding:.6rem 0; font-weight:400; }
+.identity-form .check-row input { width:1.1rem; height:1.1rem; flex-shrink:0; margin-top:.15rem; accent-color:var(--accent-ink); }
+.identity-card a:focus-visible,.identity-login a:focus-visible,summary:focus-visible { outline:3px solid var(--accent-ink); outline-offset:4px; border-radius:3px; }
+.identity-guide { line-height:1.8; }
+.identity-guide section { margin:2rem 0; scroll-margin-top:2rem; }
+.identity-guide ol,.identity-guide ul { padding-left:1.5rem; list-style:decimal; }
+.identity-guide ul { list-style:disc; }
+@keyframes identity-enter { from { opacity:.6; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+@media(max-width:760px) { .account-welcome { grid-template-columns:1fr; padding:1.25rem 1rem; gap:1rem; } .identity-login { padding:1.5rem; } .account-welcome .welcome-art { max-width:160px; } .identity-review { padding:1rem; } .identity-grid { grid-template-columns:1fr; } .identity-steps li { font-size:.75rem; } .site-header nav { flex-wrap:wrap; gap:.5rem 1rem; } }
+@media(prefers-reduced-motion:reduce) { .identity-result { animation:none; } }
+.identity-card h1[tabindex="-1"]:focus { outline:none; }

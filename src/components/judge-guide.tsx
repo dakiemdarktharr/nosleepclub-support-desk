@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { GUIDE_SESSION_PREFIX, guideStages, type GuideRole } from "@/domain/judge-guide";
 import { GuideIllustration } from "./guide-illustration";
+import { usePathname } from "next/navigation";
 
 type Position = { left: number; top: number; width: number; height: number };
 type Guide = { stage: string; index: number };
 const waitingStages = ["sender-form", "sender-preview", "reviewer-list"];
 
 export function JudgeGuide({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const content = useRef<HTMLDivElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const tip = useRef<HTMLElement>(null);
@@ -17,7 +19,7 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
   const lastStage = useRef("");
   const lastTarget = useRef("");
   const [ready, setReady] = useState(false);
-  const [intro, setIntro] = useState(true);
+  const [intro, setIntro] = useState(false);
   const [guide, setGuide] = useState<Guide | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
@@ -34,8 +36,14 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
         if (sessionStorage.getItem(`${GUIDE_SESSION_PREFIX}${key}`) === "seen") seen.current.add(key);
       } catch { /* Storage may be disabled by the browser. */ }
     }
-    setIntro(!seen.current.has("intro"));
+    setIntro(!seen.current.has("intro") && /^\/(send-help|workspace|review|audit|verify|track)(\/|$)/.test(pathname));
     setReady(true);
+  }, [pathname]);
+
+  useEffect(() => {
+    const open = () => setIntro(true);
+    window.addEventListener("vng-open-guide", open);
+    return () => window.removeEventListener("vng-open-guide", open);
   }, []);
 
   const dismissIntro = useCallback(() => {
@@ -177,6 +185,10 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
           <p>Thử website qua hai vai trò. Mũi tên đỏ sẽ chỉ chỗ cần thao tác.</p>
         </header>
         <div className="guide-modal-scroll" tabIndex={0} aria-label="Nội dung hướng dẫn sử dụng">
+          <section>
+            <h3>Đăng nhập và cấp ID</h3>
+            <p>Trang đầu mặc định Đăng nhập bằng ID đã được IT cấp. Truy cập bằng ID là demo, chưa xác minh danh tính. Chọn “Nhân viên mới?” để gửi họ tên, job và phạm vi quyền; lưu liên kết theo dõi. Chỉ sau khi IT duyệt mới có ID chính thức. Quyền xử lý ID cần OTP qua kênh do IT cấu hình và vai trò riêng.</p>
+          </section>
           <section>
             <h3>1. Tôi cần hỗ trợ — trải nghiệm người gửi</h3>
             <p>Chọn <strong>Tôi cần hỗ trợ</strong> ở trang đầu. Chọn phòng ban và nhập mã nhân viên (cả hai đều bắt buộc); mã dùng để liên kết, tra cứu hồ sơ nhưng chưa xác thực danh tính. Viết vấn đề hoặc chọn danh mục, điền thông tin rồi bấm <strong>Gửi</strong>. Ví dụ: “VPN không kết nối”.</p>

@@ -1,15 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Headphones, ClipboardList } from "lucide-react";
+import { LoginPanel } from "@/components/identity-ui";
 export default function Home() {
   return (
-    <main className="welcome" aria-label="Chọn vai trò">
+    <main className="welcome account-welcome" aria-label="Đăng nhập hoặc khám phá VNG Support">
+      <LoginPanel />
       <section className="welcome-copy">
-        <h1>
+        <h2>
           Bạn cần hỗ trợ
           <br />
           gì hôm nay?
-        </h1>
+        </h2>
+        <p>Dùng thử các luồng hỗ trợ và Verify bằng dữ liệu giả lập, không cần tài khoản.</p>
         <div className="entry-links">
           <Link
             aria-label="Tôi cần hỗ trợ"
@@ -19,7 +22,7 @@ export default function Home() {
             <Headphones size={25} />
             <span>
               <strong>Tôi cần hỗ trợ</strong>
-              <small>Gửi vấn đề và nhận hướng dẫn</small>
+              <small>Demo gửi vấn đề và nhận hướng dẫn</small>
             </span>
             <ArrowRight size={22} />
           </Link>
@@ -36,7 +39,6 @@ export default function Home() {
             <ArrowRight size={22} />
           </Link>
         </div>
-      </section>
       <div className="welcome-art">
         <span className="hello-note" aria-hidden="true">
           Xin chào!
@@ -49,6 +51,7 @@ export default function Home() {
           alt="Nhân vật màu cam thân thiện đang vẫy tay chào"
         />
       </div>
+      </section>
     </main>
   );
 }

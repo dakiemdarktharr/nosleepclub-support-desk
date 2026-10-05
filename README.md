@@ -20,8 +20,8 @@ README này mô tả các luồng trong repository hiện tại. Bản trên web
 ## Bắt đầu sử dụng
 
 1. Mở [website](https://vng-support.vercel.app).
-2. Đọc popup hướng dẫn, cuộn để xem đầy đủ nội dung và bấm **Đã hiểu**.
-3. Chọn **Tôi cần hỗ trợ** để gửi yêu cầu hoặc **Dành cho nhân viên** để vào không gian human reviewer.
+2. Nếu cần, mở **Hướng dẫn sử dụng** hoặc **Hướng dẫn demo**. Popup cũng xuất hiện lần đầu khi vào luồng hỗ trợ demo; bấm **Đã hiểu** để tiếp tục.
+3. Đăng nhập bằng ID đã cấp, hoặc dùng **Tôi cần hỗ trợ** / **Dành cho nhân viên** để trải nghiệm demo không cần tài khoản. **Hướng dẫn demo** mở onboarding; màn hình đăng nhập không bị hộp hướng dẫn che khi vừa vào.
 
 Mũi tên hướng dẫn sẽ chỉ các nút và ô cần thao tác khi bạn vào từng vai trò lần đầu. Quay lại cùng vai trò trong tab hiện tại sẽ tiếp tục sử dụng bình thường. Đóng tab và mở lại website sẽ bắt đầu lượt hướng dẫn mới.
 
@@ -91,20 +91,45 @@ Reviewer có bộ lọc **Hàng đợi chuyển tiếp**: **Ngoài quy định**
 
 | Trang | Công dụng |
 | --- | --- |
-| [Trang đầu](https://vng-support.vercel.app/) | Chọn vai trò và mở hướng dẫn |
+| [Trang đầu](https://vng-support.vercel.app/) | Đăng nhập, mở demo và hướng dẫn |
 | [Gửi yêu cầu](https://vng-support.vercel.app/send-help) | Nhập vấn đề và bắt đầu hội thoại |
 | [Theo dõi yêu cầu](https://vng-support.vercel.app/track) | Tra cứu bằng mã hoặc liên kết |
 | [Yêu cầu cần xử lý](https://vng-support.vercel.app/review) | Không gian human reviewer |
 | [Lịch sử xử lý](https://vng-support.vercel.app/audit) | Xem diễn biến và quyết định |
 | [Kiểm thử](https://vng-support.vercel.app/verify) | Chạy các tình huống và đối chiếu kết quả |
 
-## I.D — Mock Employee RBAC
+Các route mới trong mã nguồn: `/identity/new` (xin cấp ID), `/identity/track` (theo dõi đơn), `/identity/review` (IT duyệt), `/help` (hướng dẫn). Chưa xác nhận website đã triển khai các route này.
 
-Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees.csv). CSV là nguồn dữ liệu duy nhất cho API và tra cứu danh tính RBAC; API kiểm tra ID trong CSV theo ID sinh từ họ tên trước khi dùng hồ sơ. Level là số nguyên từ `00` đến `36` (miền giá trị có 37 level); các level không xuất hiện trong 36 hồ sơ vẫn hợp lệ cho policy.
+## Đăng nhập, cấp ID và phạm vi quyền
 
-Đây là dataset mô phỏng của dự án, không phải danh sách nhân viên thật hoặc cơ cấu quyền chính thức của VNG. Form hỗ trợ bắt buộc nhập **Mã nhân viên** để nhóm các yêu cầu khai cùng mã và cho reviewer/audit tra cứu theo mã. Mã được bỏ khoảng trắng ngoài và chuẩn hóa chữ thường khi lưu; mã phải dài tối đa 32 ký tự, bắt đầu bằng chữ hoặc số, các ký tự còn lại gồm chữ, số, `_` hoặc `-`. Đây là mã do người gửi khai báo, chưa được xác thực với danh bạ nhân sự và không cấp quyền reviewer. Mã và phòng ban chỉ dùng làm metadata quản lý, không đi vào phân tích/model. API danh bạ và RBAC vẫn dùng header riêng, không tự lấy ID từ form. Khi triển khai với nhân sự thật, cần nối trường này với SSO/danh bạ HR để xác minh người gửi.
+Trang đầu mặc định **Đăng nhập**, chỉ có ô ID, không có mật khẩu. Theo yêu cầu demo hiện tại, ID đã cấp và còn hiệu lực được vào gửi hỗ trợ mà không cần OTP. ID sai, chưa cấp hoặc đã bị IT vô hiệu hóa bị từ chối. Đơn bị từ chối không tạo tài khoản. **Biết ID không chứng minh danh tính**: phiên này được ghi `demo`, không có quyền duyệt ID hay thực thi tài nguyên.
 
-### Dataset ID nhân viên
+Người xử lý ID mở **Dành cho người xử lý ID → Xác minh OTP để dùng quyền IT**. Mã gửi tới kênh do operator xác minh và cấu hình trước, không lấy từ form công khai. Mã dùng một lần, hết hạn sau 5 phút, tối đa 5 lần thử; phiên HttpOnly có thời hạn 8 giờ. Vai trò `identity-admin` phải được operator cấp độc lập; tên job, level CSV và header tự khai báo không cấp quyền này. Chưa có relay/kênh thì xác minh IT bị chặn. Đăng xuất ở trang gửi hỗ trợ khi dùng máy chung.
+
+### Nhân viên mới
+
+1. Bấm **Nhân viên mới?** bên dưới đăng nhập. Nhập họ tên người cần cấp ID, chọn job có sẵn hoặc tạo job mới. Không nhập liên hệ, mật khẩu, credentials hay dữ liệu bí mật.
+2. **Job có sẵn:** xem quyền, đích và giới hạn của đúng phiên bản profile; IT duyệt gắn nguyên profile đó. Ngoài phạm vi hiển thị đều không được phép.
+3. **Job mới:** nhập tên job, thêm phạm vi có cấu trúc theo môi trường (sandbox/staging/production), tài nguyên, thao tác và đích cụ thể. Danh mục gồm task/project, repository, log, database/schema, cloud, cấu hình, secrets, khóa và quản trị. Không nhận wildcard hoặc quyền tự do. IT chỉ được chọn tập con của phạm vi đã gửi trước khi tạo profile và gắn cho nhân viên.
+4. Xem lại và **Gửi đơn cho IT**. Biên nhận chỉ xuất hiện khi MongoDB commit thành công. Nếu lỗi kết nối, giữ trang và thử lại cùng nội dung; mã gửi chống tạo đơn lặp.
+5. Lưu **liên kết theo dõi riêng**. Khóa đọc nằm trong fragment của URL, không được lưu vào localStorage. Ai có liên kết có thể xem đơn; không chia sẻ công khai. Trang theo dõi hiển thị chờ IT, trùng ID, được duyệt hoặc bị từ chối cùng lý do.
+6. Chỉ sau khi được duyệt, trang thành công hiển thị **ID chính thức** và hướng dẫn về đăng nhập. IT xử lý đơn tại **Không gian IT → Cấp ID nhân viên**, tách biệt reviewer hỗ trợ công khai của bản demo.
+
+`generateEmployeeId(fullName)` bỏ dấu tiếng Việt, chuyển thường, lấy từ cuối rồi nối chữ đầu các từ trước: `Phạm Quang Minh Hòa → hoapqm`, `Trần Ngọc Anh → anhtn`. Unique index MongoDB chặn trùng. Khi trùng, đơn chuyển `ID_CONFLICT`; IT xác minh nhân sự rồi chọn hậu tố số `-2`…`-9999` có lý do. Không tự thêm hậu tố, không ghi đè tài khoản; tên không va chạm giữ nguyên công thức.
+
+Duyệt job **không tự cấp quyền nhạy cảm**. Server so khớp chính xác environment/resource/operation/target; production, secrets, khóa, quản trị/root, xuất dữ liệu và thao tác rủi ro cần thẩm quyền riêng. `POST /api/identity/access` yêu cầu phiên OTP, đọc profile đã duyệt và ghi audit; trả `executed: false` vì dự án chưa có connector thực thi/IAM. Quyền ít rủi ro đúng phạm vi có thể đạt kiểm tra mà không cần IT duyệt lại từng lần; connector tương lai vẫn phải kiểm tra deterministic policy trước khi chạy. Đây là cơ chế đề xuất của dự án, không phải policy chính thức của VNG.
+
+### Lưu trữ và API
+
+MongoDB là nguồn vận hành duy nhất cho tài khoản/ID, profile và phiên bản, đơn, quyết định, lý do, audit, OTP và phiên. Không dùng CSV, memory fallback hoặc localStorage cho dữ liệu này. `IDENTITY_MONGODB_URI` (hoặc `MONGODB_URI`) và **`IDENTITY_MONGODB_DB` riêng** là bắt buộc. Cần replica set/cluster hỗ trợ transaction. Giao dịch cấp ID ghi profile, tài khoản, quyết định và audit nguyên tử; schema validation, unique indexes và optimistic version chặn dữ liệu sai, ID trùng và quyết định ghi đè. Không đổi storage của Support/Verify. Xem [cấu hình MongoDB, bootstrap IT và OTP relay](RUNBOOK.md#hệ-thống-id-nhân-viên).
+
+`GET /api/employees` chỉ trả danh bạ MongoDB cho phiên OTP có `identity-admin`; bỏ kênh xác minh khỏi response, `Cache-Control: no-store`. Thiếu phiên: 401; phiên demo/không có vai trò: 403; Mongo unavailable: 503. `X-Employee-ID` không được dùng làm bằng chứng xác thực. UI/Verify demo vẫn tiếp nhận mã tự khai báo để đáp ứng brief; mã đó không tạo tài khoản. Với phiên ID hợp lệ, form hỗ trợ tự điền ID và server chặn ID khác phiên.
+
+[Hướng dẫn trong app](src/app/help/page.tsx) · [Thiết kế và bản đồ giữ tính năng](docs/IDENTITY-UX-PLAN.md) · [Schema và sinh ID](src/domain/identity.ts)
+
+### Dataset ID cũ — chỉ dùng kiểm tra/seed có kiểm soát
+
+`data/employees.csv` còn 36 hồ sơ fixture của dự án; **không đọc ở runtime, không tự import và không cho đăng nhập**. Bảng dưới giữ khớp CSV để tra cứu dữ liệu cũ. Không dùng level để suy ra quyền thật. Chưa có bằng chứng xác minh nguồn gốc từng tên; không khẳng định mọi tên đều hoàn toàn hư cấu. Nếu cần seed/import, operator phải rà soát nguồn dữ liệu, dùng nhãn giả lập rõ ràng, validate ID và lưu MongoDB kèm audit; không nạp tự động dataset này vào môi trường thật.
 
 | ID mock | Họ tên mock | Level | Chức danh mô phỏng | Phòng ban mô phỏng |
 | --- | --- | --- | --- | --- |
@@ -147,31 +172,6 @@ Danh bạ mock có 36 hồ sơ nằm trong [`data/employees.csv`](data/employees
 
 Khi cần thay đổi hồ sơ, cập nhật CSV và kiểm tra lại bảng này. ID `oanhnt` và `nhannt` là các ID đã sửa trong phiên bản `878448f`; không dùng các ID cũ `oanhtn` hoặc `nhant`.
 
-### Thử API danh bạ ở local
-
-`GET /api/employees` trả toàn bộ danh bạ cho nhân viên level 21 trở lên. Route dùng `X-Employee-ID` để mô phỏng danh tính: thiếu ID hoặc ID không có trong CSV nhận `401`, level dưới 21 nhận `403`. Đây là xác thực mock để trình diễn RBAC, không phải đăng nhập an toàn hoặc danh tính đã xác minh.
-
-```powershell
-Invoke-RestMethod http://localhost:3000/api/employees -Headers @{
-  "X-Employee-ID" = "trangtt"
-}
-```
-
-Phản hồi thành công chứa mảng 36 hồ sơ trong `data`, với `level` là số (ví dụ `00` trong CSV thành `0` trong JSON), và header `Cache-Control: no-store`.
-
-| Header `X-Employee-ID` | Kết quả | Ý nghĩa |
-| --- | --- | --- |
-| `namhp` (level 21) hoặc `trangtt` (22) | `200` | Đủ ngưỡng xem danh bạ mock |
-| `bachnt` (20) hoặc `tamnt` (00) | `403` | ID tồn tại nhưng dưới ngưỡng 21 |
-| Bỏ header hoặc `synthetic_unknown_employee` | `401` | Chưa cung cấp ID hoặc không có trong CSV |
-| ID hợp lệ khi CSV không đọc/validate được | `500` | Danh bạ không khả dụng; không trả nội dung lỗi nội bộ |
-
-Header được trim và chuyển thành chữ thường, nên `TRANGTT` cũng khớp `trangtt`. Chạy các ví dụ trên server local; không dùng header tự khai báo này làm xác thực production.
-
-ID được sinh bởi `generateEmployeeId(fullName)`: bỏ dấu tiếng Việt, lấy phần tên cuối làm gốc rồi nối chữ cái đầu của các phần đứng trước theo thứ tự. Ví dụ hoàn toàn giả lập: `Nhân Viên Giả Lập Alpha` → `alphanvgl`. Tên có thể sinh trùng ID; bộ đọc CSV từ chối ID trùng, không tự phân biệt hồ sơ trùng tên. `checkAuthorityLevel(minRequiredLevel)` tạo guard kiểm tra level tối thiểu; `AUTHORITY_LEVELS` định nghĩa các mốc `intern=0`, `professional=6`, `management=21`, `executive=31`.
-
-Hiện chỉ `GET /api/employees` gắn guard này, với ngưỡng `management=21`. Chưa có scope theo người được giao task, project, phòng ban hoặc quyền duyệt tài chính. Các mốc level không tự cấp quyền cho workflow IT/reviewer, không thay deterministic policy và không thay SSO. Mã nguồn: [bộ đọc CSV và sinh ID](src/domain/employees.ts), [guard level](src/lib/employee-rbac.ts), [route danh bạ](src/app/api/employees/route.ts).
-
 ## Chạy trên máy của bạn
 
 Cài **Node.js 22 trở lên** và **npm**, sau đó mở terminal tại thư mục repository:
@@ -188,7 +188,7 @@ Nếu dùng Windows PowerShell, thay lệnh sao chép bằng:
 Copy-Item .env.example .env.local
 ```
 
-Mở **http://localhost:3000**. Cấu hình mẫu dùng phản hồi mô phỏng và bộ nhớ cục bộ để thử các luồng ngay sau khi khởi động.
+Mở **http://localhost:3000**. Cấu hình mẫu dùng phản hồi mô phỏng và memory-demo cho Support/Verify. Hệ thống ID cần MongoDB riêng theo RUNBOOK; không fallback bộ nhớ.
 
 Các lệnh kiểm tra dành cho người phát triển:
 
@@ -202,7 +202,9 @@ npm run test:e2e
 
 Build phải hoàn tất trước E2E. Để kiểm tra production build bằng mock/memory trên server riêng `127.0.0.1:3227`, dùng các lệnh desktop/mobile tách biệt trong [runbook](RUNBOOK.md#kiểm-tra-trước-khi-phát-hành).
 
-Ở commit `878448f`, kiểm tra **local** đạt 505 unit/integration tests (32 file), 11 kiểm tra guard Mongo và 89 E2E (45 desktop, 44 mobile; bỏ qua một bài quay video mobile). Lint, typecheck và build đạt. Đây là kết quả AI-assisted đã ghi cho commit đó, không phải bằng chứng hosted CI hoặc production hiện tại. Xem [phạm vi và kết quả kiểm tra UI](docs/UI-REVIEW-VNG.md). Lượt cập nhật README này chỉ kiểm tra tính khớp của tài liệu với CSV/code và các liên kết local; không chạy lại toàn bộ bộ kiểm thử ứng dụng.
+Ở commit `878448f`, kiểm tra **local** đạt 505 unit/integration tests (32 file), 11 kiểm tra guard Mongo và 89 E2E (45 desktop, 44 mobile; bỏ qua một bài quay video mobile). Lint, typecheck và build đạt. Đây là kết quả AI-assisted đã ghi cho commit đó, không phải bằng chứng hosted CI hoặc production hiện tại. Xem [phạm vi và kết quả kiểm tra UI](docs/UI-REVIEW-VNG.md). Bản README tại `e1ad60d` chỉ kiểm tra tài liệu/CSV, không chạy lại app.
+
+Bản tích hợp UI/ID từ base `7857d5c`: **561 unit/integration tests**, **115 E2E đạt, 1 skip**, 11 guard Mongo đạt; lint, typecheck và build đạt. Xem [báo cáo bàn giao và giới hạn local/mock](docs/IDENTITY-UX-DELIVERY.md).
 
 Xem thêm [hướng dẫn giám khảo](docs/JUDGE-ONBOARDING.md) và [hướng dẫn vận hành](RUNBOOK.md).
 

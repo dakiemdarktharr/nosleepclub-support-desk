@@ -2,10 +2,10 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { FlaskConical, Inbox, ShieldCheck } from "lucide-react";
 
-type StaffSection = "review" | "audit" | "verify";
+type StaffSection = "review" | "audit" | "verify" | "identity";
 
 const navigation: Array<{
-  href: "/review" | "/audit" | "/verify";
+  href: "/review" | "/audit" | "/verify" | "/identity/review";
   section: StaffSection;
   label: string;
   icon: typeof Inbox;
@@ -13,6 +13,7 @@ const navigation: Array<{
   { href: "/review", section: "review", label: "Yêu cầu cần xử lý", icon: Inbox },
   { href: "/audit", section: "audit", label: "Lịch sử xử lý", icon: ShieldCheck },
   { href: "/verify", section: "verify", label: "Kiểm thử", icon: FlaskConical },
+  { href: "/identity/review", section: "identity", label: "Cấp ID nhân viên", icon: ShieldCheck },
 ];
 
 export function StaffWorkspace({

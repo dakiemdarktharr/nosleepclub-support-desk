@@ -26,7 +26,7 @@ test("QR decodes to the role picker and URL can be copied from any page", async 
   // A scan opens a fresh tab with no guide flags, as on another device.
   const scanned = await context.newPage();
   await scanned.goto(decoded!.data);
-  await scanned.getByRole("button", { name: "Đã hiểu", exact: true }).click();
+  await expect(scanned.getByRole("heading", { name: "Đăng nhập", exact: true })).toBeVisible();
   await expect(scanned.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true })).toBeVisible();
   await expect(scanned.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toBeVisible();
 });

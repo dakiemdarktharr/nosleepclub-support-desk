@@ -1,38 +1,32 @@
-import { afterEach, expect, it, vi } from "vitest";
-import * as employees from "@/domain/employees";
+import { beforeEach, expect, it, vi } from "vitest";
+import { getEmployees, generateEmployeeId } from "@/domain/employees";
 import { GET } from "@/app/api/employees/route";
-import { checkAuthorityLevel } from "@/lib/employee-rbac";
-
-afterEach(() => vi.restoreAllMocks());
-const request = (id?: string) => new Request("http://localhost/api/employees", { headers: id ? { "X-Employee-ID": id } : {} });
-it("validates the existing mock CSV and enforces directory level 21 for every record", async () => {
-  const rows = employees.getEmployees();
-  expect(rows).toHaveLength(36);
-  for (const employee of rows) {
-    expect(employee.id).toBe(employees.generateEmployeeId(employee.name));
-    const response = GET(request(employee.id.toUpperCase()));
-    expect(response.status).toBe(employee.level >= 21 ? 200 : 403);
-    expect(response.headers.get("cache-control")).toBe("no-store");
-    const body = await response.json();
-    if (employee.level >= 21) expect(body.data).toHaveLength(rows.length);
-    else expect(body).not.toHaveProperty("data");
-  }
+import { SupportError } from "@/lib/support-repository";
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), store: vi.fn() }));
+vi.mock("@/lib/identity-auth", () => ({ requireIdentitySession: mocks.auth }));
+vi.mock("@/lib/identity-store", () => ({ identityStore: mocks.store }));
+beforeEach(() => vi.resetAllMocks());
+it("retains 36 validated legacy fixtures without using them as runtime accounts", () => {
+  const rows = getEmployees(); expect(rows).toHaveLength(36);
+  expect(new Set(rows.map((row) => row.id)).size).toBe(36);
+  for (const row of rows) expect(row.id).toBe(generateEmployeeId(row.name));
 });
-it("rejects absent or unknown mock identity without returning the directory", async () => {
-  for (const id of [undefined, "synthetic_unknown_employee"]) {
-    const response = GET(request(id));
-    expect(response.status).toBe(401);
-    expect(await response.json()).not.toHaveProperty("data");
-  }
+it("requires verified IT instead of trusting an ID header", async () => {
+  mocks.auth.mockRejectedValue(new SupportError("AUTHENTICATION_REQUIRED", "Đăng nhập", 401));
+  const response = await GET(new Request("http://localhost/api/employees", { headers: { "X-Employee-ID": "alphanvgl" } }));
+  expect(response.status).toBe(401); expect(mocks.auth).toHaveBeenCalledWith(expect.any(Request), true);
+  expect(mocks.store).not.toHaveBeenCalled(); expect(await response.json()).not.toHaveProperty("data");
 });
-it("does not echo filesystem/parser exception details to response or logs", async () => {
-  vi.spyOn(employees, "getEmployees").mockImplementation(() => { throw new Error("SYNTHETIC_PRIVATE_DIRECTORY_DETAILS"); });
-  const logger = vi.spyOn(console, "error").mockImplementation(() => {});
-  const response = GET(request("synthetic"));
-  expect(response.status).toBe(500);
-  expect(await response.text()).not.toContain("SYNTHETIC_PRIVATE_DIRECTORY_DETAILS");
-  expect(JSON.stringify(logger.mock.calls)).not.toContain("SYNTHETIC_PRIVATE_DIRECTORY_DETAILS");
+it("returns Mongo directory without trusted delivery channels and never caches", async () => {
+  mocks.auth.mockResolvedValue({ employee: { id: "operator" }, assurance: "verified" });
+  const find = vi.fn().mockReturnValue({ sort: () => ({ limit: () => ({ toArray: async () => [{ id: "alphanvgl" }] }) }) });
+  mocks.store.mockResolvedValue({ db: { collection: () => ({ find }) } });
+  const response = await GET(new Request("http://localhost/api/employees"));
+  expect(response.status).toBe(200); expect(response.headers.get("cache-control")).toBe("no-store");
+  expect(find).toHaveBeenCalledWith({}, { projection: { _id: 0, verifiedChannel: 0 } });
 });
-it("rejects invalid authority thresholds instead of creating permissive guards", () => {
-  for (const level of [-1, 37, 1.5, NaN, Infinity]) expect(() => checkAuthorityLevel(level)).toThrow(RangeError);
+it("redacts storage errors instead of reading CSV on failure", async () => {
+  mocks.auth.mockResolvedValue({}); mocks.store.mockRejectedValue(new Error("SYNTHETIC_PRIVATE_DB_URI"));
+  const response = await GET(new Request("http://localhost/api/employees"));
+  expect(response.status).toBe(503); expect(await response.text()).not.toContain("SYNTHETIC_PRIVATE_DB_URI");
 });

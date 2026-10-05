@@ -4,9 +4,11 @@ import { optionName } from "@/domain/presentation";
 export function EmployeeIdentityFields({
   fields,
   onChange,
+  lockedId,
 }: {
   fields: Record<string, string>;
   onChange: (fields: Record<string, string>) => void;
+  lockedId?: string;
 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -43,11 +45,12 @@ export function EmployeeIdentityFields({
           aria-required="true"
           required
           value={fields.employeeId ?? ""}
+          readOnly={!!lockedId}
           onChange={(event) =>
             onChange({ ...fields, employeeId: event.target.value })
           }
         />
-        <span className="field-hint">Bắt buộc trước khi gửi yêu cầu.</span>
+        <span className="field-hint">{lockedId ? "ID từ phiên hiện tại; đăng xuất để đổi ID." : "Mã tự khai báo cho demo, chưa xác minh danh tính."}</span>
       </label>
     </div>
   );
