@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Header } from "@/components/header";
 import { JudgeGuide } from "@/components/judge-guide";
+import { RouteTransition } from "@/components/route-transition";
 import "./globals.css";
 
 const nunito = localFont({
@@ -24,7 +25,7 @@ export default function RootLayout({
       <body>
         <JudgeGuide>
           <Header />
-          {children}
+          <RouteTransition>{children}</RouteTransition>
         </JudgeGuide>
       </body>
     </html>

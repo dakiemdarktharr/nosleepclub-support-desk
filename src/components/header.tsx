@@ -15,11 +15,11 @@ export function Header() {
         </span>
         VNG Support
       </Link>
-      {path !== "/" && !staff && (
+      {path !== "/" && path !== "/login" && !staff && (
         <nav aria-label="Điều hướng chính">
           <Link href="/send-help" aria-current={path === "/send-help" || path === "/workspace" ? "page" : undefined}>Gửi yêu cầu</Link>
           <Link href="/track" aria-current={path === "/track" ? "page" : undefined}>Theo dõi yêu cầu</Link>
-          <Link href="/" >Đăng nhập</Link>
+          <Link href="/login" >Đăng nhập</Link>
           <Link href="/help" aria-current={path === "/help" ? "page" : undefined}>Hướng dẫn</Link>
         </nav>
       )}

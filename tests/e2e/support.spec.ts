@@ -17,11 +17,13 @@ async function submit(page: Page, text: string) {
   await expect(page).toHaveURL(/\/requests\/[a-f0-9-]+$/);
   await expect(page.getByText("Trạng thái:")).toBeVisible();
 }
-test("public entry buttons open both workspaces without authentication", async ({
+test("role entry opens login, public demo and staff workspace", async ({
   page,
 }, info) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
+  await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Tôi cần hỗ trợ" }),
   ).toBeVisible();

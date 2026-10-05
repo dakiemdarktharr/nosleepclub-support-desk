@@ -26,7 +26,7 @@ test("QR decodes to the role picker and URL can be copied from any page", async 
   // A scan opens a fresh tab with no guide flags, as on another device.
   const scanned = await context.newPage();
   await scanned.goto(decoded!.data);
-  await expect(scanned.getByRole("heading", { name: "Đăng nhập", exact: true })).toBeVisible();
+  await expect(scanned.getByRole("heading", { name: "Bạn cần hỗ trợ gì hôm nay?" })).toBeVisible();
   await expect(scanned.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true })).toBeVisible();
   await expect(scanned.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toBeVisible();
 });
@@ -38,7 +38,7 @@ test("pages and QR dialog fit narrow phones and landscape without horizontal scr
   } });
   expect(response.ok()).toBe(true);
   const { data: row } = await response.json();
-  const routes = ["/", "/send-help", "/workspace", "/track", "/review", `/review?requestId=${row.id}`, `/requests/${row.id}`, "/audit", "/verify"];
+  const routes = ["/", "/login", "/identity/new", "/send-help", "/workspace", "/track", "/review", `/review?requestId=${row.id}`, `/requests/${row.id}`, "/audit", "/verify"];
   for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
     await page.setViewportSize(viewport);
     for (const route of routes) {

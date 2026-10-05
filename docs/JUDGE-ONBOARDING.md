@@ -10,7 +10,7 @@ Thay đổi có AI assistance, tiếp nối commit `1ed0954` trên nhánh `codex
 
 ## Trải nghiệm
 
-- Trang đầu mặc định Đăng nhập và không che form. Bấm **Hướng dẫn demo**, hoặc vào luồng Support/reviewer lần đầu để mở popup trắng bo tròn, viền cam, minh họa SVG với mũi tên đỏ; nội dung cuộn bên trong và nút **Đã hiểu** luôn ở cuối khung. Popup giữ focus bàn phím và khóa cuộn trang phía sau.
+- Trang đầu chỉ hiện hai lựa chọn vai trò. Chọn **Tôi cần hỗ trợ** → **Hướng dẫn & tùy chọn** → **Hướng dẫn demo**, hoặc vào luồng Support/reviewer lần đầu để mở popup trắng bo tròn, viền cam, minh họa SVG với mũi tên đỏ; nội dung cuộn bên trong và nút **Đã hiểu** luôn ở cuối khung. Popup giữ focus bàn phím và khóa cuộn trang phía sau.
 - Chọn **Tôi cần hỗ trợ**: mũi tên chỉ chế độ, ô chọn **Phòng ban**, danh mục, các ô nhập, **Gửi**, phản hồi, xác nhận, A/B/C/D, hỏi tiếp và lịch sử. Bước Phòng ban chỉ đánh dấu ô chọn này, không bao quanh hoặc trỏ vào trường mã nhân viên. Cả phòng ban và mã nhân viên đều bắt buộc trước khi gửi preview; mã được dùng để liên kết và tra cứu hồ sơ nhưng chưa xác thực danh tính. Để trống Phòng ban không tự chuyển bước. Các bước không có trên giao diện hiện tại được bỏ qua. Nút **Gửi** vẫn chạy preview; bước xác nhận mới lưu hồ sơ.
 - Chọn **Dành cho nhân viên**: hướng dẫn lọc danh sách, mở hồ sơ, đọc bằng chứng, nhập lý do, quyết định và kiểm tra nhật ký. Hướng dẫn không tự click, gửi request hoặc phê duyệt.
 - Có thể bấm **Tiếp theo** hoặc **Bỏ qua hướng dẫn**. Mỗi vai trò được ghi nhận ngay khi bắt đầu, nên thoát giữa chừng rồi quay lại cũng không lặp.
@@ -20,7 +20,7 @@ Người gửi có ID đã cấp có thể đăng nhập demo; “Nhân viên m�
 
 ## URL / QR
 
-Nút **URL / QR** ở đầu trái header trên mọi trang. Mã tạo ngay trong trình duyệt bằng `qrcode.react`; không gửi URL đến dịch vụ QR bên ngoài. Nội dung luôn là `window.location.origin + '/'`, không chứa mã hồ sơ, query hoặc fragment. Quét bằng camera điện thoại sẽ mở trang Đăng nhập cùng hai lối vào demo; nút Hướng dẫn demo cho phép mở onboarding khi cần.
+Nút **URL / QR** ở đầu trái header trên mọi trang. Mã tạo ngay trong trình duyệt bằng `qrcode.react`; không gửi URL đến dịch vụ QR bên ngoài. Nội dung luôn là `window.location.origin + '/'`, không chứa mã hồ sơ, query hoặc fragment. Quét bằng camera điện thoại sẽ mở trang chọn vai trò. **Tôi cần hỗ trợ** dẫn tới Đăng nhập; **Hướng dẫn & tùy chọn** chứa hướng dẫn demo và lối vào trải nghiệm không cần tài khoản.
 
 Popup có URL, nút sao chép, mở trang chọn vai trò và đóng. Nếu clipboard bị chặn, ô URL được chọn để sao chép thủ công. URL localhost chỉ hoạt động trên máy đang chạy; quét từ điện thoại cần truy cập bản triển khai hoặc địa chỉ mạng có thể kết nối. Không hardcode URL production và không thay đổi cấu hình deployment.
 

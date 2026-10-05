@@ -29,6 +29,8 @@ test("record a raw demo and verify reviewer override, stop and audit", async ({
     await page
       .getByRole("link", { name: "Tôi cần hỗ trợ", exact: true })
       .click();
+    await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
+    await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
     await fillEmployeeIdentity(page);
     await page
       .getByLabel("Mô tả yêu cầu", { exact: true })

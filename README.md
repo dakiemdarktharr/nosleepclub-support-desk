@@ -20,8 +20,8 @@ README này mô tả các luồng trong repository hiện tại. Bản trên web
 ## Bắt đầu sử dụng
 
 1. Mở [website](https://vng-support.vercel.app).
-2. Nếu cần, mở **Hướng dẫn sử dụng** hoặc **Hướng dẫn demo**. Popup cũng xuất hiện lần đầu khi vào luồng hỗ trợ demo; bấm **Đã hiểu** để tiếp tục.
-3. Đăng nhập bằng ID đã cấp, hoặc dùng **Tôi cần hỗ trợ** / **Dành cho nhân viên** để trải nghiệm demo không cần tài khoản. **Hướng dẫn demo** mở onboarding; màn hình đăng nhập không bị hộp hướng dẫn che khi vừa vào.
+2. Chọn **Tôi cần hỗ trợ** hoặc **Dành cho nhân viên** tùy việc cần làm.
+3. **Tôi cần hỗ trợ** mở màn hình đăng nhập bằng ID; **Dành cho nhân viên** mở trang tiếp nhận. Trong màn hình đăng nhập, mở **Hướng dẫn & tùy chọn** để xem hướng dẫn, theo dõi đơn cấp ID hoặc **Trải nghiệm demo** không cần tài khoản.
 
 Mũi tên hướng dẫn sẽ chỉ các nút và ô cần thao tác khi bạn vào từng vai trò lần đầu. Quay lại cùng vai trò trong tab hiện tại sẽ tiếp tục sử dụng bình thường. Đóng tab và mở lại website sẽ bắt đầu lượt hướng dẫn mới.
 
@@ -91,7 +91,7 @@ Reviewer có bộ lọc **Hàng đợi chuyển tiếp**: **Ngoài quy định**
 
 | Trang | Công dụng |
 | --- | --- |
-| [Trang đầu](https://vng-support.vercel.app/) | Đăng nhập, mở demo và hướng dẫn |
+| [Trang đầu](https://vng-support.vercel.app/) | Chọn gửi hỗ trợ hoặc vào trang nhân viên |
 | [Gửi yêu cầu](https://vng-support.vercel.app/send-help) | Nhập vấn đề và bắt đầu hội thoại |
 | [Theo dõi yêu cầu](https://vng-support.vercel.app/track) | Tra cứu bằng mã hoặc liên kết |
 | [Yêu cầu cần xử lý](https://vng-support.vercel.app/review) | Không gian human reviewer |
@@ -102,7 +102,7 @@ Các route mới trong mã nguồn: `/identity/new` (xin cấp ID), `/identity/t
 
 ## Đăng nhập, cấp ID và phạm vi quyền
 
-Trang đầu mặc định **Đăng nhập**, chỉ có ô ID, không có mật khẩu. Theo yêu cầu demo hiện tại, ID đã cấp và còn hiệu lực được vào gửi hỗ trợ mà không cần OTP. ID sai, chưa cấp hoặc đã bị IT vô hiệu hóa bị từ chối. Đơn bị từ chối không tạo tài khoản. **Biết ID không chứng minh danh tính**: phiên này được ghi `demo`, không có quyền duyệt ID hay thực thi tài nguyên.
+Chọn **Tôi cần hỗ trợ** ở trang đầu để mở **Đăng nhập** (`/login`), chỉ có ô ID, không có mật khẩu. Chọn **Màn hình chính** để quay lại hai lựa chọn vai trò. Theo yêu cầu demo hiện tại, ID đã cấp và còn hiệu lực được vào gửi hỗ trợ mà không cần OTP. ID sai, chưa cấp hoặc đã bị IT vô hiệu hóa bị từ chối. Đơn bị từ chối không tạo tài khoản. **Biết ID không chứng minh danh tính**: phiên này được ghi `demo`, không có quyền duyệt ID hay thực thi tài nguyên.
 
 Người xử lý ID mở **Dành cho người xử lý ID → Xác minh OTP để dùng quyền IT**. Mã gửi tới kênh do operator xác minh và cấu hình trước, không lấy từ form công khai. Mã dùng một lần, hết hạn sau 5 phút, tối đa 5 lần thử; phiên HttpOnly có thời hạn 8 giờ. Vai trò `identity-admin` phải được operator cấp độc lập; tên job, level CSV và header tự khai báo không cấp quyền này. Chưa có relay/kênh thì xác minh IT bị chặn. Đăng xuất ở trang gửi hỗ trợ khi dùng máy chung.
 

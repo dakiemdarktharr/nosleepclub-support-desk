@@ -124,7 +124,7 @@ node scripts/identity-bootstrap.mjs --file C:\private\identity-operator.json --d
 ```
 
 Script không sửa account đã tồn tại: gặp trùng ID thì dừng. Script tạo profile khởi tạo, tài khoản `identity-admin`, kênh đã xác minh và audit trong cùng transaction. Profile tên IT không tự tạo role ở luồng đăng ký công khai. Không chạy script bằng dữ liệu nhân viên thật trong kiểm thử tự động. Các thay đổi/revoke account, role hoặc kênh sau bootstrap cần operator có thẩm quyền thực hiện qua quy trình MongoDB có audit; chưa có UI quản trị các thay đổi này. Session luôn kiểm tra lại `ACTIVE` và role từ MongoDB nên vô hiệu hóa/thu hồi vai trò có hiệu lực ở request tiếp theo.
-4. Tại Đăng nhập, mở “Dành cho người xử lý ID”, chọn OTP rồi xác minh. Chọn **Cấp ID nhân viên**; xác minh nhân sự ngoài hệ thống trước khi duyệt. Hệ thống không tự biến họ tên trong đơn thành danh tính đáng tin cậy.
+4. Từ trang đầu chọn **Tôi cần hỗ trợ** để mở Đăng nhập. Mở “Dành cho người xử lý ID”, chọn OTP rồi xác minh. Chọn **Cấp ID nhân viên**; xác minh nhân sự ngoài hệ thống trước khi duyệt. Hệ thống không tự biến họ tên trong đơn thành danh tính đáng tin cậy.
 
 ### Trình diễn và giới hạn
 

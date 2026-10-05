@@ -88,7 +88,8 @@ test("structured sender tour points to the fields before the description", async
 });
 
 test("explicit demo guide opens a bounded scrollable introduction without blocking default login", async ({ page }, info) => {
-  await page.goto("/");
+  await page.goto("/login");
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
   await page.getByRole("button", { name: "Hướng dẫn demo", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Bắt đầu cùng VNG Support" });
   await expect(dialog).toBeVisible();
@@ -97,9 +98,10 @@ test("explicit demo guide opens a bounded scrollable introduction without blocki
   await expect(dialog.getByRole("img")).toHaveCount(3);
   const scroll = page.getByLabel("Nội dung hướng dẫn sử dụng", { exact: true });
   expect(await scroll.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+  const lockedScrollY = await page.evaluate(() => scrollY);
   await scroll.evaluate((element) => { element.scrollTop = element.scrollHeight; });
   await expect(dialog.getByRole("button", { name: "Đã hiểu", exact: true })).toBeInViewport();
-  expect(await page.evaluate(() => scrollY)).toBe(0);
+  expect(await page.evaluate(() => scrollY)).toBe(lockedScrollY);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await dialog.getByRole("button", { name: "Đã hiểu", exact: true }).focus();
   await page.keyboard.press("Tab");
@@ -108,16 +110,17 @@ test("explicit demo guide opens a bounded scrollable introduction without blocki
   await page.screenshot({ path: `artifacts/judge-intro-${info.project.name}.png` });
   await dialog.getByRole("button", { name: "Đã hiểu", exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  await expect(page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Đăng nhập", exact: true })).toBeVisible();
   await page.reload();
   await expect(dialog).not.toBeVisible();
 });
 
 test("sender follows actual controls, sees feedback and does not repeat after returning home", async ({ page }, info) => {
-  await page.goto("/");
+  await page.goto("/login");
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
   await page.getByRole("button", { name: "Hướng dẫn demo", exact: true }).click();
   await page.getByRole("button", { name: "Đã hiểu", exact: true }).click();
-  await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
+  await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
   const tip = page.getByRole("region", { name: "Hướng dẫn thao tác" });
   await expect(tip).toContainText("1. Chọn cách gửi");
   await page.getByRole("button", { name: "Mô tả vấn đề", exact: true }).click();
@@ -149,6 +152,8 @@ test("sender follows actual controls, sees feedback and does not repeat after re
   await expect(tip).not.toBeVisible();
   await page.getByRole("link", { name: "VNG Support", exact: true }).click();
   await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
+  await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
   await expect(tip).not.toBeVisible();
   await page.reload();
   await expect(tip).not.toBeVisible();
@@ -160,14 +165,17 @@ test("reviewer tour is independent and never executes a decision automatically",
   } });
   expect(response.ok()).toBe(true);
   const { data: row } = await response.json();
-  await page.goto("/");
+  await page.goto("/login");
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
   await page.getByRole("button", { name: "Hướng dẫn demo", exact: true }).click();
   await page.getByRole("button", { name: "Đã hiểu", exact: true }).click();
-  await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
+  await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
   const tip = page.getByRole("region", { name: "Hướng dẫn thao tác" });
   await expect(tip).toBeVisible();
   await page.getByRole("link", { name: "VNG Support", exact: true }).click();
   await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
+  await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
   await expect(tip).not.toBeVisible();
   await page.getByRole("link", { name: "VNG Support", exact: true }).click();
   await page.getByRole("link", { name: "Dành cho nhân viên", exact: true }).click();
@@ -192,16 +200,18 @@ test("reviewer tour is independent and never executes a decision automatically",
 });
 
 test("a fresh tab offers the introduction and starts the sender tour again", async ({ page, context }) => {
-  await page.goto("/");
+  await page.goto("/login");
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
   await page.getByRole("button", { name: "Hướng dẫn demo", exact: true }).click();
   await page.getByRole("button", { name: "Đã hiểu", exact: true }).click();
   await page.close();
   const fresh = await context.newPage();
-  await fresh.goto("/");
+  await fresh.goto("/login");
+  await fresh.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
   await expect(fresh.getByRole("heading", { name: "Đăng nhập", exact: true })).toBeVisible();
   await fresh.getByRole("button", { name: "Hướng dẫn demo", exact: true }).click();
   await expect(fresh.getByRole("dialog", { name: "Bắt đầu cùng VNG Support" })).toBeVisible();
   await fresh.getByRole("button", { name: "Đã hiểu", exact: true }).click();
-  await fresh.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
+  await fresh.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
   await expect(fresh.getByRole("region", { name: "Hướng dẫn thao tác" })).toContainText("1. Chọn cách gửi");
 });

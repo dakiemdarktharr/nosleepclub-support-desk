@@ -187,11 +187,11 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
         <div className="guide-modal-scroll" tabIndex={0} aria-label="Nội dung hướng dẫn sử dụng">
           <section>
             <h3>Đăng nhập và cấp ID</h3>
-            <p>Trang đầu mặc định Đăng nhập bằng ID đã được IT cấp. Truy cập bằng ID là demo, chưa xác minh danh tính. Chọn “Nhân viên mới?” để gửi họ tên, job và phạm vi quyền; lưu liên kết theo dõi. Chỉ sau khi IT duyệt mới có ID chính thức. Quyền xử lý ID cần OTP qua kênh do IT cấu hình và vai trò riêng.</p>
+            <p>Chọn “Tôi cần hỗ trợ” ở trang đầu để đăng nhập bằng ID đã được IT cấp. Truy cập bằng ID là demo, chưa xác minh danh tính. Chọn “Nhân viên mới?” để gửi họ tên, job và phạm vi quyền; lưu liên kết theo dõi. Chỉ sau khi IT duyệt mới có ID chính thức. Quyền xử lý ID cần OTP qua kênh do IT cấu hình và vai trò riêng.</p>
           </section>
           <section>
             <h3>1. Tôi cần hỗ trợ — trải nghiệm người gửi</h3>
-            <p>Chọn <strong>Tôi cần hỗ trợ</strong> ở trang đầu. Chọn phòng ban và nhập mã nhân viên (cả hai đều bắt buộc); mã dùng để liên kết, tra cứu hồ sơ nhưng chưa xác thực danh tính. Viết vấn đề hoặc chọn danh mục, điền thông tin rồi bấm <strong>Gửi</strong>. Ví dụ: “VPN không kết nối”.</p>
+            <p>Chọn <strong>Tôi cần hỗ trợ</strong> ở trang đầu rồi đăng nhập; hoặc mở <strong>Hướng dẫn & tùy chọn → Trải nghiệm demo</strong> để thử bằng dữ liệu giả lập. Chọn phòng ban và nhập mã nhân viên (cả hai đều bắt buộc); mã dùng để liên kết, tra cứu hồ sơ nhưng chưa xác thực danh tính. Viết vấn đề hoặc chọn danh mục, điền thông tin rồi bấm <strong>Gửi</strong>. Ví dụ: “VPN không kết nối”.</p>
             <GuideIllustration kind="sender" />
             <p>Đọc phản hồi, sửa nếu cần rồi bấm <strong>Xác nhận và gửi yêu cầu</strong>. Với câu hỏi trò chuyện, bấm <strong>Lưu và tiếp tục trò chuyện</strong> để mở trang theo dõi.</p>
             <GuideIllustration kind="feedback" />

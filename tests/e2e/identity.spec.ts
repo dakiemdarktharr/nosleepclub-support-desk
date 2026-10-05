@@ -2,14 +2,21 @@ import { test, expect } from "./fixtures";
 const id = "bbbbbbbb-bbbb-4bbb-abbb-bbbbbbbbbbbb";
 const scope = { environment: "sandbox", resource: "project", operation: "read", target: "project-demo" };
 const profile = { id, version: 1, name: "Job giả lập Alpha", scopes: [scope], active: true };
-test("login is the default with no password; existing Support and judge routes remain discoverable", async ({ page }) => {
+test("home offers only two roles; support opens password-free login and optional tools", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator("main a")).toHaveCount(2);
+  await expect(page.getByLabel("ID nhân viên", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toHaveAttribute("href", "/review");
+  await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("heading", { name: "Đăng nhập", exact: true })).toBeVisible();
   await expect(page.getByLabel("ID nhân viên", { exact: true })).toBeVisible();
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Nhân viên mới?" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true })).toHaveAttribute("href", "/send-help");
-  await expect(page.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toHaveAttribute("href", "/review");
+  await expect(page.getByText("Dùng ID đã được IT cấp", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("Truy cập bằng ID là chế độ demo", { exact: false })).toHaveCount(0);
+  await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
+  await expect(page.getByRole("link", { name: "Theo dõi đơn cấp ID" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 test("without Mongo the real API reports unavailable and does not create a demo account", async ({ request }) => {
