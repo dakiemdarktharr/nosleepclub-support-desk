@@ -22,7 +22,7 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
   const [intro, setIntro] = useState(false);
   const [guide, setGuide] = useState<Guide | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
-  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [viewport, setViewport] = useState({ width: 0, height: 0, headerBottom: 0 });
 
   const remember = useCallback((key: string) => {
     seen.current.add(key);
@@ -125,7 +125,9 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
       const rect = target.getBoundingClientRect();
       const value = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
       setPosition((previous) => JSON.stringify(previous) === JSON.stringify(value) ? previous : value);
-      setViewport((previous) => previous.width === innerWidth && previous.height === innerHeight ? previous : { width: innerWidth, height: innerHeight });
+      const headerBottom = Math.max(0, content.current?.querySelector<HTMLElement>(".site-header")?.getBoundingClientRect().bottom ?? 0);
+      setViewport((previous) => previous.width === innerWidth && previous.height === innerHeight && previous.headerBottom === headerBottom
+        ? previous : { width: innerWidth, height: innerHeight, headerBottom });
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
     const advance = (event: Event) => {
@@ -148,6 +150,8 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
     observer.observe(content.current, { subtree: true, childList: true, attributes: true });
     const resize = new ResizeObserver(schedule);
     resize.observe(content.current);
+    const header = content.current.querySelector<HTMLElement>(".site-header");
+    if (header) resize.observe(header);
     window.addEventListener("resize", schedule);
     window.addEventListener("scroll", schedule, true);
     // Capture before React disables a submitted form for its pending request.
@@ -165,6 +169,9 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
   const step = guide && guideStages[guide.stage].steps[guide.index];
   const dockTop = position ? position.top + Math.min(position.height, 200) / 2 > viewport.height / 2 : false;
   const tipLeft = position ? Math.max(12, Math.min(position.left, viewport.width - 332)) : 12;
+  // Keep navigation reachable while the tour is open, including a wrapped mobile header.
+  const tipTop = viewport.headerBottom + 12;
+  const tipMaxHeight = Math.max(0, Math.min(viewport.height * 0.4, viewport.height - tipTop - 12));
   const targetX = position ? Math.max(12, Math.min(viewport.width - 12, position.left + position.width / 2)) : 0;
   const targetY = position ? Math.max(8, Math.min(viewport.height - 8, dockTop ? position.top : position.top + position.height)) : 0;
   const last = guide ? guide.index === guideStages[guide.stage].steps.length - 1 : false;
@@ -217,9 +224,9 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
           <div className="guide-target-ring" style={{ left: position.left - 4, top: position.top - 4, width: position.width + 8, height: position.height + 8 }} />
           <svg className="guide-arrow" aria-hidden="true" width={viewport.width} height={viewport.height}>
             <defs><marker id="live-guide-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626" /></marker></defs>
-            <path d={`M ${tipLeft + 160} ${dockTop ? 12 + (tip.current?.offsetHeight ?? 210) : viewport.height - 12 - (tip.current?.offsetHeight ?? 210)} Q ${targetX + 45} ${targetY + (dockTop ? -50 : 50)} ${targetX} ${targetY}`} stroke="#dc2626" strokeWidth="4" fill="none" strokeLinecap="round" markerEnd="url(#live-guide-arrow)" />
+            <path d={`M ${tipLeft + 160} ${dockTop ? tipTop + (tip.current?.offsetHeight ?? 210) : viewport.height - 12 - (tip.current?.offsetHeight ?? 210)} Q ${targetX + 45} ${targetY + (dockTop ? -50 : 50)} ${targetX} ${targetY}`} stroke="#dc2626" strokeWidth="4" fill="none" strokeLinecap="round" markerEnd="url(#live-guide-arrow)" />
           </svg>
-          <aside ref={tip} className="guide-tip" role="region" aria-label="Hướng dẫn thao tác" style={{ left: tipLeft, ...(dockTop ? { top: 12 } : { bottom: 12 }) }}>
+          <aside ref={tip} className="guide-tip" role="region" aria-label="Hướng dẫn thao tác" style={{ left: tipLeft, maxHeight: tipMaxHeight, ...(dockTop ? { top: tipTop } : { bottom: 12 }) }}>
             <p className="eyebrow">{guideStages[guide.stage].role === "sender" ? "NGƯỜI GỬI" : "HUMAN REVIEWER"}</p>
             <div aria-live="polite"><h3>{step.title}</h3><p>{step.text}</p></div>
             <div className="guide-tip-actions">

@@ -1,6 +1,28 @@
 import { expect, freshTest as test, type Page } from "./fixtures";
 import { employeeIdentity, fillEmployeeIdentity } from "./intake-helpers";
 
+for (const viewport of [{ width: 1280, height: 600 }, { width: 844, height: 390 }, { width: 390, height: 844 }]) {
+  test(`tour leaves header navigation reachable at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/send-help");
+    await page.getByRole("button", { name: "Đã hiểu", exact: true }).click();
+    const tip = page.getByRole("region", { name: "Hướng dẫn thao tác" });
+    await expect(tip).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    const home = page.getByRole("link", { name: "VNG Support", exact: true });
+    await home.scrollIntoViewIfNeeded();
+    await expect.poll(async () => {
+      const header = await page.locator(".site-header").boundingBox();
+      const box = await tip.boundingBox();
+      return header && box ? box.y >= header.y + header.height : false;
+    }).toBe(true);
+    // A real click must work with the tour open, without force or dismissing it.
+    await home.click({ timeout: 5000 });
+    await expect(page.getByRole("main", { name: "Chọn vai trò" })).toBeVisible();
+    await expect(tip).not.toBeVisible();
+  });
+}
+
 async function departmentGuideGeometry(page: Page) {
   return page.evaluate(() => {
     const department = document.querySelector('select[aria-label="Phòng ban"]');
