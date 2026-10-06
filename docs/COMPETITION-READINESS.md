@@ -1,5 +1,11 @@
 # VNG Support — bằng chứng readiness ngày 07/10/2026
 
+**Bản ghi lịch sử lượt đầu.** Hai commit của lượt này sau đó đã được chủ repo
+cho phép push thành HEAD `e2cc414`; CI của HEAD đó đã đạt. Lượt kỹ thuật tiếp
+theo dùng chính SHA này làm base và được báo riêng tại
+[TECHNICAL-READINESS.md](TECHNICAL-READINESS.md). Không đọc bảng trước/sau bên
+dưới như kết quả của HEAD mới hơn.
+
 **Chưa đủ cơ sở kết luận 9,5/10.** Lượt này sửa lỗi có regression, bổ sung
 đường demo/audit, privacy và protocol thu thập. Exact-match development vẫn
 56/128. Held-out độc lập và bằng chứng ba người dùng thực tế **NOT COLLECTED**.

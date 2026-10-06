@@ -22,6 +22,7 @@ npm run typecheck
 npm test
 node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs
 npm run build
+npm run test:persistence
 $env:SUPPORT_E2E_PRODUCTION='true'
 npm run test:e2e -- --project=chromium
 npm run test:e2e -- --project=mobile
@@ -58,6 +59,21 @@ npx vitest run tests/support-verify.test.ts
 node scripts/development-report.mjs
 ```
 
+Xuất báo cáo từng case và so sánh hai lượt (giữ baseline riêng trước khi sửa):
+
+```powershell
+node scripts/development-report.mjs artifacts/original-fixture-evaluation.json --out artifacts/case-report.json
+node scripts/development-report.mjs artifacts/original-fixture-evaluation.json --baseline artifacts/technical-baseline.json --out artifacts/comparison-report.json
+```
+
+`--out` từ chối ghi đè file có sẵn. Mỗi case có expected/actual, rule, evidence,
+reason, missing fields và diagnostic signals; signal không phải kết luận của
+chuyên gia. Metadata thêm dataset ID/hash/split và evaluator hash/dirty. So sánh
+từ chối nhãn/input khác nhau khi có digest; baseline cũ thiếu digest được ghi
+rõ giới hạn. Trace có thể chứa tên/PII chưa được nhận diện trong fixture cũ:
+chỉ giữ local, không stage hay công bố nếu chưa rà soát. Xem
+[báo cáo mới và danh sách adjudication](docs/TECHNICAL-READINESS.md).
+
 Test dùng API route + readback mock/memory; ghi SHA, runtime digest/dirty, policy,
 Node và môi trường trong artifact local. Script in confusion matrix, coverage,
 exact-match, FNR, unnecessary escalation và các nhóm lỗi. Ground Truth giữ nguyên.
@@ -68,6 +84,10 @@ Policy `support-guidance-v5.8` đồng bộ alias dữ kiện với bộ tách s
 giữ approval context có giới hạn và không nhầm yêu cầu quyền thành artefact.
 Không đổi authority/risk gate hoặc quota. Bump version để preview/cache cũ không
 được dùng lại. Mở rộng redaction theo [inventory](docs/PRIVACY-INVENTORY.md).
+
+Version v5.9 chỉ vô hiệu preview/cache sau sửa extraction: giữ mã approval
+nhiều đoạn nguyên vẹn và không coi câu cảm ơn hoàn chỉnh là tác vụ riêng.
+Rule, quota, safety threshold và registry approval không đổi.
 
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
@@ -85,6 +105,19 @@ Policy `support-guidance-v5.6` đưa nhận diện ý định freeform của pro
 Policy `support-guidance-v5.7` kiểm tra tổ hợp route/catalog của model, bỏ field tùy chọn rỗng khỏi phân tích và đánh giá riêng câu tiếp nối có rủi ro/thao tác nghiệp vụ. Phủ định trong câu cũ không được triệt tiêu rủi ro câu mới. Preview/answer cache phiên bản cũ không được dùng lại. Xem [regression và giới hạn kiểm chứng](docs/INTENT-REVIEW-FIXES.md).
 
 ## Kiểm tra Mongo trong môi trường thử nghiệm riêng
+
+`npm run test:persistence` chạy bài integration có opt-in. Khi chưa cấu hình
+`SUPPORT_TEST_MONGO_URI` và `SUPPORT_TEST_MONGO_ACK`, test **skip** với
+`persistenceVerification=NOT_PERFORMED`, không kết nối Mongo. Cấu hình thiếu
+một phần/không an toàn hoặc test đã opt-in nhưng thất bại là **fail**, không skip.
+Không có memory fallback. Cần build trước, port 3227 trống và Mongo disposable
+loopback đã được operator xác nhận như hướng dẫn bên dưới.
+
+Harness hiện đọc lại request/audit sau restart app, thực hiện STOP/CAS, restart
+app lần nữa và đối chiếu quyết định reviewer/audit nguyên vẹn với Mongo. Chỉ khi
+mọi assertion đạt mới trả `APP_RESTART_VERIFIED`. Không restart mongod, không
+chứng minh identity transaction/replica set hay production durability. Lượt
+kiểm tra này không có Mongo test: xem [bằng chứng hiện tại](docs/TECHNICAL-READINESS.md).
 
 Ưu tiên harness có guard và tự restart tiến trình tại [hướng dẫn kiểm tra persistence](docs/FEEDBACK-EVIDENCE-REVIEW.md#reproducible-mongo-evidence): `node scripts/mongo-restart-smoke.mjs`. Harness chỉ chấp nhận Mongo loopback trên instance disposable được khai báo rõ, database mới do script chọn, không có `.env` local, model mock và budget 0. Chưa có kết quả live từ harness trong lượt sửa này. `durable=true` vẫn là metadata của adapter; trường health `persistenceVerification=NOT_PERFORMED` nói rõ endpoint không kiểm tra restart.
 
