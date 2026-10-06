@@ -1,7 +1,7 @@
 import type { Decision, RiskSignal } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.7";
+export const POLICY_VERSION = "support-guidance-v5.8";
 export const demoResourceLimits = {
   gpuCount: 2,
   gpuTypes: ["t4", "a10"],

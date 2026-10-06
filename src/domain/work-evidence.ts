@@ -63,6 +63,9 @@ export const workKinds = profiles.map((profile) => profile.kind) as WorkKind[];
 
 export function workEvidencePlan(question: string): WorkEvidence | undefined {
   const text = normalize(question);
+  // Access to an artifact is not a request to author/analyse it. Keep approval
+  // and missing access facts in the support policy, even if the purpose mentions email/meetings.
+  if (/\b(?:cap|xin|cho|need|request|grant|add)\b[^.;\n]{0,70}\b(?:quyen|access|permission)\b/.test(text)) return;
   // A resource named "inventory" or an email login issue is not an analysis task.
   if (!/so sanh|tom tat|du bao|toi uu|viet |sua loi|fix |debug|cap nhat|tim nguyen nhan|phan tich|kiem tra|hay cho biet|compare|summarize|forecast|optimi[sz]e|draft|update|analy[sz]e|review/.test(text)) return;
   const profile = profiles.find((item) => item.match.test(text));

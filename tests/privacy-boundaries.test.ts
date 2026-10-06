@@ -16,6 +16,32 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 const input = (rawText: string) => ({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
 const hidden = "SYNTHETIC_HIDDEN_987";
 
+const extendedPrivacyCases = [
+  ['{"otp":"123456"}', "123456", "VERIFICATION_CODE"],
+  ['{"o\u200ftp":"123456"}', "123456", "VERIFICATION_CODE"],
+  ["ｏｔｐ: １２３４５６", "123456", "VERIFICATION_CODE"],
+  ["mã OTP: 123 456", "123 456", "VERIFICATION_CODE"],
+  ["CCCD: 000-000-000-000", "000-000-000-000", "LABELED_IDENTITY_NUMBER"],
+  ["synthetic.person+demo@example.invalid", "synthetic.person+demo@example.invalid", "EMAIL"],
+  ["employee ID: EMP-SYNTHETIC-99", "EMP-SYNTHETIC-99", "LABELED_EMPLOYEE_ID"],
+] as const;
+it.each(extendedPrivacyCases)("masks bounded synthetic PII/OTP through model boundary, storage and audit: %s", async (text, value, marker) => {
+  const extraction = vi.spyOn(model, "extractWithModel");
+  const row = await submitSupport(input(`VPN lỗi; ${text}`));
+  expect(redact(text).markers).toContain(marker);
+  expect(extraction).toHaveBeenCalled();
+  expect(JSON.stringify(extraction.mock.calls)).not.toContain(value);
+  expect(JSON.stringify(row)).not.toContain(value);
+  expect(JSON.stringify(await getSupportRequest(row.id))).not.toContain(value);
+  expect(row.events.length).toBeGreaterThan(0);
+});
+it.each([
+  "Nhân Viên Giả Lập Beta", "địa chỉ: đường GIẢ LẬP, khu DEMO",
+  "unlabelled-id-demo42", "OTP: 12345678901", "CCCD: 000-000-000-0000",
+])("documents unsupported formats without promising anonymization: %s", (text) => {
+  expect(redact(text).text).toBe(text);
+});
+
 it.each(["client_secret", "access_token", "refresh_token", "aws_session_token", "private_key"])("masks JSON %s before model extraction, stored input and audit", async (key) => {
   const extraction = vi.spyOn(model, "extractWithModel");
   const request = await submitSupport(input(`VPN lỗi; {"${key}":"${hidden}"}`));

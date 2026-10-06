@@ -2,7 +2,7 @@
 export function redact(text: string): { text: string; markers: string[] } {
   const markers = new Set<string>();
   // Match the same Unicode forms that extraction understands, before any boundary.
-  let safe = text.normalize("NFKC").replace(/[\u200B-\u200D\u2060\uFEFF]/g, "");
+  let safe = text.normalize("NFKC").replace(/[\u200B-\u200F\u2060\uFEFF]/g, "");
   const replace = (pattern: RegExp, marker: string, replacement: string) => {
     safe = safe.replace(pattern, () => {
       markers.add(marker);
@@ -27,7 +27,7 @@ export function redact(text: string): { text: string; markers: string[] } {
     },
   );
   safe = safe.replace(
-    /((?:mã xác minh|ma xac minh|mã otp|ma otp|\botp|verification code|one[ -]time code)\s*(?::|=|là|la|is)?\s*)[0-9]{4,10}\b/gi,
+    /((?:mã xác minh|ma xac minh|mã otp|ma otp|\botp|verification code|one[ -]time code)\s*["']?\s*(?::|=|là|la|is)?\s*["']?)[0-9](?:[ -]?[0-9]){3,9}(?![ -]*[0-9])/gi,
     (_, prefix: string) => {
       markers.add("VERIFICATION_CODE");
       return prefix + "[REDACTED_VERIFICATION_CODE]";
@@ -66,7 +66,7 @@ export function redact(text: string): { text: string; markers: string[] } {
   // Only explicit labels and bounded formats: unlabeled numbers may be ticket
   // IDs/resources. These masks neither validate identity nor anonymize all PII.
   safe = safe.replace(
-    /((?:\bCCCD|căn cước(?: công dân)?|can cuoc(?: cong dan)?)\s*(?:[:=]|là|la|is)?\s*)[0-9]{12}(?![0-9])/gi,
+    /((?:\bCCCD|căn cước(?: công dân)?|can cuoc(?: cong dan)?)\s*["']?\s*(?:[:=]|là|la|is)?\s*["']?)[0-9](?:[ .-]?[0-9]){11}(?![ .-]*[0-9])/gi,
     (_, prefix: string) => {
       markers.add("LABELED_IDENTITY_NUMBER");
       return prefix + "[REDACTED_IDENTITY_NUMBER]";
@@ -77,6 +77,15 @@ export function redact(text: string): { text: string; markers: string[] } {
     (_, prefix: string) => {
       markers.add("LABELED_PHONE_NUMBER");
       return prefix + "[REDACTED_PHONE_NUMBER]";
+    },
+  );
+  replace(/\b[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)+\b/gi,
+    "EMAIL", "[REDACTED_EMAIL]");
+  safe = safe.replace(
+    /((?:employee[ _-]?id|mã nhân viên|ma nhan vien)\s*["']?\s*[:=]\s*["']?)[a-z0-9][a-z0-9_-]{2,63}\b/gi,
+    (_, prefix: string) => {
+      markers.add("LABELED_EMPLOYEE_ID");
+      return prefix + "[REDACTED_EMPLOYEE_ID]";
     },
   );
   return { text: safe, markers: [...markers] };

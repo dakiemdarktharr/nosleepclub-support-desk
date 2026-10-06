@@ -11,6 +11,16 @@ import type {
 import { redact } from "./redaction";
 import { isEmployeeIdentityField } from "./employee-identity";
 
+// One vocabulary for extracting a labelled fact and keeping it with its request.
+const factLabels: Record<string, string> = {
+  resourceScope: "resourceScope|resource scope|database name|database|db|cơ sở dữ liệu|database đích",
+  targetSystem: "targetSystem|target system|ứng dụng|hệ thống",
+  namespace: "namespace", workload: "workload|pod|deployment", cluster: "cluster|cụm",
+  source: "source|nguồn", target: "target|đích", reason: "reason|lý do|mục đích",
+  operation: "operation|thao tác", repository: "repository|repo", pipeline: "pipeline",
+  provider: "provider|nhà cung cấp",
+};
+
 export function normalize(text: string) {
   return text
     .normalize("NFKC")
@@ -405,22 +415,7 @@ export function extractText(rawText: string): Extraction {
     if (match) entities[key] = match[1];
   }
   // Explicit labelled facts are extracted without an LLM; preserve original resource spelling.
-  const labels: Record<string, string> = {
-    resourceScope:
-      "resourceScope|resource scope|database name|database|db|cơ sở dữ liệu|database đích",
-    targetSystem: "targetSystem|target system|ứng dụng|hệ thống",
-    namespace: "namespace",
-    workload: "workload|pod|deployment",
-    cluster: "cluster|cụm",
-    source: "source|nguồn",
-    target: "target|đích",
-    reason: "reason|lý do|mục đích",
-    operation: "operation|thao tác",
-    repository: "repository|repo",
-    pipeline: "pipeline",
-    provider: "provider|nhà cung cấp",
-  };
-  for (const [key, label] of Object.entries(labels)) {
+  for (const [key, label] of Object.entries(factLabels)) {
     const match = rawText.match(
       new RegExp(`(?:^|[;\\n,]|\\s)(?:${label})\\s*[:=]\\s*([^;\\n,]+)`, "i"),
     );
@@ -692,11 +687,15 @@ export function extractIntake(
       // Risk detection still evaluates the full original input and every value.
       const factLabel =
         label &&
-        [...allFields].some((field) => normalize(field) === normalize(label));
+        [...allFields, ...Object.values(factLabels).flatMap((value) => value.split("|"))]
+          .some((field) => normalize(field) === normalize(label));
       // These complete, bounded questions add no operation or scope. Do not
       // discard arbitrary unknown fragments, or extra actions hidden in prose.
       const guidanceFollowup = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) tu dau|ban huong dan(?: giup toi)? duoc khong)[?.!]*$/.test(normalize(fragment));
-      if ((factLabel || guidanceFollowup) && requests.length)
+      // A complete approval claim adds provenance, not a task or verified authority.
+      // Anchor both ends so a second operation cannot hide behind this metadata.
+      const approvalContext = /^(?:manager|lead|team lead|producer)(?: cua (?:toi|minh))? (?:da |has |already )?(?:confirm )?approv(?:e|ed|al)(?: (?:o|tai|trong|qua|tren|in|at|on|via))?(?: (?:ticket|request|thread|comment))? (?:[a-z][a-z0-9]{1,12} \d{2,10}|slack|email)[.!]?$/.test(normalize(fragment));
+      if ((factLabel || guidanceFollowup || approvalContext) && requests.length)
         requests[requests.length - 1] += `; ${fragment}`;
       else requests.push(fragment);
       return requests;

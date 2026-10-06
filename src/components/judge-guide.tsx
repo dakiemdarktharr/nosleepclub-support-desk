@@ -167,7 +167,17 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
   }, [guide, next]);
 
   const step = guide && guideStages[guide.stage].steps[guide.index];
-  const dockTop = position ? position.top + Math.min(position.height, 200) / 2 > viewport.height / 2 : false;
+  // On narrow screens reserve space for the bottom tip so native scrolling can
+  // reveal *any* control, including history links outside the current tour step.
+  const mobileTipSpace = guide && viewport.width > 0 && viewport.width <= 760 ? viewport.height * 0.4 + 24 : 0;
+  useEffect(() => {
+    if (!mobileTipSpace) return;
+    const root = document.documentElement;
+    const previous = root.style.scrollPaddingBottom;
+    root.style.scrollPaddingBottom = `${mobileTipSpace}px`;
+    return () => { root.style.scrollPaddingBottom = previous; };
+  }, [mobileTipSpace]);
+  const dockTop = position && viewport.width > 760 ? position.top + Math.min(position.height, 200) / 2 > viewport.height / 2 : false;
   const tipLeft = position ? Math.max(12, Math.min(position.left, viewport.width - 332)) : 12;
   // Keep navigation reachable while the tour is open, including a wrapped mobile header.
   const tipTop = viewport.headerBottom + 12;
@@ -178,7 +188,7 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <div ref={content} inert={intro ? true : undefined}>{children}</div>
+      <div ref={content} inert={intro ? true : undefined} style={mobileTipSpace ? { paddingBottom: mobileTipSpace } : undefined}>{children}</div>
       <dialog ref={dialog} className="guide-modal" aria-labelledby="judge-guide-title" onCancel={(event) => { event.preventDefault(); dismissIntro(); }} onKeyDown={(event) => {
         if (event.key !== "Tab") return;
         const controls = event.currentTarget.querySelectorAll<HTMLElement>('button, [tabindex="0"]');

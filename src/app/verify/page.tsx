@@ -326,6 +326,14 @@ export default function VerifyPage() {
                 {result.actual?.bucket}
               </p>
               <p>Rule IDs: {result.actual?.ruleIds.join(", ") ?? "—"}</p>
+              {result.actual && <>
+                <p>Nơi tiếp nhận: {result.actual.assignedTeam} · nhãn điều phối mô phỏng, chưa gửi thông báo.</p>
+                <p>Policy: {result.actual.policyVersion}</p>
+                <details>
+                  <summary>Bằng chứng quyết định</summary>
+                  <ul className="list-disc pl-5">{result.actual.safeEvidence.map((quote, index) => <li className="break-words" key={index}>{quote}</li>)}</ul>
+                </details>
+              </>}
               <p>{result.actual?.adminReason ?? result.error}</p>
               <p>
                 Kiểm tra lưu trữ:{" "}

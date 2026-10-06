@@ -106,6 +106,7 @@ export async function analyze(
   const baseline = extractIntake(analysisInput, markers);
   const mockRouting = (process.env.AI_PROVIDER || "mock") === "mock";
   const workEvidence = mockRouting && input.mode === "freeform" &&
+    !(baseline.requestKind === "ACCESS_REQUEST" && baseline.entities.permission) &&
     !Object.keys(analysisInput.fields).length &&
     !baseline.riskSignals.length &&
     !baseline.subrequests.some((part) => part.riskSignals.length) &&

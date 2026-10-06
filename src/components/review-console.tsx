@@ -225,6 +225,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
         data-guide-stage={requestId ? "reviewer-detail" : "reviewer-list"}
       >
         {error && <Alert tone="error">{error}</Alert>}
+        <p className="mb-3 text-sm text-slate-700">Reviewer demo công khai · chưa xác thực thành viên team. Chỉ dùng dữ liệu giả lập.</p>
         {!requestId && (
           <>
             <header className="it-page-heading">

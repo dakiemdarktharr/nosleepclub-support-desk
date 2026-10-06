@@ -1,5 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { POLICY_VERSION } from "@/domain/policy-source";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { supportVerifyCases, runSupportCase } from "@/lib/support-verify";
 import { GET as detail } from "@/app/api/support/requests/[id]/route";
@@ -123,6 +125,15 @@ it("reports original expectations without rewriting them or hiding mismatches", 
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
+        provenance: {
+          sourceRevision: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+          runtimeDirty: Boolean(execFileSync("git", ["diff", "HEAD", "--", "src", "package.json", "package-lock.json"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim()),
+          runtimeDigest: createHash("sha256").update(
+            execFileSync("git", ["ls-files", "-z", "src", "package.json", "package-lock.json"], { encoding: "utf8" })
+              .split("\0").filter(Boolean).sort().map(path => `${path}\0${createHash("sha256").update(readFileSync(path)).digest("hex")}`).join("\n"),
+          ).digest("hex"),
+          node: process.version, storage: "memory-demo", model: "mock-no-api-call", policy: POLICY_VERSION,
+        },
         provider: "mock",
         route: "/api/support/requests",
         total: results.length,
