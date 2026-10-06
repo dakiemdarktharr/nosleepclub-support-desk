@@ -312,7 +312,8 @@ it("model ambiguity cannot produce guidance approval", async () => {
     }),
   });
   expect(row.decision?.action).toBe("ESCALATE");
-  expect(row.canonical?.model.failure).toBe("MODEL_EVIDENCE_INVALID");
+  expect(row.canonical?.ambiguities).toContain("Unsure whether restart or factory reset is intended");
+  expect(row.canonical?.riskSignals).toContain("CONFLICT");
 });
 it("large GPU allocation cannot be auto-approved even with a hypothetical verified approval", () => {
   const canonical = extractIntake({

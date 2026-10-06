@@ -208,9 +208,9 @@ it("rejects instruction-bearing web text even when the citation domain is truste
   ).toBe("unavailable");
 });
 it("serves a repeated public identity question without spending another model call", async () => {
+  const canonical = (await analyze(input("bạn tên gì"), [])).canonical;
   vi.stubEnv("AI_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
-  const canonical = (await analyze(input("bạn tên gì"), [])).canonical;
   const article = knowledgeSeed.find((row) => row.label === "IDENTITY")!;
   const run = vi.fn(async () => ({
     label: "IDENTITY",
@@ -287,15 +287,15 @@ it("key rotation invalidates signed cached answers", async () => {
   await withAnswerCache("same-key", run, validate);
   expect(run).toHaveBeenCalledTimes(2);
 });
-it("model exhaustion still produces a transparent safe fallback without human escalation", async () => {
+it("extraction budget exhaustion escalates without answering", async () => {
   vi.stubEnv("AI_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
   vi.stubEnv("AI_MODEL", "test");
   vi.stubEnv("AI_MAX_ATTEMPTS", "0");
   const row = await submitSupport(input("xin chào"));
-  expect(row.decision?.action).toBe("AUTO_APPROVE");
-  expect(row.assistance[0].answer?.fallbackReason).toBe("BUDGET_EXHAUSTED");
-  expect(row.assistance[0].source).toBe("deterministic");
+  expect(row.decision?.action).toBe("ESCALATE");
+  expect(row.canonical?.model.failureReason).toBe("BUDGET_EXHAUSTED");
+  expect(row.assistance).toEqual([]);
 });
 
 it("invalid evidence falls back instead of escalating an ordinary question", async () => {

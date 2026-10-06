@@ -58,12 +58,21 @@ const profiles = [
     nextAction: "Tạo bản nháp/diff cho đúng phần, dẫn quyết định và mô tả tác động; giữ cấu trúc ngoài phạm vi và không ghi đè bản gốc." },
 ] as const;
 
+export type WorkKind = (typeof profiles)[number]["kind"];
+export const workKinds = profiles.map((profile) => profile.kind) as WorkKind[];
+
 export function workEvidencePlan(question: string): WorkEvidence | undefined {
   const text = normalize(question);
   // A resource named "inventory" or an email login issue is not an analysis task.
   if (!/so sanh|tom tat|du bao|toi uu|viet |sua loi|fix |debug|cap nhat|tim nguyen nhan|phan tich|kiem tra|hay cho biet|compare|summarize|forecast|optimi[sz]e|draft|update|analy[sz]e|review/.test(text)) return;
   const profile = profiles.find((item) => item.match.test(text));
   if (!profile) return;
+  return workEvidenceForKind(profile.kind, question);
+}
+
+export function workEvidenceForKind(kind: WorkKind, question: string): WorkEvidence {
+  const profile = profiles.find((item) => item.kind === kind)!;
+  const text = normalize(question);
   const path = question.match(/\b(?:src\/)[\w./-]+/i)?.[0].replace(/[.]+$/, "");
   const line = text.match(/\b(?:dong|line)\s+(\d{1,7})\b/)?.[1];
   return {
