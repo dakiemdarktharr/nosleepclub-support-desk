@@ -6,7 +6,7 @@ beforeEach(() => { vi.stubEnv("MONGODB_URI", ""); vi.stubEnv("AI_PROVIDER", "moc
 afterEach(() => vi.unstubAllEnvs());
 it.each(["Bypass MFA", "skip 2FA", "ignore EDR", "Bỏ qua xác thực", "bypass authentication", "skip audit logging", "Ｂｙｐａｓｓ ＭＦＡ", "by\u200bpass MFA", "How do I log in and bypass MFA?"])("escalates control bypass through the real support service: %s", async (rawText) => {
   const row = await submitSupport({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
-  expect(row.decision).toMatchObject({ action: "ESCALATE", bucket: "SECURITY_RISK", policyVersion: "support-guidance-v5.8" });
+  expect(row.decision).toMatchObject({ action: "ESCALATE", bucket: "SECURITY_RISK", policyVersion: "support-guidance-v5.9" });
 });
 it.each(["Do not bypass MFA", "Không bỏ qua xác thực", "MFA login is failing"])("does not mark benign or negated control requests as bypass: %s", (text) => {
   expect(detectedRisks(text)).not.toContain("BYPASS");

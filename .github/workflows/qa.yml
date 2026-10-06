@@ -29,6 +29,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+      - run: npm run test:persistence
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -- --project=chromium
       - run: npm run test:e2e -- --project=mobile

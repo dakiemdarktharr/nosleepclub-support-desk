@@ -133,12 +133,30 @@ it("reports original expectations without rewriting them or hiding mismatches", 
               .split("\0").filter(Boolean).sort().map(path => `${path}\0${createHash("sha256").update(readFileSync(path)).digest("hex")}`).join("\n"),
           ).digest("hex"),
           node: process.version, storage: "memory-demo", model: "mock-no-api-call", policy: POLICY_VERSION,
+          dataset: {
+            id: "legacy-original-128", split: "development", labelStatus: "not-independently-adjudicated",
+            count: original.length,
+            // Hash exactly the cases used by the evaluator, including original labels.
+            sha256: createHash("sha256").update(JSON.stringify(original)).digest("hex"),
+            packs: [...new Set(original.map(item => item.pack))],
+            inputTransform: "employeeFixture supplies missing department and synthetic employeeId only",
+          },
+          evaluator: {
+            sha256: createHash("sha256").update(
+              ["tests/support-verify.test.ts", "src/lib/support-verify.ts", "scripts/development-report.mjs"]
+                .map(path => readFileSync(path, "utf8").replace(/\r\n/g, "\n")).join("\n"),
+            ).digest("hex"),
+            dirty: Boolean(execFileSync("git", ["diff", "HEAD", "--", "tests/support-verify.test.ts", "src/lib/support-verify.ts", "scripts/development-report.mjs"], { encoding: "utf8" }).trim()),
+          },
         },
         provider: "mock",
         route: "/api/support/requests",
         total: results.length,
         passed: results.filter((row) => row.pass).length,
-        results,
+        results: results.map((row, index) => ({ ...row, datasetCase: {
+          pack: original[index].pack,
+          sha256: createHash("sha256").update(JSON.stringify(original[index])).digest("hex"),
+        } })),
       },
       null,
       2,

@@ -401,7 +401,9 @@ export function extractText(rawText: string): Extraction {
   if (duration) entities.duration = duration[0];
   const environment = environmentOf(text);
   if (environment !== "unknown") entities.environment = environment;
-  const approvalReference = rawText.match(/\b[A-Z][A-Z0-9]{1,12}-\d{2,10}\b/);
+  // Preserve the whole bounded reference; a suffix must never resolve to a
+  // different registry record. Verification still checks exact scope and TTL.
+  const approvalReference = rawText.match(/(?<![A-Za-z0-9_-])[A-Z][A-Z0-9]{1,12}(?:-[A-Z0-9]{1,12}){0,3}-\d{2,10}(?![A-Za-z0-9_-])/);
   if (approvalReference) entities.approvalReference = approvalReference[0];
   if (/approved|approve|da duyet|phe duyet/.test(text))
     entities.approvalStatus = "claimed";
@@ -681,6 +683,9 @@ export function extractIntake(
     )
     .map((part) => part.trim())
     .filter(Boolean)
+    // A complete courtesy is not an extra task. Keep the original input and
+    // its risk/evidence checks; never discard a clause with appended content.
+    .filter((part) => !/^(?:thanks(?: team)?|thank you(?: team)?|cam on(?: team| ban)?)[.!]*$/.test(normalize(part)))
     .reduce<string[]>((requests, fragment) => {
       const label = fragment.match(/^([^:=]+)[:=]/)?.[1];
       // Labelled facts describe the preceding request, not an independent task.

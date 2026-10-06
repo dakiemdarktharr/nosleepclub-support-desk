@@ -8,6 +8,7 @@ import { once } from "node:events";
 import { setTimeout as delay } from "node:timers/promises";
 import { MongoClient } from "mongodb";
 import { validateMongoSmokeConfig } from "./mongo-smoke-guard.mjs";
+import { pathToFileURL } from "node:url";
 
 const base = "http://127.0.0.1:3227";
 let child, client, unavailable;
@@ -39,7 +40,8 @@ async function start(uri, database, revision, expectUnavailable = false) {
   child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", "3227"], { env, stdio: "ignore", windowsHide: true });
   let launchFailed = false;
   child.on("error", () => { launchFailed = true; });
-  for (let i = 0; i < 40; i++) {
+  const deadline = Date.now() + 40_000;
+  for (let i = 0; i < 40 && Date.now() < deadline; i++) {
     if (launchFailed || child.exitCode !== null) throw new Error("Owned server failed to start.");
     try {
       // A static page establishes startup even when Mongo health must fail.
@@ -70,6 +72,7 @@ async function run() {
   client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
   const db = client.db(database);
   assert.equal((await db.listCollections().toArray()).length, 0);
+  const mongodbVersion = (await db.admin().serverInfo()).version;
   await start(uri, database, revision);
   const payload = { rawText: "VPN lỗi; client_secret: SYNTHETIC_RESTART_ONLY", fields: { department: "engineering", employeeId: "EMP-SMOKE-01" }, confirmed: true, idempotencyKey: randomUUID() };
   const before = await api("/api/support/requests", payload);
@@ -83,12 +86,26 @@ async function run() {
   const after = await api(`/api/support/requests/${request.id}`);
   assert.equal(after.status, 200);
   assert.deepEqual(after.body.data, request);
+  const firstAudit = await api(`/api/support/events?requestId=${request.id}`);
+  assert.equal(firstAudit.status, 200);
+  assert.deepEqual(firstAudit.body.data, request.events);
   const review = { version: request.version, action: "STOP", reason: "Synthetic persistence concurrency check" };
   const updates = await Promise.all([api(`/api/review/${request.id}`, review), api(`/api/review/${request.id}`, review)]);
   assert.deepEqual(updates.map((result) => result.status).sort(), [200, 409]);
   const stored = (await api(`/api/support/requests/${request.id}`)).body.data;
   assert.equal(stored.version, request.version + 1);
   assert.equal(stored.events.filter((event) => event.action === "STOP").length, 1);
+  await stop();
+  // A second restart must preserve the human decision and its complete audit,
+  // not merely the initial request document created before review.
+  await start(uri, database, revision);
+  const reviewed = await api(`/api/support/requests/${request.id}`);
+  assert.equal(reviewed.status, 200);
+  assert.deepEqual(reviewed.body.data, stored);
+  const reviewedAudit = await api(`/api/support/events?requestId=${request.id}`);
+  assert.equal(reviewedAudit.status, 200);
+  assert.deepEqual(reviewedAudit.body.data, stored.events);
+  assert.deepEqual((await db.collection("v3_support_requests").findOne({ _id: request.id })).data, stored);
   await stop();
   // Owned non-Mongo listener models a broken DB connection without stopping Mongo.
   unavailable = createServer((socket) => socket.destroy());
@@ -98,12 +115,17 @@ async function run() {
   assert.equal((await api(`/api/support/requests/${request.id}`)).status, 503);
   assert.equal((await api("/api/support/requests", { ...payload, idempotencyKey: randomUUID() })).status, 503);
   assert.deepEqual((await db.collection("v3_support_requests").findOne({ _id: request.id })).data, stored);
-  console.log(JSON.stringify({ sourceRevision, workingTreeClean, node: process.version, database, evidence: "local-synthetic-mongo", provider: "mock", restartReadBack: "PASS", concurrentCas: "PASS", unavailableReadWrite: "PASS", productionPersistence: "NOT_TESTED", cleanup: "No data deleted; retain disposable database for inspection." }, null, 2));
+  return { sourceRevision, workingTreeClean, node: process.version, mongodbVersion, database, evidence: "local-synthetic-mongo", provider: "mock", persistenceVerification: "APP_RESTART_VERIFIED", restartReadBack: "PASS", reviewAuditRestart: "PASS", concurrentCas: "PASS", unavailableReadWrite: "PASS", mongoServerRestart: "NOT_PERFORMED", identityTransactions: "NOT_PERFORMED", productionPersistence: "NOT_TESTED", cleanup: "No data deleted; retain disposable database for inspection." };
 }
-try { await run(); }
-catch { console.error("Mongo smoke failed or refused. Check isolation guards, local Mongo, free port 3227 and a completed build. No live success is claimed."); process.exitCode = 1; }
-finally {
-  await stop();
-  if (unavailable) await new Promise((resolve) => unavailable.close(resolve));
-  await client?.close();
+export async function runMongoSmoke() {
+  try { return await run(); }
+  finally {
+    await stop();
+    if (unavailable) await new Promise((resolve) => unavailable.close(resolve));
+    await client?.close();
+  }
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  try { console.log(JSON.stringify(await runMongoSmoke(), null, 2)); }
+  catch { console.error("Mongo smoke failed or refused. Check isolation guards, local Mongo, free port 3227 and a completed build. persistenceVerification=NOT_PERFORMED."); process.exitCode = 1; }
 }
