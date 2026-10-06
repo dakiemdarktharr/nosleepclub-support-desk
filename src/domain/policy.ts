@@ -65,7 +65,7 @@ export function missingFacts(request: CanonicalRequest): string[] {
   const guide = guidanceRules.find((rule) =>
     rule.labels.some((label) => label === request.intentLabel),
   );
-  if (guide && isGuidanceOnly(request)) return [];
+  if (guide && isGuidanceOnly(request)) return request.missingFields;
 
   let required: string[];
   switch (serviceGroup) {
@@ -240,7 +240,12 @@ export function missingFacts(request: CanonicalRequest): string[] {
     required = ["pathOrBucket", "permission", "duration", "reason"];
   else if (requestKind === "INCIDENT")
     required = ["symptom", "affectedScope", "startTime"];
-  return required.filter((field) => isMissing(field, e[field]));
+  return [
+    ...new Set([
+      ...required.filter((field) => isMissing(field, e[field])),
+      ...request.missingFields,
+    ]),
+  ];
 }
 
 export function requiresApproval(request: CanonicalRequest) {

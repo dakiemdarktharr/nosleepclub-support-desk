@@ -104,7 +104,8 @@ export async function analyze(
     ),
   };
   const baseline = extractIntake(analysisInput, markers);
-  const workEvidence = input.mode === "freeform" &&
+  const mockRouting = (process.env.AI_PROVIDER || "mock") === "mock";
+  const workEvidence = mockRouting && input.mode === "freeform" &&
     !Object.entries(input.fields).some(([field, value]) => !isEmployeeIdentityField(field) && Boolean(value)) &&
     !baseline.riskSignals.length &&
     !baseline.subrequests.some((part) => part.riskSignals.length) &&
@@ -112,35 +113,41 @@ export async function analyze(
       ? workEvidencePlan(input.rawText)
       : undefined;
   if (workEvidence) {
-    // This server has a reviewed knowledge corpus, not filesystem/Drive/BI tools.
-    // Do the available lookup before requesting an exact source; never pretend
-    // a public help article contains the user's private business artefact.
-    try {
-      const found = await retrieveKnowledge(input.rawText, "GENERAL_GUIDE");
-      workEvidence.sourceChecks.push({
-        source: `Kho kiến thức (${found.storage})`,
-        result: found.articles.length
-          ? `Tìm thấy bài hướng dẫn: ${found.articles.map((row) => row.title).join("; ")}. Các bài này không phải artefact của yêu cầu.`
-          : "Không tìm thấy artefact phù hợp trong kho đã cấu hình.",
-      });
-    } catch {
-      workEvidence.sourceChecks.push({ source: "Kho kiến thức", result: "Tra cứu thất bại; chưa thể xác nhận nội dung nguồn." });
-    }
-    workEvidence.sourceChecks.push({
-      source: "Attachment, workspace/repository, Drive, dashboard, hệ thống tác vụ bên ngoài",
-      result: "Ứng dụng chưa có connector đọc các nguồn này. Không thể mở đường dẫn/URL chỉ từ nội dung tin nhắn.",
-    });
     const canonical = { ...baseline, workEvidence };
+    await checkWorkSources(canonical, input.rawText);
     return { canonical, decision: evaluatePolicy(canonical, verifyApproval) };
   }
-  const conversation = conversationRoute(analysisInput, baseline);
+  const conversation = mockRouting
+    ? conversationRoute(analysisInput, baseline)
+    : null;
   const canonical = conversation
     ? conversationalCanonical(baseline, conversation)
     : await extractWithModel(analysisInput, baseline, options);
+  if (canonical.workEvidence) await checkWorkSources(canonical, input.rawText);
   return {
     canonical,
     decision: evaluatePolicy(canonical, verifyApproval),
   };
+}
+async function checkWorkSources(canonical: CanonicalRequest, question: string) {
+  const workEvidence = canonical.workEvidence;
+  if (!workEvidence) return;
+  // This server has no connector for the user's private business artifact.
+  try {
+    const found = await retrieveKnowledge(question, "GENERAL_GUIDE");
+    workEvidence.sourceChecks.push({
+      source: `Kho kiến thức (${found.storage})`,
+      result: found.articles.length
+        ? `Tìm thấy bài hướng dẫn: ${found.articles.map((row) => row.title).join("; ")}. Các bài này không phải artefact của yêu cầu.`
+        : "Không tìm thấy artefact phù hợp trong kho đã cấu hình.",
+    });
+  } catch {
+    workEvidence.sourceChecks.push({ source: "Kho kiến thức", result: "Tra cứu thất bại; chưa thể xác nhận nội dung nguồn." });
+  }
+  workEvidence.sourceChecks.push({
+    source: "Attachment, workspace/repository, Drive, dashboard, hệ thống tác vụ bên ngoài",
+    result: "Ứng dụng chưa có connector đọc các nguồn này. Không thể mở đường dẫn/URL chỉ từ nội dung tin nhắn.",
+  });
 }
 function fingerprintOf(input: SupportInput) {
   return createHash("sha256")
@@ -181,14 +188,14 @@ export async function completeAnalysis(
   }
   return { ...result, assistance };
 }
-export async function previewSupport(value: unknown) {
+export async function previewSupport(value: unknown, options: ModelOptions = {}) {
   const safe = prepareInput(value);
   requireIntakeIdentity(safe.input.fields);
   const preview: SupportPreview = {
     id: randomUUID(),
     fingerprint: fingerprintOf(safe.input),
     expiresAt: new Date(Date.now() + 10 * 60_000),
-    ...(await completeAnalysis(safe.input, safe.markers)),
+    ...(await completeAnalysis(safe.input, safe.markers, options)),
   };
   await saveSupportPreview(preview);
   return {
