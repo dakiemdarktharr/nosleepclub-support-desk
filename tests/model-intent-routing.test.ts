@@ -209,3 +209,50 @@ it("shows that a formerly unknown statement is not independently approved by the
   expect(extractIntake(input("The print queue is stuck on my workstation")).intentLabel)
     .toBe("UNKNOWN_SUPPORT_REQUEST");
 });
+
+it.each(["conversation", "work"])("rejects inconsistent %s routing and support catalog facts", async (route) => {
+  const rawText = "Máy in bị kẹt";
+  const { canonical, decision } = await analyze(input(rawText), [], {
+    run: async () => ({ ...printerIntent(rawText), route,
+      conversationLabel: route === "conversation" ? "GOOGLE_RECOVERY" : null,
+      workKind: route === "work" ? "code" : null }),
+  });
+  expect(canonical.model.failure).toBe("MODEL_OUTPUT_INVALID");
+  expect(canonical.conversation).toBeUndefined();
+  expect(canonical.workEvidence).toBeUndefined();
+  expect(decision.action).toBe("ESCALATE");
+});
+
+it("ignores cleared optional fields when the model requests a business artifact", async () => {
+  const rawText = "Tôi cần bản so sánh hai phiên bản thỏa thuận này";
+  const request = input(rawText);
+  request.fields.symptom = "   ";
+  const { canonical, decision } = await analyze(request, [], {
+    run: async () => ({ ...printerIntent(rawText), requestKind: "OTHER", serviceGroup: "OTHER",
+      intentLabel: "UNKNOWN_SUPPORT_REQUEST", requestedAction: "request", route: "work", workKind: "contract" }),
+  });
+  expect(canonical.model.failure).toBeUndefined();
+  expect(canonical.workEvidence?.kind).toBe("contract");
+  expect(decision.action).toBe("NEEDS_INFORMATION");
+});
+
+it("does not let an empty optional field erase an evidenced model fact", async () => {
+  const rawText = "Máy in bị kẹt";
+  const request = input(rawText);
+  request.fields.symptom = "";
+  const { canonical } = await analyze(request, [], { run: async () => ({
+    ...printerIntent(rawText), entities: { symptom: "bị kẹt" },
+    evidence: [...printerIntent(rawText).evidence, { field: "symptom", quote: "bị kẹt" }],
+  }) });
+  expect(canonical.entities.symptom).toBe("bị kẹt");
+  expect(request.fields.symptom).toBe("");
+});
+
+it("keeps mock artifact routing consistent when an optional field was cleared", async () => {
+  vi.stubEnv("AI_PROVIDER", "mock");
+  const request = input("So sánh hai phiên bản hợp đồng");
+  request.fields.symptom = "   ";
+  const { canonical, decision } = await analyze(request, []);
+  expect(canonical.workEvidence?.kind).toBe("contract");
+  expect(decision.action).toBe("NEEDS_INFORMATION");
+});

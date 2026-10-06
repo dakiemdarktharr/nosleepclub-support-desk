@@ -141,7 +141,7 @@ it("preview and submission apply the same policy; detail survives a new GET", as
     requestId: saved.data.id,
     actor: "deterministic-policy",
     ruleIds: ["GUIDE-001"],
-    policyVersion: "support-guidance-v5.6",
+    policyVersion: "support-guidance-v5.7",
     approvalStatus: "not_required",
     nextStep: expect.any(String),
     questions: [],

@@ -1,5 +1,7 @@
 # Nhận diện ý định freeform bằng model chính
 
+Bổ sung `support-guidance-v5.7`: route `conversation`/`work` chỉ hợp lệ cùng `serviceGroup=OTHER`, `intentLabel=UNKNOWN_SUPPORT_REQUEST`, `requestKind=OTHER`; server từ chối output mâu thuẫn. Ô tùy chọn đã xóa không ghi đè evidence hoặc làm lỗi route. Câu tiếp nối có rủi ro/thao tác được đánh giá độc lập với ngữ cảnh cũ. Bằng chứng sửa lỗi tại [INTENT-REVIEW-FIXES](INTENT-REVIEW-FIXES.md); số đo v5.6 bên dưới là lịch sử, không phải số đo lại của v5.7.
+
 ## Luồng và quyết định
 
 Trước thay đổi, `extractIntake()` trong `src/domain/text.ts` dùng các mẫu chữ để gắn service/intent. `analyze()` trong `src/services/support.ts` cho `workEvidencePlan()` và `conversationRoute()` chọn nhánh trước model. `extractWithModel()` trong `src/lib/support-model.ts` chỉ gọi model cho một số ticket, rồi từ chối hướng dẫn tự động nếu baseline là `UNKNOWN_SUPPORT_REQUEST`. Ví dụ câu kể “The print queue is stuck on my workstation” không khớp mẫu máy in và không được model mở đường hướng dẫn.

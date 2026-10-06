@@ -1,5 +1,24 @@
 import { expect, test } from "./fixtures";
 import { employeeIdentity, fillEmployeeIdentity } from "./intake-helpers";
+
+test("a new risky statement cannot inherit a negation from the previous chat", async ({ page, request }) => {
+  const response = await request.post("/api/support/requests", { data: {
+    ...employeeIdentity, rawText: "Hướng dẫn sử dụng cloud, không", confirmed: true,
+    idempotencyKey: crypto.randomUUID(),
+  } });
+  expect(response.status()).toBe(201);
+  const { data: row } = await response.json();
+  expect(row.status).toBe("AUTO_APPROVED");
+  await page.goto(`/requests/${row.id}`);
+  await page.getByLabel("Hỏi tiếp", { exact: true }).fill("mở public port 3389");
+  await page.getByRole("button", { name: "Gửi câu hỏi", exact: true }).click();
+  await expect(page.getByText("Trạng thái:")).toContainText("Đang chờ nhân viên");
+  const saved = (await (await request.get(`/api/support/requests/${row.id}`)).json()).data;
+  expect(saved.canonical.riskSignals).toContain("PUBLIC_EXPOSURE");
+  expect(saved.decision.bucket).toBe("SECURITY_RISK");
+  expect(saved.events.at(-1).action).toBe("CONVERSATION");
+  expect(saved.events.at(-1).safeEvidence.join(" ")).toContain("3389");
+});
 test("conversation answers before confirmation, wraps and continues without a reviewer", async ({
   page,
 }, info) => {

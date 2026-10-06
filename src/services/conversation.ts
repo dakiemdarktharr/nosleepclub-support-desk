@@ -52,10 +52,9 @@ export async function continueConversation(id: string, value: unknown) {
   const safe = prepareInput({
     ...current.input,
     previewId: undefined,
-    // General chat answers need their original topic to interpret terse replies.
-    // Diagnostics are re-evaluated from the new symptom so no earlier prose can
-    // turn a conjunction into a second operational request.
-    rawText: current.canonical?.conversation
+    // Keep context for safe chat, but never let an earlier negation cancel
+    // an independently detected risk or operational request in the new turn.
+    rawText: current.canonical?.conversation && !risky
       ? `${current.input.rawText.slice(-3900)} ${input.question}`
       : input.question,
     fields: employeeIdentityOnly(current.input.fields),

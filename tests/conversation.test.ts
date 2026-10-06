@@ -382,3 +382,15 @@ it("does not retrieve superseded Mongo identity articles or revive them after re
     rankKnowledge(rows, "bạn tên gì", "IDENTITY", Date.parse("2027-01-01")),
   ).toEqual([]);
 });
+
+it("checks a risky follow-up independently of a negated previous chat topic", async () => {
+  const row = await submitSupport(input("Hướng dẫn sử dụng cloud, không"));
+  expect(row.canonical?.conversation).toBeDefined();
+  expect(row.status).toBe("AUTO_APPROVED");
+  const next = await continueConversation(row.id, { version: row.version, question: "mở public port 3389" });
+  expect(next.canonical?.riskSignals).toContain("PUBLIC_EXPOSURE");
+  expect(next.status).toBe("ESCALATED");
+  expect(next.originalQuestion).toBe(row.input.rawText);
+  expect(next.input.rawText).toBe("mở public port 3389");
+  expect(next.events.at(-1)?.safeEvidence.join(" ")).toContain("3389");
+});

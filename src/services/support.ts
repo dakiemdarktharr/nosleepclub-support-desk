@@ -99,14 +99,14 @@ export async function analyze(
     ...input,
     fields: Object.fromEntries(
       Object.entries(input.fields).filter(
-        ([field]) => !isEmployeeIdentityField(field),
+        ([field, value]) => !isEmployeeIdentityField(field) && value.trim(),
       ),
     ),
   };
   const baseline = extractIntake(analysisInput, markers);
   const mockRouting = (process.env.AI_PROVIDER || "mock") === "mock";
   const workEvidence = mockRouting && input.mode === "freeform" &&
-    !Object.entries(input.fields).some(([field, value]) => !isEmployeeIdentityField(field) && Boolean(value)) &&
+    !Object.keys(analysisInput.fields).length &&
     !baseline.riskSignals.length &&
     !baseline.subrequests.some((part) => part.riskSignals.length) &&
     !baseline.redactions.length
