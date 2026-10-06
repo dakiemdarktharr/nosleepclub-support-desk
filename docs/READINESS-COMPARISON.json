@@ -1,0 +1,167 @@
+{
+  "scope": "development synthetic; original Ground Truth unchanged; no independent accuracy claim",
+  "dateLocal": "2026-10-07 Asia/Saigon",
+  "baseline": {
+    "sourceRevision": "c2a832031deedd758120d49578eed52f6c12d190",
+    "evaluatedAt": "2026-10-06T18:24:32.043Z",
+    "provider": "mock",
+    "model": "mock-no-api-call",
+    "storage": "memory-demo",
+    "node": "v24.18.0",
+    "policy": "support-guidance-v5.7",
+    "total": 128,
+    "exactMatch": 56,
+    "available": 128,
+    "readbackPassed": 128,
+    "confusionMatrix": {
+      "AUTO_APPROVE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 1,
+        "ESCALATE": 33
+      },
+      "NEEDS_INFORMATION": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 0,
+        "ESCALATE": 0
+      },
+      "ESCALATE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 1,
+        "ESCALATE": 93
+      }
+    },
+    "mismatchGroups": {
+      "byRule": {
+        "INFO-001": 64,
+        "INFO-005": 56,
+        "AUTH-005": 66,
+        "AUTH-007": 20,
+        "SEC-005": 4,
+        "AUTH-002": 9,
+        "AUTH-001": 8,
+        "AUTH-008": 1,
+        "INFO-EVIDENCE-001": 2,
+        "SEC-001": 3,
+        "SEC-003": 1,
+        "GUIDE-007": 1
+      },
+      "byBucket": {
+        "ROUTINE -> BEYOND_AUTHORITY": 31,
+        "MISSING_INFO -> BEYOND_AUTHORITY": 30,
+        "ROUTINE -> MISSING_INFO": 1,
+        "BEYOND_AUTHORITY -> SECURITY_RISK": 6,
+        "SECURITY_RISK -> BEYOND_AUTHORITY": 1,
+        "ROUTINE -> SECURITY_RISK": 2,
+        "MISSING_INFO -> MISSING_INFO": 1
+      },
+      "bySubrequestCount": {
+        "2": 27,
+        "3": 44,
+        "4": 1
+      }
+    }
+  },
+  "candidate": {
+    "sourceRevision": "b4b995ec91ac54cbba11d37779f09665d9b2643e",
+    "runtimeDirty": false,
+    "runtimeDigest": "8ef9ca3e0dc14cbb620cce5055b4421e8e36b21924effb02e43877cb119de6e5",
+    "node": "v24.18.0",
+    "storage": "memory-demo",
+    "model": "mock-no-api-call",
+    "policy": "support-guidance-v5.8",
+    "evaluatedAt": "2026-10-06T19:00:51.235Z",
+    "provider": "mock",
+    "total": 128,
+    "available": 128,
+    "exactMatch": {
+      "count": 56,
+      "rate": 0.4375,
+      "definition": "action + bucket + expected rule if supplied; unavailable counts as non-match"
+    },
+    "coverage": 1,
+    "readbackPassed": 128,
+    "confusionMatrix": {
+      "AUTO_APPROVE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 1,
+        "ESCALATE": 33
+      },
+      "NEEDS_INFORMATION": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 0,
+        "ESCALATE": 0
+      },
+      "ESCALATE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 1,
+        "ESCALATE": 93
+      }
+    },
+    "binaryEscalation": {
+      "tp": 93,
+      "tn": 1,
+      "fp": 33,
+      "fn": 1,
+      "falseNegativeRate": 0.010638297872340425,
+      "unnecessaryEscalationRate": 0.9705882352941176,
+      "definition": "ESCALATE is positive; NEEDS_INFORMATION is negative; unavailable excluded"
+    },
+    "mismatchGroups": {
+      "byRule": {
+        "INFO-001": 61,
+        "INFO-005": 53,
+        "AUTH-005": 63,
+        "AUTH-007": 21,
+        "SEC-005": 4,
+        "AUTH-002": 9,
+        "AUTH-001": 8,
+        "AUTH-008": 1,
+        "SEC-001": 3,
+        "SEC-003": 1,
+        "GUIDE-007": 1,
+        "INFO-EVIDENCE-001": 1
+      },
+      "byBucket": {
+        "ROUTINE -> BEYOND_AUTHORITY": 31,
+        "MISSING_INFO -> BEYOND_AUTHORITY": 30,
+        "ROUTINE -> MISSING_INFO": 1,
+        "BEYOND_AUTHORITY -> SECURITY_RISK": 6,
+        "SECURITY_RISK -> BEYOND_AUTHORITY": 1,
+        "ROUTINE -> SECURITY_RISK": 2,
+        "MISSING_INFO -> MISSING_INFO": 1
+      },
+      "bySubrequestCount": {
+        "2": 34,
+        "3": 37,
+        "4": 1
+      }
+    }
+  },
+  "comparison": {
+    "changedActionOrBucket": [],
+    "regressedExactPass": [],
+    "changedRuleLists": [
+      "verify-002-small-sandbox",
+      "gt-routine-002-confluence-rdp-runbook",
+      "gt-routine-009-confluence-prod-db-sop",
+      "gt-routine-011-sandbox-k3s",
+      "gt-routine-012-github-actions-read",
+      "gt-routine-014-jira-dataops-board"
+    ],
+    "changedSubrequestCounts": [
+      "verify-002-small-sandbox",
+      "TC002",
+      "gt-routine-005-sandbox-webhook",
+      "gt-routine-009-confluence-prod-db-sop",
+      "gt-routine-011-sandbox-k3s",
+      "gt-routine-012-github-actions-read",
+      "gt-routine-014-jira-dataops-board"
+    ]
+  },
+  "evidence": {
+    "independentHeldOut": "NOT_COLLECTED",
+    "threeRealUsersWrittenFeedback": "NOT_COLLECTED",
+    "liveModelQuality": "NOT_PERFORMED",
+    "persistenceVerification": "NOT_PERFORMED"
+  }
+}

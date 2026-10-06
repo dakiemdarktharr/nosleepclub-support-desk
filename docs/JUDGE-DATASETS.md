@@ -59,6 +59,15 @@ Nguồn: `mlai26_new/data/verify/judge-15.json`. Bộ này dùng 13 tình huốn
 
 ## Đối chiếu 128 fixture development
 
+**Đã đo lại trên base `c2a832031deedd758120d49578eed52f6c12d190` ngày
+07/10/2026 ICT:** vẫn 56/128 (43,75%), coverage 128/128. Đây là lần đo mới,
+không tái sử dụng kết quả 03/10 bên dưới. [Báo cáo base/candidate](COMPETITION-READINESS.md)
+ghi metric đầy đủ, provenance, nhóm lỗi và phần cần adjudication. Dùng lệnh
+`npx vitest run tests/support-verify.test.ts` rồi `node scripts/development-report.mjs`
+để đo đúng checkout; file artifact được test tạo lại không tự là kết quả HEAD.
+
+### Kết quả lịch sử 03/10 — giữ để đối chiếu
+
 Chạy lại trên base `a057fcbe17ac0282d6aebe0af7db62df27d80506` ngày 03/10/2026 ICT, bằng mock/memory và cùng decision API: **56/128 exact match (43,8%), 72 mismatch**. Đây là fixture synthetic phát triển; expected label chưa được xác nhận độc lập và tập này không phải held-out benchmark.
 
 Trong 72 mismatch:

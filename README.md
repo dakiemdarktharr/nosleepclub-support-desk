@@ -43,6 +43,10 @@ Không gian reviewer hỗ trợ hiện là **public demo**, tách khỏi quyền
 
 ### Giám khảo: Verify và input mới
 
+Đường demo ngắn, không cần tài khoản: **Trang đầu → Dành cho nhân viên → Đã hiểu → Kiểm thử → Đề A → Chạy toàn bộ test (5)**. Xem 3 routine/2 escalation, mở **Bằng chứng quyết định** và **Mở request / audit → Lịch sử yêu cầu và hướng dẫn**, rồi quay lại Verify để nhập một tình huống mới. Có thể bỏ qua tour; tour không tự chạy thao tác.
+
+[Readiness và số đo hiện tại](docs/COMPETITION-READINESS.md) · [Protocol held-out/người dùng](docs/INDEPENDENT-EVALUATION-PROTOCOL.md) · [Nội dung 5 slide, video và checklist](docs/SUBMISSION-CONTENT.md). Các bằng chứng độc lập/người dùng còn thiếu được ghi `NOT COLLECTED`; không suy ra 9,5/10 từ số test đạt.
+
 1. Mở **Kiểm thử / Verify**, chọn bộ và bấm **Chạy toàn bộ test** một lần.
 2. Xem expected/actual, rule, thời điểm và liên kết hồ sơ; mở audit để đối chiếu quyết định. Có thể dừng, xem lại và tiếp tục lượt chạy đã lưu.
 3. Nhập tình huống mới trong Verify hoặc form hỗ trợ. Input mới đi qua luồng xử lý ứng dụng, không nhận kết quả theo case ID.
@@ -77,7 +81,7 @@ flowchart TD
 ```
 
 - **Nhận diện ý định:** với `AI_PROVIDER=openai`, freeform đủ điều kiện được model chính phân tích cả khi là câu kể, có lỗi gõ hoặc diễn đạt khác. Input theo danh mục, rủi ro rõ ràng và “reset” cần làm rõ có đường kiểm tra deterministic riêng; không phải mọi request đều gọi LLM. Provider `mock` dùng nhận diện và câu trả lời mô phỏng để chạy offline.
-- **Quyết định:** Zod kiểm tra schema, evidence phải khớp input và nhánh xử lý phải nhất quán. Policy hiện tại `support-guidance-v5.7` ưu tiên `SECURITY_RISK → BEYOND_AUTHORITY → MISSING_INFO → ROUTINE`. Model không được tự phê duyệt hay bỏ qua rule. Lỗi model/schema/evidence chuyển xử lý an toàn.
+- **Quyết định:** Zod kiểm tra schema, evidence phải khớp input và nhánh xử lý phải nhất quán. Policy hiện tại `support-guidance-v5.8` ưu tiên `SECURITY_RISK → BEYOND_AUTHORITY → MISSING_INFO → ROUTINE`. Model không được tự phê duyệt hay bỏ qua rule. Lỗi model/schema/evidence chuyển xử lý an toàn.
 - **Hướng dẫn có nguồn:** hội thoại tìm trong corpus có revision, nguồn và hạn sử dụng bằng BM25 kết hợp chuẩn hóa Việt–Anh/typo. Không dùng vector database hay embeddings. Web search chỉ bật riêng cho các chủ đề/nguồn cho phép; URL trong ticket không tự cho app quyền đọc tài liệu riêng.
 - **Thiếu tài liệu công việc:** yêu cầu tạo/sửa một sản phẩm công việc mà chưa có tài liệu đầu vào được hỏi bổ sung cụ thể. App chưa có connector đọc Drive, repository, dashboard hoặc attachment riêng của người gửi; không giả vờ đã đọc tài liệu.
 - **Sau câu trả lời:** sentiment rule-based giúp phân biệt đã giải quyết, cần tiếp tục và cần người hỗ trợ. Rủi ro và policy vẫn ưu tiên; câu nguy hiểm không được đánh dấu hoàn tất chỉ vì có lời cảm ơn. Phản hồi positive có thể tạo gợi ý tri thức **chờ rà soát**, không tự thêm vào kho trả lời.
@@ -367,7 +371,7 @@ Tests bao phủ nhận diện câu kể, output model sai schema/evidence, rủi
 
 - **Demo và xác thực:** hỗ trợ/reviewer có đường public demo; đăng nhập người gửi chỉ bằng ID có thể bị mạo danh. Chưa có SSO, reviewer RBAC theo team hoặc ACL đầy đủ cho dữ liệu hỗ trợ. Chỉ dùng dữ liệu giả lập/đã ẩn danh trước; chưa coi đây là hệ thống production chứa dữ liệu nhân viên thật.
 - **Quyền và tích hợp:** policy/approval fixtures là mô phỏng. Không có connector thực thi hạ tầng, cấp quyền IAM, đọc tài liệu riêng hoặc thông báo reviewer thật. Hệ thống ID lưu tài khoản của app khi Mongo được cấu hình, không tạo tài khoản VNG bên ngoài.
-- **Riêng tư:** redaction chỉ che các mẫu được hỗ trợ, không ẩn danh toàn diện tên, email, điện thoại hoặc secret bị làm rối. Không nhập credentials hay dữ liệu production để thử.
+- **Riêng tư:** redaction che một số mẫu credential/OTP, email ASCII, CCCD/điện thoại có nhãn và employee ID có nhãn trong nội dung. Không ẩn danh toàn diện; tên/địa chỉ tự do và metadata ID vẫn có thể nhận diện. Xem [inventory và ranh giới đã kiểm thử](docs/PRIVACY-INVENTORY.md). Không nhập credentials hay dữ liệu production để thử.
 - **Nhận diện:** câu nhiều ý có thể bị chuyển reviewer thận trọng; evidence là trích dẫn đúng chưa chứng minh model hiểu đúng nghĩa. Không tuyên bố độ chính xác từ số test đạt.
 - **Đánh giá:** evaluator trả `caller-declared-unverified`; chưa xác minh held-out/consent hoặc nghiên cứu với ba nhân sự thực tế. Đề xuất ngưỡng chuyển tiếp chỉ là candidate, chưa tự kích hoạt routing production. Xem [hợp đồng đánh giá](docs/EVALUATION.md).
 - **Lưu trữ và triển khai:** health `durable=true` cho biết adapter Mongo được chọn; `persistenceVerification=NOT_PERFORMED` nói rõ chưa kiểm tra đọc lại sau restart. Push GitHub không chứng minh website chạy đúng commit. Xem [ranh giới bằng chứng](docs/FEEDBACK-EVIDENCE-REVIEW.md).

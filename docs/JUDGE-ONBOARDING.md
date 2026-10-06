@@ -1,5 +1,23 @@
 # Hướng dẫn giám khảo và truy cập bằng QR
 
+## Đường demo Đề A trong vài phút
+
+1. Từ trang đầu chọn **Dành cho nhân viên**, đọc nhãn reviewer public demo,
+   bấm **Đã hiểu**; có thể bỏ qua tour. Không cần xin ID để chạy Verify.
+2. Chọn **Kiểm thử**, giữ **Đề A — 5 trường hợp**, bấm **Chạy toàn bộ test (5)**.
+   Kiểm tra 3 AUTO/2 ESCALATE; không nhận PASS nếu readback API thất bại.
+3. Mở **Bằng chứng quyết định**, đọc action/bucket/rule, nơi tiếp nhận, câu hỏi
+   và thời gian. Nơi tiếp nhận là nhãn điều phối, không phải thông báo tới team thật.
+4. Mở **Mở request / audit → Lịch sử yêu cầu và hướng dẫn → Rule, evidence và
+   thông tin còn thiếu** để đối chiếu. Có thể bấm logo về trang đầu khi tour mở.
+5. Quay lại Verify, nhập phòng ban/mã synthetic và **Judge input mới** do giám
+   khảo tự chọn. Kết quả hợp lệ có thể là hỏi bổ sung hoặc từ chối có lý do.
+
+E2E mới kiểm tra đường đi này trên desktop/mobile và thao tác bàn phím.
+[Readiness hiện tại](COMPETITION-READINESS.md) tách kết quả local/mock khỏi live,
+user study và held-out. Health live chỉ đọc không chứng minh model quality hoặc
+Mongo restart; chạy Verify live có ghi dữ liệu và có thể gọi model trả phí.
+
 ## Phạm vi demo hiện tại
 
 Sản phẩm là IT support. Dùng các case synthetic; không nhập dữ liệu cá nhân/credential thật. Hàng đợi Ngoài quy định/Cần thẩm quyền chỉ lọc danh sách, không xác thực team hoặc thông báo đến người thật. Evaluator nhận nhãn do caller khai báo; chưa có bằng chứng held-out độc lập, consent đã xác minh hoặc user study. Redaction chỉ che một số mẫu có nhận diện; Mongo health ping không chứng minh persistence sau restart. Xem [bằng chứng và giới hạn hiện tại](FEEDBACK-EVIDENCE-REVIEW.md), gồm harness local và quyết định quyền reviewer còn cần chủ repo cung cấp.

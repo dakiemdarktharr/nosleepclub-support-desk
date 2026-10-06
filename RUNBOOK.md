@@ -20,7 +20,7 @@ Chỉ sao chép `.env.example` khi chưa có `.env.local`; giữ cấu hình cá
 npm run lint
 npm run typecheck
 npm test
-node --test scripts/mongo-smoke-guard.test.mjs
+node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs
 npm run build
 $env:SUPPORT_E2E_PRODUCTION='true'
 npm run test:e2e -- --project=chromium
@@ -50,6 +50,24 @@ Sau khi triển khai, kiểm tra trang chọn vai trò, popup lần đầu, URL/
 Mở **Kiểm thử**, chọn lượt đã lưu rồi tiếp tục sau khi lỗi mạng hoặc giới hạn tần suất đã hết. Trường hợp có thể thử lại giữ nguyên mã yêu cầu. Một kết quả không khớp policy vẫn được ghi là không đạt; không thay kỳ vọng để che lỗi.
 
 ## Bảo trì dữ liệu và policy
+
+Đo development trên checkout cần đánh giá (không dùng artifact cũ như kết quả HEAD):
+
+```powershell
+npx vitest run tests/support-verify.test.ts
+node scripts/development-report.mjs
+```
+
+Test dùng API route + readback mock/memory; ghi SHA, runtime digest/dirty, policy,
+Node và môi trường trong artifact local. Script in confusion matrix, coverage,
+exact-match, FNR, unnecessary escalation và các nhóm lỗi. Ground Truth giữ nguyên.
+Artifact có timestamp/UUID chỉ lưu local, không stage. Kết quả độc lập/người dùng
+chưa có: xem [báo cáo readiness](docs/COMPETITION-READINESS.md).
+
+Policy `support-guidance-v5.8` đồng bộ alias dữ kiện với bộ tách subrequest,
+giữ approval context có giới hạn và không nhầm yêu cầu quyền thành artefact.
+Không đổi authority/risk gate hoặc quota. Bump version để preview/cache cũ không
+được dùng lại. Mở rộng redaction theo [inventory](docs/PRIVACY-INVENTORY.md).
 
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
@@ -96,7 +114,13 @@ Mở hai tab reviewer cùng request/version, bấm Stop: một thành công, m�
 
 ## Giới hạn riêng tư và phép đo local
 
-Redaction nhận diện một số credential/OTP, kể cả JSON snake-case và một số biến thể Unicode; che CCCD 12 số liền nhau và mobile Việt Nam khi có nhãn rõ theo định dạng trong [phạm vi privacy](docs/FEEDBACK-EVIDENCE-REVIEW.md#privacy-boundary-inventory). Không ẩn danh toàn diện CCCD, điện thoại, email, tên, điểm hoặc OTP/secret bị làm rối. Dữ liệu chưa nhận diện có thể đến model, storage, audit và UI. Chỉ dùng synthetic hoặc đã ẩn danh trước; dữ liệu gõ vào form vẫn tồn tại trong trình duyệt trước xử lý. Không tự sửa dữ liệu lịch sử bằng thay đổi này.
+Redaction nhận diện một số credential/OTP (gồm JSON quote), CCCD 12 số có nhãn
+với dấu phân cách giới hạn, mobile Việt Nam có nhãn, email ASCII và employee ID
+có nhãn trong nội dung. [Inventory hiện tại](docs/PRIVACY-INVENTORY.md) nêu các
+biến thể được test và loại chưa hỗ trợ. Tên/địa chỉ tự do, metadata ID và dữ liệu
+không nhận diện có thể đến storage/audit/UI; input chưa che có thể đến model.
+Chỉ dùng synthetic hoặc ẩn danh trước. Form vẫn giữ dữ liệu trước khi server
+xử lý; không tự sửa/xóa dữ liệu lịch sử.
 
 `node scripts/measure-support-latency.mjs` dùng server loopback3227 mock/memory và câu CAPABILITIES có thể hiện bực bội để đi qua đường tạo câu trả lời cùng prompt tone. Script bỏ5 warmup, đo15 preview tuần tự và một burst 5 request đồng thời; trả p50/p95/max HTTP+JSON. Có đúng 30 request nên chạy trên server vừa khởi động để không đụng rate limit demo. Ghi kèm OS, Node, commit và production start mode. Preview chỉ lưu tạm trong memory, không tạo support request. Provider mock chỉ dựng prompt rồi trả fallback; phép đo không bao gồm OpenAI, Mongo, production hoặc tải lớn, và không tự chứng minh lợi ích từ song song hóa.
 
