@@ -30,34 +30,25 @@ export function withoutOverride(raw: string) {
     )
     .trim();
 }
-export function conversationRoute(
+export function conversationEligible(
   input: SupportInput,
   baseline: CanonicalRequest,
-): ConversationContext | null {
-  const question = withoutOverride(input.rawText);
-  const ignoredOverride = question !== input.rawText.trim();
-  const risks = [
-    ...baseline.riskSignals,
-    ...baseline.subrequests.flatMap((part) => part.riskSignals),
-  ];
-  if (risks.some((risk) => risk !== "INJECTION" || !ignoredOverride))
-    return null;
-  if (baseline.redactions.length || !question) return null;
-  if (hasInstructionAttack(question)) return null;
+  question: string,
+) {
+  if (
+    baseline.riskSignals.length ||
+    baseline.subrequests.some((part) => part.riskSignals.length) ||
+    baseline.redactions.length ||
+    !question ||
+    hasInstructionAttack(question)
+  )
+    return false;
   const text = normalize(question);
-  // A leftover override is not a harmless prefix, and guidance cannot smuggle a second action.
   if (
-    /system prompt|developer message|auto.approve|ignore.*instruction|bo qua.*(?:instruction|huong dan)|bypass|bo qua.*(?:phe duyet|chinh sach)/.test(
-      text,
-    )
+    /system prompt|developer message|auto.approve|ignore.*instruction|bo qua.*(?:instruction|huong dan)|bypass|bo qua.*(?:phe duyet|chinh sach)/.test(text) ||
+    /\b(?:cap|grant|provision|create|tao|mo|open|deploy|xoa|delete|doi|change)\b.{0,30}\b(?:quyen|access|vm|server|tai nguyen|resource|port|cong|database|db|firewall|role|production|pipeline)\b/.test(text)
   )
-    return null;
-  if (
-    /\b(?:cap|grant|provision|create|tao|mo|open|deploy|xoa|delete|doi|change)\b.{0,30}\b(?:quyen|access|vm|server|tai nguyen|resource|port|cong|database|db|firewall|role|production|pipeline)\b/.test(
-      text,
-    )
-  )
-    return null;
+    return false;
   if (
     Object.entries(input.fields).some(
       ([key, value]) =>
@@ -69,9 +60,27 @@ export function conversationRoute(
         ),
     )
   )
-    return null;
-  if (input.requestKind && !["GUIDANCE", "OTHER"].includes(input.requestKind))
-    return null;
+    return false;
+  return !input.requestKind || ["GUIDANCE", "OTHER"].includes(input.requestKind);
+}
+export function conversationMatchesBaseline(
+  baseline: CanonicalRequest,
+  label: ConversationLabel,
+) {
+  return (
+    !["EVERYDAY", "IDENTITY", "CAPABILITIES", "GREETING", "GENERAL_GUIDE"].includes(label) ||
+    baseline.intentLabel === "UNKNOWN_SUPPORT_REQUEST" ||
+    (label === "GENERAL_GUIDE" && baseline.intentLabel === "GENERAL_HOW_TO")
+  );
+}
+export function conversationRoute(
+  input: SupportInput,
+  baseline: CanonicalRequest,
+): ConversationContext | null {
+  const question = withoutOverride(input.rawText);
+  const ignoredOverride = question !== input.rawText.trim();
+  if (!conversationEligible(input, baseline, question)) return null;
+  const text = normalize(question);
   const how =
     /lam sao|lam the nao|cach |huong dan|su dung|how (?:to|do|can)|explain|what is/.test(
       text,
@@ -124,18 +133,7 @@ export function conversationRoute(
     label = "GENERAL_GUIDE";
   if (!label) return null;
   // A specific operational request cannot enter chat merely by mentioning food or greetings.
-  if (
-    [
-      "EVERYDAY",
-      "IDENTITY",
-      "CAPABILITIES",
-      "GREETING",
-      "GENERAL_GUIDE",
-    ].includes(label) &&
-    baseline.intentLabel !== "UNKNOWN_SUPPORT_REQUEST" &&
-    !(label === "GENERAL_GUIDE" && baseline.intentLabel === "GENERAL_HOW_TO")
-  )
-    return null;
+  if (!conversationMatchesBaseline(baseline, label)) return null;
   return { label, question, ignoredOverride };
 }
 export function conversationalCanonical(
@@ -150,8 +148,8 @@ export function conversationalCanonical(
     intentLabel: `CHAT_${conversation.label}`,
     requestedAction: "answer",
     missingFields: [],
-    riskSignals: [],
-    subrequests: [],
-    model: { source: "deterministic" },
+    riskSignals: baseline.riskSignals,
+    subrequests: baseline.subrequests,
+    model: baseline.model,
   };
 }

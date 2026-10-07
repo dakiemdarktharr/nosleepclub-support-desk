@@ -56,7 +56,7 @@ export async function continueConversation(id: string, value: unknown) {
     // Diagnostics are re-evaluated from the new symptom so no earlier prose can
     // turn a conjunction into a second operational request.
     rawText: current.canonical?.conversation
-      ? `${current.input.rawText.slice(-3900)}\nCâu hỏi tiếp theo: ${input.question}`
+      ? `${current.input.rawText.slice(-3900)} ${input.question}`
       : input.question,
     fields: employeeIdentityOnly(current.input.fields),
   });

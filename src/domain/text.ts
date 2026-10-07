@@ -116,7 +116,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   )
     risks.add("BYPASS");
   if (
-    /ignore (?:all |previous |the )?(?:instructions|policy|security)|system prompt|developer message|return auto.approve|tra ve auto.approve|already approved by the system/.test(
+    /ignore (?:all |previous |the )?(?:instructions|policy|security)|bo qua (?:tat ca |cac )?(?:instruction|huong dan|chi dan)|system prompt|developer message|return auto.approve|tra ve auto.approve|already approved by the system/.test(
       text,
     )
   )

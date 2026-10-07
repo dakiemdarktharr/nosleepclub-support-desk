@@ -62,6 +62,8 @@ Các báo cáo release, migration và prompt bàn giao cũ có thể tra cứu t
 
 Policy `support-guidance-v5.5` thay đổi nhận diện câu mô tả, feedback và đích tiếp nhận policy gap; preview cũ phải tạo lại. Reviewer có thể lọc `queue=OUT_OF_POLICY` hoặc `queue=AUTHORITY_REQUIRED` qua trang review/API phân trang. Bộ lọc áp dụng cả memory/Mongo, không sửa lịch sử quyết định đã lưu và không cấp quyền reviewer. Xem [đối chiếu nhận xét doanh nghiệp](docs/ENTERPRISE-FEEDBACK.md) để phân biệt regression synthetic, Mongo mock và phần chưa xác minh live.
 
+Policy `support-guidance-v5.6` đưa nhận diện ý định freeform của provider OpenAI qua model trước khi áp dụng deterministic policy. Preview phiên bản cũ phải tạo lại; provider `mock` vẫn là mô phỏng regex để chạy demo/test offline và không chứng minh chất lượng nhận diện của OpenAI. Lỗi nhận diện, schema hoặc evidence chuyển reviewer an toàn. Không có thay đổi sentiment sau câu trả lời.
+
 ## Kiểm tra Mongo trong môi trường thử nghiệm riêng
 
 Ưu tiên harness có guard và tự restart tiến trình tại [hướng dẫn kiểm tra persistence](docs/FEEDBACK-EVIDENCE-REVIEW.md#reproducible-mongo-evidence): `node scripts/mongo-restart-smoke.mjs`. Harness chỉ chấp nhận Mongo loopback trên instance disposable được khai báo rõ, database mới do script chọn, không có `.env` local, model mock và budget 0. Chưa có kết quả live từ harness trong lượt sửa này. `durable=true` vẫn là metadata của adapter; trường health `persistenceVerification=NOT_PERFORMED` nói rõ endpoint không kiểm tra restart.
