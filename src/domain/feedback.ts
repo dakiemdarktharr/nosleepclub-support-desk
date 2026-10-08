@@ -4,8 +4,9 @@ import type { CanonicalRequest } from "./contracts";
 export type FeedbackSentiment = "positive" | "neutral" | "negative";
 
 export function requiresFeedbackAnalysis(request: CanonicalRequest) {
+  // USER_HANDOFF is a policy rule too: emotional tone cannot cancel it.
   return [request, ...request.subrequests].some((part) =>
-    part.riskSignals.some((risk) => risk !== "USER_HANDOFF") ||
+    part.riskSignals.length > 0 ||
     ["ACCESS_REQUEST", "CONFIGURATION_CHANGE", "ROUTINE_WORKFLOW", "INCIDENT"].includes(part.requestKind),
   );
 }

@@ -52,7 +52,7 @@ Không gian reviewer hỗ trợ hiện là **public demo**, tách khỏi quyền
 
 Đường demo ngắn, không cần tài khoản: **Trang đầu → Dành cho nhân viên → Đã hiểu → Kiểm thử → Đề A → Chạy toàn bộ test (5)**. Xem 3 routine/2 escalation, mở **Bằng chứng quyết định** và **Mở request / audit → Lịch sử yêu cầu và hướng dẫn**, rồi quay lại Verify để nhập một tình huống mới. Có thể bỏ qua tour; tour không tự chạy thao tác.
 
-[Readiness kỹ thuật mới nhất](docs/TECHNICAL-READINESS.md) · [Đánh giá trước đó](docs/COMPETITION-READINESS.md) · [Protocol held-out/người dùng](docs/INDEPENDENT-EVALUATION-PROTOCOL.md) · [Nội dung 5 slide, video và checklist](docs/SUBMISSION-CONTENT.md). Các bằng chứng độc lập/người dùng còn thiếu được ghi `NOT COLLECTED`; không suy ra 9,5/10 từ số test đạt.
+[Rà soát tích hợp mới nhất](docs/SENTIMENT-INTEGRATION-REVIEW.md) · [Readiness kỹ thuật](docs/TECHNICAL-READINESS.md) · [Đánh giá trước đó](docs/COMPETITION-READINESS.md) · [Protocol held-out/người dùng](docs/INDEPENDENT-EVALUATION-PROTOCOL.md) · [Nội dung 5 slide, video và checklist](docs/SUBMISSION-CONTENT.md). Các bằng chứng độc lập/người dùng còn thiếu được ghi `NOT COLLECTED`; không suy ra 9,5/10 từ số test đạt.
 
 1. Mở **Kiểm thử / Verify**, chọn bộ và bấm **Chạy toàn bộ test** một lần.
 2. Xem expected/actual, rule, thời điểm và liên kết hồ sơ; mở audit để đối chiếu quyết định. Có thể dừng, xem lại và tiếp tục lượt chạy đã lưu.
@@ -92,12 +92,12 @@ flowchart TD
 - **Hướng dẫn có nguồn:** hội thoại tìm trong corpus có revision, nguồn và hạn sử dụng bằng BM25 kết hợp chuẩn hóa Việt–Anh/typo. Không dùng vector database hay embeddings. Web search chỉ bật riêng cho các chủ đề/nguồn cho phép; URL trong ticket không tự cho app quyền đọc tài liệu riêng.
 - **Thiếu tài liệu công việc:** yêu cầu tạo/sửa một sản phẩm công việc mà chưa có tài liệu đầu vào được hỏi bổ sung cụ thể. App chưa có connector đọc Drive, repository, dashboard hoặc attachment riêng của người gửi; không giả vờ đã đọc tài liệu.
 - **Sentiment trước khi gửi:** model phân tích ý định trả thêm nhãn `positive`, `neutral` hoặc `negative` cùng cụm từ bằng chứng và một câu giải thích trong cùng phản hồi, không gọi sentiment riêng. Người gửi rà soát kết quả trong preview. Nếu model lỗi, thiếu cấu hình hoặc bằng chứng không khớp, giao diện ghi rõ nhãn rule-based fallback; sentiment không thay đổi quyết định policy.
-- **Sau câu trả lời:** sentiment model hỗ trợ phân biệt phản hồi đã giải quyết, cần tiếp tục và cần người hỗ trợ. Rủi ro và policy vẫn ưu tiên; câu nguy hiểm không được đánh dấu hoàn tất chỉ vì có lời cảm ơn. Phản hồi positive có thể tạo gợi ý tri thức **chờ rà soát**, không tự thêm vào kho trả lời.
+- **Sau câu trả lời:** sentiment model hỗ trợ phân biệt phản hồi đã giải quyết, cần tiếp tục và cần người hỗ trợ. Rủi ro và policy vẫn ưu tiên; câu nguy hiểm không được đánh dấu hoàn tất chỉ vì có lời cảm ơn. Rule chuyển người `USER_HANDOFF` cũng phải qua policy, không bị model sentiment hủy. Phản hồi positive có thể tạo gợi ý tri thức **chờ rà soát**, không tự thêm vào kho trả lời.
 - **Truy vết:** audit ghi thời điểm, actor, trạng thái trước/sau, rule, evidence, giải thích và câu hỏi tiếp theo. Không lưu chain-of-thought. Preview gắn phiên bản policy; thay policy làm preview/cache cũ không được dùng lại.
 
 `AUTO_APPROVE` có thể là cho phép trả hướng dẫn hoặc tiếp nhận workflow mô phỏng. Nó **không chứng minh máy đã được sửa, tài khoản đã được cấp quyền, cổng đã mở hoặc hạ tầng đã thay đổi**. Người dùng/reviewer xác nhận kết quả trong workflow; dự án chưa thực thi IAM/cloud/database thật.
 
-[Nhận diện bằng model](docs/MODEL-INTENT-ROUTING.md) · [Retrieval](docs/RAG-RETRIEVAL.md) · [Quản trị tri thức](docs/KNOWLEDGE-REVIEW.md) · [Workflow theo bằng chứng](docs/EVIDENCE-WORKFLOW-FOLLOWUP.md)
+[Rà soát tích hợp sentiment](docs/SENTIMENT-INTEGRATION-REVIEW.md) · [Nhận diện bằng model](docs/MODEL-INTENT-ROUTING.md) · [Retrieval](docs/RAG-RETRIEVAL.md) · [Quản trị tri thức](docs/KNOWLEDGE-REVIEW.md) · [Workflow theo bằng chứng](docs/EVIDENCE-WORKFLOW-FOLLOWUP.md)
 
 ### 2. Workflow chi tiết theo module
 
@@ -163,7 +163,7 @@ flowchart TB
         RESULT --> PREVIEW["previewSupport<br/>Fingerprint + policyVersion<br/>Preview TTL 10 phút, chưa tạo ticket"]
         PREVIEW --> CONFIRM["Người gửi xác nhận → submitSupport<br/>Idempotency, TTL, fingerprint<br/>Kiểm tra lại policy / approval"]
         CONFIRM --> SAVE["Tiếp nhận RECEIVED<br/>Sau đó lưu quyết định / assistance / events"]
-        FOLLOWUP["clarifySupport / continueConversation / feedbackSupport<br/>Kiểm tra risk trước sentiment<br/>Neutral hỏi tiếp; negative chuyển người<br/>Positive hợp lệ hoàn tất + gợi ý tri thức"] --> REANALYZE["Cần phân tích lại → M1–M4<br/>Sau đó lưu thay đổi qua M6"]
+        FOLLOWUP["clarifySupport / continueConversation / feedbackSupport<br/>Kiểm tra risk và USER_HANDOFF trước sentiment<br/>Neutral hỏi tiếp; negative chuyển người<br/>Positive hợp lệ hoàn tất + gợi ý tri thức"] --> REANALYZE["Cần phân tích lại → M1–M4<br/>Sau đó lưu thay đổi qua M6"]
         FOLLOWUP -->|"Cập nhật trạng thái"| AUDIT
         REVIEW["reviewSupport<br/>Reason + transition + version<br/>Chặn duyệt Security risk / thiếu căn cứ"] --> AUDIT
         STORED["Hồ sơ đã lưu, đọc từ M6"] --> REVIEW
@@ -217,7 +217,7 @@ Tên model chính **được lấy từ cấu hình**, không hard-code một ph
 | Sentiment yêu cầu mới trong preview | Cùng phản hồi model phân tích ý định (`AI_MODEL`) khi `AI_PROVIDER=openai`; rule-based làm fallback | Một lần gọi trả cả ý định và nhãn, cụm bằng chứng phải là nguyên văn trong input, cùng một câu giải thích. Nhãn chỉ để người gửi rà soát, không tác động policy; mock, thiếu cấu hình, timeout hoặc lỗi bằng chứng dùng rule-based fallback và giao diện ghi rõ nguồn. |
 | Sentiment sau câu trả lời | Model hội thoại (`AI_CONVERSATION_MODEL`, hoặc `AI_MODEL` nếu để trống) khi `AI_PROVIDER=openai`; rule-based làm fallback | Model trả một nhãn `positive`, `neutral` hoặc `negative` theo schema. Rủi ro vẫn được kiểm tra trước sentiment; mock, timeout hoặc lỗi đầu ra dùng rule-based fallback. |
 
-`callModel` đặt `store: false`, tối đa 1.000 completion tokens, timeout tối đa 12 giây và `maxRetries: 0`; web đặt tối đa 1.000 output tokens và timeout 18 giây. Các lần gọi thật chia sẻ counter `AI_MAX_ATTEMPTS`. Đây là giới hạn từng call, không phải cam kết thời gian hoặc tổng token của một yêu cầu. `workflow-prompt.ts` bổ sung nguyên tắc làm việc theo bằng chứng cho lời gọi qua `callModel`; nó không thay policy.
+`callModel` đặt `store: false`, tối đa 1.000 completion tokens, timeout tối đa 12 giây và `maxRetries: 0`; web đặt tối đa 1.000 output tokens và timeout 18 giây. Các lần gọi thật chia sẻ counter `AI_MAX_ATTEMPTS`. Đây là giới hạn từng call, không phải cam kết thời gian hoặc tổng token của một yêu cầu. `workflow-prompt.ts` bổ sung nguyên tắc làm việc theo bằng chứng cho extraction/assistance qua `callModel`, không áp vào lời gọi sentiment riêng; nó không thay policy. Sentiment sau câu trả lời giới hạn 128 completion tokens và timeout 6 giây; lỗi/schema/evidence không hợp lệ dùng fallback có nhãn nguồn.
 
 #### RAG đi từ tài liệu đến câu trả lời ra sao?
 

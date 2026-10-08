@@ -18,7 +18,7 @@ export function SentimentPreview({
       ? "danger"
       : "neutral";
   const source = assessment.source === "model"
-    ? `Model hội thoại${assessment.model ? `: ${assessment.model}` : ""}`
+    ? `Model phân tích ý định${assessment.model ? `: ${assessment.model}` : ""}`
     : assessment.source === "rule-based"
       ? "Dự phòng theo luật (rule-based)"
       : "Chưa có mô tả để phân tích";

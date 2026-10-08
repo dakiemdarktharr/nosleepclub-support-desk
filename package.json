@@ -16,7 +16,7 @@
   "dependencies": {
     "lucide-react": "0.468.0",
     "mongodb": "7.6.0",
-    "next": "15.5.25",
+    "next": "15.5.27",
     "openai": "5.12.2",
     "qrcode.react": "^4.2.0",
     "react": "19.1.1",
@@ -31,7 +31,7 @@
     "@types/react-dom": "19.1.9",
     "autoprefixer": "10.4.21",
     "eslint": "9.35.0",
-    "eslint-config-next": "15.5.25",
+    "eslint-config-next": "15.5.27",
     "jsqr": "^1.4.0",
     "postcss": "8.5.28",
     "tailwindcss": "3.4.17",

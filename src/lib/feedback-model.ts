@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { redact } from "@/domain/redaction";
 import {
   classifyPostAnswerFeedback,
   type FeedbackSentiment,
@@ -55,7 +56,8 @@ function parseResult(
     }
   }
   const parsed = resultSchema.safeParse(candidate);
-  if (!parsed.success || !text.includes(parsed.data.evidence)) return null;
+  if (!parsed.success || !text.includes(parsed.data.evidence) ||
+      redact(JSON.stringify(parsed.data)).markers.length) return null;
   return parsed.data;
 }
 
@@ -134,6 +136,7 @@ export async function analyzeSupportSentiment(
   context: SentimentContext = "post-answer",
   options: ModelOptions = {},
 ): Promise<SentimentAssessment> {
+  text = redact(text).text;
   if (!text.trim())
     return {
       sentiment: "neutral",

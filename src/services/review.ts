@@ -196,40 +196,8 @@ export async function feedbackSupport(
   classifiedSentiment?: FeedbackSentiment,
 ) {
   const input = feedbackSchema.parse(value);
-  if (input.replyText) {
-    const safe = prepareInput({ rawText: input.replyText, idempotencyKey: id });
-    const baseline = extractIntake(safe.input, safe.markers);
-    if (requiresFeedbackAnalysis(baseline))
-      throw new SupportError("FEEDBACK_REQUIRES_CONVERSATION", "Nội dung mới cần được kiểm tra policy trong luồng hội thoại.", 422);
-  }
-  const safeReply = input.replyText ? redact(input.replyText) : null;
-  const sentiment: FeedbackSentiment = safeReply
-    ? classifiedSentiment ?? (await analyzeSupportSentiment(safeReply.text, "post-answer")).sentiment
-    : input.choice === "RESOLVED"
-      ? "positive"
-      : ["ADMIN", "CONFUSED"].includes(input.choice)
-        ? "negative"
-        : "neutral";
-  if (
-    safeReply &&
-    sentiment === "neutral" &&
-    !(input.choice === "STILL_BROKEN" && isContinuationOnly(safeReply.text))
-  )
-    throw new SupportError(
-      "FEEDBACK_REQUIRES_CONVERSATION",
-      "Câu hỏi trung tính cần đi qua luồng hội thoại để được phân tích và hỗ trợ tiếp.",
-      422,
-    );
-  if (
-    safeReply &&
-    ((sentiment === "positive" && input.choice !== "RESOLVED") ||
-      (sentiment === "negative" && input.choice !== "ADMIN"))
-  )
-    throw new SupportError(
-      "FEEDBACK_ROUTE_MISMATCH",
-      "Phản hồi cần được xử lý theo nhánh sentiment tương ứng.",
-      422,
-    );
+  // Reject invalid/stale targets before spending the shared model budget.
+  // updateSupportRequest still checks the version atomically after model work.
   const snapshot = await getSupportRequest(id);
   if (!snapshot)
     throw new SupportError("NOT_FOUND", "Không tìm thấy yêu cầu.", 404);
@@ -264,6 +232,40 @@ export async function feedbackSupport(
       "INVALID_TRANSITION",
       "Lựa chọn này chỉ áp dụng cho hướng dẫn đang mở.",
       409,
+    );
+  if (input.replyText) {
+    const safe = prepareInput({ rawText: input.replyText, idempotencyKey: id });
+    const baseline = extractIntake(safe.input, safe.markers);
+    if (requiresFeedbackAnalysis(baseline))
+      throw new SupportError("FEEDBACK_REQUIRES_CONVERSATION", "Nội dung mới cần được kiểm tra policy trong luồng hội thoại.", 422);
+  }
+  const safeReply = input.replyText ? redact(input.replyText) : null;
+  const sentiment: FeedbackSentiment = safeReply
+    ? classifiedSentiment ?? (await analyzeSupportSentiment(safeReply.text, "post-answer")).sentiment
+    : input.choice === "RESOLVED"
+      ? "positive"
+      : ["ADMIN", "CONFUSED"].includes(input.choice)
+        ? "negative"
+        : "neutral";
+  if (
+    safeReply &&
+    sentiment === "neutral" &&
+    !(input.choice === "STILL_BROKEN" && isContinuationOnly(safeReply.text))
+  )
+    throw new SupportError(
+      "FEEDBACK_REQUIRES_CONVERSATION",
+      "Câu hỏi trung tính cần đi qua luồng hội thoại để được phân tích và hỗ trợ tiếp.",
+      422,
+    );
+  if (
+    safeReply &&
+    ((sentiment === "positive" && input.choice !== "RESOLVED") ||
+      (sentiment === "negative" && input.choice !== "ADMIN"))
+  )
+    throw new SupportError(
+      "FEEDBACK_ROUTE_MISMATCH",
+      "Phản hồi cần được xử lý theo nhánh sentiment tương ứng.",
+      422,
     );
   if (input.choice === "EXPLAIN") {
     const step =
