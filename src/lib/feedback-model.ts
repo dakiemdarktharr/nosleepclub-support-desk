@@ -95,7 +95,14 @@ function classifySupportRequestSentiment(text: string): FeedbackSentiment {
   return "neutral";
 }
 
-function ruleBasedSupportRequestAssessment(text: string): SentimentAssessment {
+export function supportRequestSentimentFallback(text: string): SentimentAssessment {
+  if (!text.trim())
+    return {
+      sentiment: "neutral",
+      source: "not-assessed",
+      evidence: "",
+      explanation: "Không có mô tả tự do để nhận diện sentiment.",
+    };
   const negativeEvidence = supportRequestNegativeCues
     .map((pattern) => text.match(pattern)?.[0])
     .find(Boolean);
@@ -140,7 +147,7 @@ export async function analyzeSupportSentiment(
     !!process.env.OPENAI_API_KEY && !!model;
   if (!options.run && !modelConfigured && !options.fault)
     return context === "support-request"
-      ? ruleBasedSupportRequestAssessment(text)
+      ? supportRequestSentimentFallback(text)
       : ruleBasedAssessment(text, "Model chưa được cấu hình; nhãn tạm dùng rule-based fallback.");
 
   try {
@@ -171,7 +178,7 @@ export async function analyzeSupportSentiment(
       };
     console.warn("Sentiment model returned invalid evidence; using rule-based fallback.");
     return context === "support-request"
-      ? ruleBasedSupportRequestAssessment(text)
+      ? supportRequestSentimentFallback(text)
       : ruleBasedAssessment(text, "Model không trả được minh chứng hợp lệ; nhãn dùng rule-based fallback.");
   } catch (error) {
     const reason = error instanceof ModelFailure
@@ -179,7 +186,7 @@ export async function analyzeSupportSentiment(
       : "MODEL_OUTPUT_INVALID";
     console.warn(`Sentiment model unavailable (${reason}); using rule-based fallback.`);
     return context === "support-request"
-      ? ruleBasedSupportRequestAssessment(text)
+      ? supportRequestSentimentFallback(text)
       : ruleBasedAssessment(text, "Model chưa trả được kết quả; nhãn dùng rule-based fallback.");
   }
 }

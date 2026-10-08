@@ -183,26 +183,27 @@ it("does not accept a broad chat label over a known access request", async () =>
 
 it("reuses the preview extraction on confirmation", async () => {
   const rawText = "Máy in cứ giữ tài liệu trong hàng đợi";
-  const run = vi.fn(async (call: ModelCall) => call.purpose === "sentiment"
-    ? {
+  const run = vi.fn(async (call: ModelCall) => {
+    if (call.purpose !== "extraction") throw new Error("Unexpected second model call");
+    return {
+      ...printerIntent(rawText),
+      sentiment: {
         sentiment: "neutral",
         evidence: "Máy in cứ giữ tài liệu",
         explanation: "Câu mô tả sự cố máy in mà không thể hiện cảm xúc rõ ràng.",
-      }
-    : printerIntent(rawText));
+      },
+    };
+  });
   const preview = await previewSupport(input(rawText), { run });
-  expect(run).toHaveBeenCalledTimes(2);
-  expect(run.mock.calls.map(([call]) => call.purpose).sort()).toEqual([
-    "extraction",
-    "sentiment",
-  ]);
+  expect(run).toHaveBeenCalledOnce();
+  expect(run.mock.calls[0][0].purpose).toBe("extraction");
   expect(preview.sentiment).toMatchObject({
     sentiment: "neutral",
     source: "model",
     evidence: "Máy in cứ giữ tài liệu",
   });
   const saved = await submitSupport({ ...preview.input, confirmed: true }, { run });
-  expect(run).toHaveBeenCalledTimes(2);
+  expect(run).toHaveBeenCalledOnce();
   expect(saved.canonical).toEqual(preview.canonical);
   await expect(submitSupport({ ...preview.input, rawText: "Nội dung khác", idempotencyKey: crypto.randomUUID(), confirmed: true }, { run }))
     .rejects.toMatchObject({ code: "PREVIEW_EXPIRED" });
@@ -210,6 +211,30 @@ it("reuses the preview extraction on confirmation", async () => {
   await saveSupportPreview({ ...stale!, decision: { ...stale!.decision, policyVersion: "support-guidance-v5.5" } });
   await expect(submitSupport({ ...preview.input, idempotencyKey: crypto.randomUUID(), confirmed: true }, { run }))
     .rejects.toMatchObject({ code: "PREVIEW_EXPIRED" });
+});
+
+it("falls back only for sentiment when the combined response has invalid sentiment evidence", async () => {
+  const rawText = "Máy in cứ giữ tài liệu trong hàng đợi";
+  const run = vi.fn(async (call: ModelCall) => {
+    if (call.purpose !== "extraction") throw new Error("Unexpected second model call");
+    return {
+      ...printerIntent(rawText),
+      sentiment: {
+        sentiment: "negative",
+        evidence: "Mất cả ngày rồi",
+        explanation: "Bạn đang bực vì phải chờ.",
+      },
+    };
+  });
+
+  const preview = await previewSupport(input(rawText), { run });
+
+  expect(run).toHaveBeenCalledOnce();
+  expect(preview.sentiment).toMatchObject({
+    sentiment: "neutral",
+    source: "rule-based",
+  });
+  expect(preview.decision.action).toBe("AUTO_APPROVE");
 });
 
 it("keeps the selected structured category without invoking classification", async () => {

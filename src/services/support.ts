@@ -15,6 +15,7 @@ import type {
   AuditEvent,
   CanonicalRequest,
   Decision,
+  SentimentAssessment,
   SupportInput,
   SupportRequest,
   SupportPreview,
@@ -38,7 +39,7 @@ import {
   modelFailure,
   type ModelOptions,
 } from "@/lib/support-model";
-import { analyzeSupportSentiment } from "@/lib/feedback-model";
+import { supportRequestSentimentFallback } from "@/lib/feedback-model";
 
 export function auditEvent(
   request: SupportRequest,
@@ -95,7 +96,11 @@ export async function analyze(
   input: SupportInput,
   markers: string[],
   options: ModelOptions = {},
-): Promise<{ canonical: CanonicalRequest; decision: Decision }> {
+): Promise<{
+  canonical: CanonicalRequest;
+  decision: Decision;
+  sentiment?: SentimentAssessment;
+}> {
   // Sender identity is metadata for record management, not a support fact.
   const analysisInput = {
     ...input,
@@ -123,13 +128,21 @@ export async function analyze(
   const conversation = mockRouting
     ? conversationRoute(analysisInput, baseline)
     : null;
-  const canonical = conversation
-    ? conversationalCanonical(baseline, conversation)
-    : await extractWithModel(analysisInput, baseline, options);
+  let canonical: CanonicalRequest;
+  let sentiment: SentimentAssessment | undefined;
+  if (conversation) {
+    canonical = conversationalCanonical(baseline, conversation);
+  } else {
+    const extraction = await extractWithModel(analysisInput, baseline, options);
+    const { sentimentAssessment, ...canonicalOnly } = extraction;
+    sentiment = sentimentAssessment;
+    canonical = canonicalOnly;
+  }
   if (canonical.workEvidence) await checkWorkSources(canonical, input.rawText);
   return {
     canonical,
     decision: evaluatePolicy(canonical, verifyApproval),
+    sentiment,
   };
 }
 async function checkWorkSources(canonical: CanonicalRequest, question: string) {
@@ -194,10 +207,9 @@ export async function completeAnalysis(
 export async function previewSupport(value: unknown, options: ModelOptions = {}) {
   const safe = prepareInput(value);
   requireIntakeIdentity(safe.input);
-  const [analysis, sentiment] = await Promise.all([
-    completeAnalysis(safe.input, safe.markers, options),
-    analyzeSupportSentiment(safe.input.rawText, "support-request", options),
-  ]);
+  const analysis = await completeAnalysis(safe.input, safe.markers, options);
+  const sentiment = analysis.sentiment ??
+    supportRequestSentimentFallback(safe.input.rawText);
   const preview: SupportPreview = {
     id: randomUUID(),
     fingerprint: fingerprintOf(safe.input),
