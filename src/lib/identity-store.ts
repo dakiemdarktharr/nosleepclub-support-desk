@@ -19,17 +19,17 @@ async function initializeIdentity(db: Db) {
   }
 }
 export async function identityStore(): Promise<{ db: Db; client: MongoClient }> {
-  const uri = process.env.IDENTITY_MONGODB_URI || process.env.MONGODB_URI;
-  const name = process.env.IDENTITY_MONGODB_DB;
-  if (!uri || !name) throw new SupportError("IDENTITY_STORAGE_UNAVAILABLE", "Hệ thống ID chưa cấu hình MongoDB. Chưa thể lưu đơn hoặc đăng nhập; liên hệ IT.", 503);
-  if (!runtime.identityMongo || runtime.identityMongo.uri !== uri || runtime.identityMongo.name !== name) {
-    await runtime.identityMongo?.client.close();
-    runtime.identityMongo = { uri, name, client: new MongoClient(uri, { maxPoolSize: 5, serverSelectionTimeoutMS: 5000, ignoreUndefined: true }) };
-    runtime.identityIndexes = undefined;
-  }
-  const client = runtime.identityMongo.client;
-  const db = client.db(name);
+  const uri = process.env.IDENTITY_MONGODB_URI?.trim() || process.env.MONGODB_URI?.trim();
+  const name = process.env.IDENTITY_MONGODB_DB?.trim();
+  if (!uri || !name) throw new SupportError("IDENTITY_STORAGE_UNAVAILABLE", "Đăng nhập nhân viên và cấp ID chưa sẵn sàng. Bạn vẫn có thể chọn Đăng nhập không cần tài khoản để gửi hỗ trợ; liên hệ IT nếu cần ID.", 503);
   try {
+    if (!runtime.identityMongo || runtime.identityMongo.uri !== uri || runtime.identityMongo.name !== name) {
+      await runtime.identityMongo?.client.close();
+      runtime.identityMongo = { uri, name, client: new MongoClient(uri, { maxPoolSize: 5, serverSelectionTimeoutMS: 5000, ignoreUndefined: true }) };
+      runtime.identityIndexes = undefined;
+    }
+    const client = runtime.identityMongo.client;
+    const db = client.db(name);
     await client.connect();
     await db.command({ ping: 1 });
     runtime.identityIndexes ??= initializeIdentity(db).then(() => Promise.all([

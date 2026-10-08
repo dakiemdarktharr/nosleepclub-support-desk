@@ -2,9 +2,9 @@ import { test, expect } from "./fixtures";
 const id = "bbbbbbbb-bbbb-4bbb-abbb-bbbbbbbbbbbb";
 const scope = { environment: "sandbox", resource: "project", operation: "read", target: "project-demo" };
 const profile = { id, version: 1, name: "Job giả lập Alpha", scopes: [scope], active: true };
-test("home offers only two roles; support opens password-free login and optional tools", async ({ page }) => {
+test("home offers two roles and guest access; support opens password-free login and optional tools", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("main a")).toHaveCount(2);
+  await expect(page.locator("main a")).toHaveCount(3);
   await expect(page.getByLabel("ID nhân viên", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toHaveAttribute("href", "/review");
   await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();

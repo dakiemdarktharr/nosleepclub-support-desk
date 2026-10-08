@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+.guest-entry { margin-top: 1rem; width: 100%; text-align: center; }
+.guest-notice { margin: 0.75rem 0 1.25rem; padding: 1rem; border-left: 3px solid #F05A22; border-radius: 0.5rem; background: #fff7ed; color: #334155; line-height: 1.6; }
+
 .site-access-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; min-height: 44px; padding: 8px 10px; border: 1px solid var(--orange); border-radius: 10px; background: #fff5ef; color: #a7360d; font-size: 14px; font-weight: 800; }
 .site-access-modal { width: min(460px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 24px; border: 3px solid var(--orange); border-radius: 24px; background: white; color: var(--ink); overflow-y: auto; overscroll-behavior: contain; }
 .site-access-modal::backdrop { background: #20212480; backdrop-filter: blur(3px); }

@@ -11,6 +11,7 @@ import { isEmployeeIdentityField, normalizeEmployeeId } from "./employee-identit
 
 export const supportInputSchema = z
   .object({
+    requesterMode: z.literal("guest").optional(),
     mode: z.enum(["freeform", "structured"]).default("freeform"),
     serviceGroup: z.enum(serviceGroups).default("OTHER"),
     requestKind: z.enum(requestKinds).optional(),
@@ -31,7 +32,16 @@ export const supportInputSchema = z
     verifyCaseId: z.string().min(1).max(150).optional(),
   })
   .strict()
+  .transform((input) => ({
+    ...input,
+    // Guest access never borrows an employee identity supplied by the browser.
+    fields: input.requesterMode === "guest"
+      ? Object.fromEntries(Object.entries(input.fields).filter(([key]) => !isEmployeeIdentityField(key)))
+      : input.fields,
+  }))
   .superRefine((input, ctx) => {
+    if (input.requesterMode === "guest" && (input.verifyRunId || input.verifyCaseId))
+      ctx.addIssue({ code: "custom", path: ["requesterMode"], message: "Luồng khách không phải lượt Verify." });
     if (Boolean(input.verifyRunId) !== Boolean(input.verifyCaseId))
       ctx.addIssue({
         code: "custom",

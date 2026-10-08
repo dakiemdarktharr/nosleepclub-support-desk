@@ -42,6 +42,7 @@ export function LoginPanel() {
       <Button disabled={busy}>{busy ? "Đang xử lý…" : challenge ? "Xác minh và tiếp tục" : "Đăng nhập"}</Button>
       {challenge && <Button variant="quiet" type="button" disabled={busy} onClick={() => { setChallenge(""); setCode(""); setError(""); }}>Nhập lại ID / yêu cầu mã mới</Button>}
     </form>
+    <Link className="button secondary guest-entry" href="/guest">Đăng nhập không cần tài khoản</Link>
     <Link className="identity-text-link" href="/identity/new">Nhân viên mới?</Link>
 
     <details className="login-options"><summary>Hướng dẫn & tùy chọn</summary><div className="identity-links"><Link href="/identity/track">Theo dõi đơn cấp ID</Link><Link href="/help">Hướng dẫn sử dụng</Link><button type="button" onClick={() => window.dispatchEvent(new Event("vng-open-guide"))}>Hướng dẫn demo</button><Link href="/send-help">Trải nghiệm demo</Link></div></details>

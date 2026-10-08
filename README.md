@@ -12,12 +12,12 @@ Repository: **[dakiemdarktharr/vng-support](https://github.com/dakiemdarktharr/v
 
 ## Bắt đầu sử dụng
 
-Trang đầu có hai lựa chọn:
+Trang đầu giữ hai lựa chọn vai trò và thêm nút **Đăng nhập không cần tài khoản** bên dưới:
 
 | Bạn muốn làm gì? | Cách bắt đầu |
 | --- | --- |
 | Gửi yêu cầu bằng ID đã cấp | **Tôi cần hỗ trợ → Đăng nhập**; nhập ID còn hiệu lực. |
-| Thử hỗ trợ mà chưa có tài khoản | **Tôi cần hỗ trợ → Hướng dẫn & tùy chọn → Trải nghiệm demo**; nhập phòng ban và mã nhân viên giả lập. |
+| Gửi hỗ trợ mà chưa có tài khoản | **Đăng nhập không cần tài khoản** ở trang đầu hoặc dưới form đăng nhập → `/guest`; không cần mã nhân viên/phòng ban. |
 | Xin cấp ID mới | **Tôi cần hỗ trợ → Nhân viên mới?**; gửi đơn, lưu liên kết riêng và chờ IT duyệt. |
 | Tiếp nhận, xử lý hoặc kiểm thử | **Dành cho nhân viên**; mở hàng đợi, lịch sử hoặc Verify. |
 
@@ -26,12 +26,19 @@ Nút **URL / QR** giúp sao chép URL hoặc mở app trên điện thoại. Hư
 ### Người gửi yêu cầu
 
 1. Vào **Gửi yêu cầu**, chọn **Mô tả vấn đề** hoặc **Chọn theo danh mục**.
-2. Chọn **Phòng ban** và nhập **Mã nhân viên**. Phiên đăng nhập tự điền ID; luồng demo dùng mã giả lập, chẳng hạn `EMP-DEMO-01`, không tạo tài khoản thật.
+2. Nếu dùng tài khoản, chọn **Phòng ban** và nhập **Mã nhân viên**; phiên đăng nhập tự điền ID. Luồng **không cần tài khoản** bỏ các ô này, không tạo hay mượn danh tính nhân viên.
 3. Viết điều đang gặp, ví dụ “VPN không kết nối” hoặc “Máy in bị kẹt”. Không cần đặt thành câu hỏi; không cần biết trước nhóm hỗ trợ. Các trường nâng cao chỉ bổ sung khi có dữ kiện.
 4. Bấm **Gửi** để xem trước cách hệ thống hiểu yêu cầu, hướng dẫn hoặc câu hỏi làm rõ. Preview **chưa tạo hồ sơ yêu cầu**; dùng **Quay lại sửa** nếu cần.
 5. Chọn **Xác nhận và gửi yêu cầu**, hoặc **Lưu và tiếp tục trò chuyện** khi đang trong nhánh hội thoại.
 6. Hỏi tiếp, trả lời câu hỏi bổ sung hoặc phản hồi kết quả. **Tôi đã làm được** ghi nhận đã giải quyết; **Chuyển cho nhân viên** chuyển hỗ trợ cùng lịch sử.
 7. Lưu liên kết hoặc mã UUID đầy đủ để tra cứu tại **Theo dõi yêu cầu**. Mã ngắn `HT-…` dùng nhận biết và tìm trong reviewer/audit; trang theo dõi cần liên kết hoặc mã đầy đủ.
+
+Khách dùng ngay hỏi đáp, hướng dẫn và chẩn đoán thông thường trong giới hạn policy.
+Server ghi `requesterMode=guest`, bỏ metadata nhân viên do client gửi và ghi actor
+`guest` trong audit người gửi. Lựa chọn này không cấp quyền IT, không xác thực danh
+tính, không bỏ kiểm tra production/secrets/root, không thực thi IAM/cloud/database.
+Luồng khách không gọi hệ thống ID nên vẫn dùng được khi identity Mongo chưa sẵn sàng;
+việc lưu yêu cầu vẫn phụ thuộc storage Support đã cấu hình.
 
 ### Người xử lý yêu cầu hỗ trợ
 
@@ -307,7 +314,12 @@ Hệ thống ID chỉ dùng MongoDB cho nhân viên, profile/version, đơn, quy
 - `IDENTITY_MONGODB_DB`: **bắt buộc chỉ định database riêng** cho identity; không tự dùng tên database Support.
 - `IDENTITY_OTP_RELAY_URL`, `IDENTITY_OTP_RELAY_TOKEN`, `IDENTITY_OTP_SIGNING_KEY`: cần cho xác minh OTP, dùng endpoint HTTPS do IT quản lý và signing key tối thiểu 32 ký tự.
 
-Các biến identity chưa có trong `.env.example`; thêm vào môi trường riêng theo [hướng dẫn cấu hình và bootstrap IT](RUNBOOK.md#hệ-thống-id-nhân-viên). Database mới không có tài khoản/profile seed tự động. Operator khởi tạo người xử lý qua script `scripts/identity-bootstrap.mjs` với dữ liệu đã xác minh ngoài repository.
+Các biến identity có mẫu trong `.env.example`; URI/token/key để trống. Tên database
+riêng được chủ repo chọn là `vng_support_identity`. Trên hosting phải cấu hình
+`IDENTITY_MONGODB_DB` cho đúng môi trường; file mẫu không tự cấu hình Vercel.
+URI identity để trống dùng `MONGODB_URI` hiện có. Xem [cấu hình và bootstrap IT](RUNBOOK.md#hệ-thống-id-nhân-viên).
+Database mới không có tài khoản/profile seed tự động. Operator khởi tạo người xử lý
+qua `scripts/identity-bootstrap.mjs` với dữ liệu được xác minh ngoài repository.
 
 Code cài schema validator, unique index và ghi cấp ID/profile/quyết định/audit trong transaction. Thiếu cấu hình hoặc MongoDB unavailable trả lỗi 503, không báo đã lưu/cấp ID thành công. Kiểm thử adapter giả lập không thay thế xác minh transaction/index/concurrency trên MongoDB thật.
 

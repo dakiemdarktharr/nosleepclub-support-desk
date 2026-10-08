@@ -19,6 +19,7 @@ export default function Home() {
             <ArrowRight size={24} aria-hidden="true" />
           </Link>
         </div>
+        <Link className="button secondary guest-entry" href="/guest">Đăng nhập không cần tài khoản</Link>
       </section>
       <div className="welcome-art">
         <span className="mascot-orbit" aria-hidden="true" />

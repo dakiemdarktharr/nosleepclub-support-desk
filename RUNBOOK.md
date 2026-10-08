@@ -165,6 +165,19 @@ Hệ thống ID dùng MongoDB riêng, không thay storage Support. Không có me
 
 ### Cấu hình
 
+Trên web Vercel, lỗi chưa cấu hình có thể do đã có `MONGODB_URI` nhưng thiếu
+`IDENTITY_MONGODB_DB`. Đối chiếu **tên biến và target**, không xuất giá trị secret.
+Chủ repo chọn database riêng `vng_support_identity`; đặt
+`IDENTITY_MONGODB_DB=vng_support_identity` ở Production. Không đổi `MONGODB_DB`
+của Support. Deployment mới mới nhận biến vừa thêm; sửa file `.env.example`
+không cập nhật môi trường hosting. Không tự bootstrap nhân viên hoặc giả OTP.
+
+Mongo user cần quyền trên database identity mới, replica set/transaction và
+quyền tạo validator/index như bên dưới. Tên database được cấu hình không chứng
+minh đã có tài khoản, quyền Mongo đúng, transaction hoặc OTP relay hoạt động.
+Nếu đăng nhập nhân viên chưa sẵn sàng, dùng nút **Đăng nhập không cần tài khoản**
+để vào `/guest`; đây là luồng hỗ trợ riêng, không phải memory fallback cho tài khoản.
+
 - `IDENTITY_MONGODB_URI`: URI MongoDB lấy từ secret manager; nếu bỏ trống dùng `MONGODB_URI` hiện có. Không đưa URI thật vào Git/log.
 - `IDENTITY_MONGODB_DB`: tên database riêng, bắt buộc, không tự lấy `MONGODB_DB` của Support.
 - MongoDB phải hỗ trợ transaction: replica set hoặc sharded cluster. Standalone không đủ. Tài khoản DB cần đọc/ghi các collection `identity_*`, tạo index/collection và `collMod` để cài validator. Runtime khởi tạo validator/index một lần mỗi tiến trình; thiếu quyền thì từ chối phục vụ identity.

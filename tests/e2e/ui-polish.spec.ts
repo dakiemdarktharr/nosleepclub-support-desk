@@ -2,7 +2,7 @@ import { expect, test } from "./fixtures";
 
 test("role entry and compact login stay reachable by keyboard and browser back", async ({ page }, info) => {
   await page.goto("/");
-  await expect(page.locator("main a")).toHaveCount(2);
+  await expect(page.locator("main a")).toHaveCount(3);
   await expect(page.locator("main form")).toHaveCount(0);
   await expect(page.getByText("Dùng thử các luồng hỗ trợ", { exact: false })).toHaveCount(0);
   await page.screenshot({ animations: "disabled", path: `artifacts/ui-entry-${info.project.name}.png`, fullPage: true });
@@ -20,7 +20,7 @@ test("role entry and compact login stay reachable by keyboard and browser back",
   await page.goBack();
   await expect(page).toHaveURL(/\/login$/);
   await page.getByRole("link", { name: "Màn hình chính", exact: true }).click();
-  await expect(page.locator("main a")).toHaveCount(2);
+  await expect(page.locator("main a")).toHaveCount(3);
 });
 
 test("native dropdown supports keyboard selection, Escape and retained form input", async ({ page }, info) => {

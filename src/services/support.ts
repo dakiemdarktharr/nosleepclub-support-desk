@@ -50,7 +50,7 @@ export function auditEvent(
     id: randomUUID(),
     requestId: request.id,
     timestamp: new Date().toISOString(),
-    actor,
+    actor: request.input.requesterMode === "guest" && actor === "employee-demo" ? "guest" : actor,
     beforeStatus,
     afterStatus: request.status,
     action,
@@ -84,8 +84,9 @@ export function prepareInput(value: unknown) {
   const parsed = supportInputSchema.parse(value);
   return safeInput(parsed);
 }
-function requireIntakeIdentity(fields: Record<string, string>) {
-  const identityError = employeeIdentityError(fields);
+function requireIntakeIdentity(input: SupportInput) {
+  if (input.requesterMode === "guest") return;
+  const identityError = employeeIdentityError(input.fields);
   if (identityError)
     throw new SupportError("IDENTITY_REQUIRED", identityError, 422);
 }
@@ -191,7 +192,7 @@ export async function completeAnalysis(
 }
 export async function previewSupport(value: unknown, options: ModelOptions = {}) {
   const safe = prepareInput(value);
-  requireIntakeIdentity(safe.input.fields);
+  requireIntakeIdentity(safe.input);
   const preview: SupportPreview = {
     id: randomUUID(),
     fingerprint: fingerprintOf(safe.input),
@@ -227,7 +228,7 @@ export async function submitSupport(
 ): Promise<SupportRequest> {
   const safe = prepareInput(value);
   const input = safe.input;
-  requireIntakeIdentity(input.fields);
+  requireIntakeIdentity(input);
   if (!input.confirmed)
     throw new SupportError(
       "CONFIRMATION_REQUIRED",

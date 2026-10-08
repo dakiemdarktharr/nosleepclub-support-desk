@@ -95,6 +95,9 @@ export function requireDemoReviewer() {
 }
 export async function requireEmployeeIdentity(value: unknown, request?: Request) {
   const input = supportInputSchema.parse(value);
+  // Guest support is independent of Mongo identity and existing cookies.
+  // Policy and IT authentication remain server-enforced.
+  if (input.requesterMode === "guest") return input;
   // Only an exact fixture in a server-created Verify run can use the synthetic path.
   // Validate here too: preview does not go through submitSupport's Verify guard.
   if (input.verifyRunId) {

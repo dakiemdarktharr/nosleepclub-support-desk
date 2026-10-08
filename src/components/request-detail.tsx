@@ -76,7 +76,7 @@ export function RequestDetail({ id }: { id: string }) {
             ? "Nhân viên đã duyệt; đang chờ hoàn tất xử lý mô phỏng."
             : "";
   return (
-    <main className="page page-narrow space-y-6" data-guide-stage="sender-result">
+    <main className="page page-narrow space-y-6" data-guide-stage={request?.input.requesterMode === "guest" ? undefined : "sender-result"}>
       <div>
         <p className="eyebrow">THEO DÕI HỖ TRỢ</p>
         <h1>Yêu cầu {displayId(id)}</h1>
@@ -347,7 +347,7 @@ export function RequestDetail({ id }: { id: string }) {
             <AuditTimeline events={request.events} />
           </details>
           {!active && (
-            <Link className="button primary" href="/send-help">
+            <Link className="button primary" href={request.input.requesterMode === "guest" ? "/guest" : "/send-help"}>
               Gửi yêu cầu mới
             </Link>
           )}

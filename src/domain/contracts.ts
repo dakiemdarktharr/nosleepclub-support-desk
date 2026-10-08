@@ -91,6 +91,7 @@ export const extractionSchema = z
 export type Extraction = z.infer<typeof extractionSchema>;
 
 export type SupportInput = {
+  requesterMode?: "guest";
   mode: "freeform" | "structured";
   serviceGroup: ServiceGroup;
   requestKind?: RequestKind;
