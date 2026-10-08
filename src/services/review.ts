@@ -4,7 +4,7 @@ import {
   requiresFeedbackAnalysis,
   type FeedbackSentiment,
 } from "@/domain/feedback";
-import { classifyFeedbackWithModel } from "@/lib/feedback-model";
+import { analyzeSupportSentiment } from "@/lib/feedback-model";
 import { explainStep } from "@/domain/guidance";
 import { z } from "zod";
 import { canReview } from "@/domain/transitions";
@@ -204,7 +204,7 @@ export async function feedbackSupport(
   }
   const safeReply = input.replyText ? redact(input.replyText) : null;
   const sentiment: FeedbackSentiment = safeReply
-    ? classifiedSentiment ?? await classifyFeedbackWithModel(safeReply.text)
+    ? classifiedSentiment ?? (await analyzeSupportSentiment(safeReply.text, "post-answer")).sentiment
     : input.choice === "RESOLVED"
       ? "positive"
       : ["ADMIN", "CONFUSED"].includes(input.choice)

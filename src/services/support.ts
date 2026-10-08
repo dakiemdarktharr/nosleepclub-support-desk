@@ -38,6 +38,7 @@ import {
   modelFailure,
   type ModelOptions,
 } from "@/lib/support-model";
+import { analyzeSupportSentiment } from "@/lib/feedback-model";
 
 export function auditEvent(
   request: SupportRequest,
@@ -193,11 +194,16 @@ export async function completeAnalysis(
 export async function previewSupport(value: unknown, options: ModelOptions = {}) {
   const safe = prepareInput(value);
   requireIntakeIdentity(safe.input);
+  const [analysis, sentiment] = await Promise.all([
+    completeAnalysis(safe.input, safe.markers, options),
+    analyzeSupportSentiment(safe.input.rawText, "support-request", options),
+  ]);
   const preview: SupportPreview = {
     id: randomUUID(),
     fingerprint: fingerprintOf(safe.input),
     expiresAt: new Date(Date.now() + 10 * 60_000),
-    ...(await completeAnalysis(safe.input, safe.markers, options)),
+    ...analysis,
+    sentiment,
   };
   await saveSupportPreview(preview);
   return {
@@ -205,6 +211,7 @@ export async function previewSupport(value: unknown, options: ModelOptions = {})
     canonical: preview.canonical,
     decision: preview.decision,
     assistance: preview.assistance,
+    sentiment: preview.sentiment,
     expiresAt: preview.expiresAt,
   };
 }

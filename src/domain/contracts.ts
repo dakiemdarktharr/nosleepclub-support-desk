@@ -171,6 +171,13 @@ export type RequestStatus =
   | "STOPPED"
   | "COMPLETED";
 export type FeedbackSentiment = "positive" | "neutral" | "negative";
+export type SentimentAssessment = {
+  sentiment: FeedbackSentiment;
+  source: "model" | "rule-based" | "not-assessed";
+  evidence: string;
+  explanation: string;
+  model?: string;
+};
 export type KnowledgeCandidate = {
   status: "PENDING_REVIEW";
   sourceRequestId: string;
@@ -271,6 +278,7 @@ export type SupportPreview = {
   id: string;
   fingerprint: string;
   expiresAt: Date;
+  sentiment: SentimentAssessment;
   canonical: CanonicalRequest;
   decision: Decision;
   assistance: Assistance | null;

@@ -27,10 +27,12 @@ import {
   type ServiceGroup,
   type RequestKind,
   type Assistance,
+  type SentimentAssessment,
 } from "@/domain/contracts";
 import { browserApi } from "@/lib/browser-api";
 import { Alert, Button, Card, Spinner, Textarea } from "@/components/ui";
 import { SupportResult } from "@/components/support-result";
+import { SentimentPreview } from "@/components/sentiment-preview";
 import { SupportField } from "@/components/support-field";
 import { AssistanceHistory } from "@/components/support-history";
 type Preview = {
@@ -38,6 +40,7 @@ type Preview = {
   canonical: CanonicalRequest;
   decision: Decision;
   assistance: Assistance | null;
+  sentiment: SentimentAssessment;
 };
 const kinds: Record<RequestKind, string> = {
   GUIDANCE: "Hỏi cách thực hiện",
@@ -361,6 +364,7 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
               <blockquote className="original-question">
                 {preview.input.rawText || "Yêu cầu theo danh mục"}
               </blockquote>
+              <SentimentPreview assessment={preview.sentiment} />
               <dl className="fact-list">
                 {Object.entries(preview.canonical.entities)
                   .filter(([key]) => key !== "intentLabel")

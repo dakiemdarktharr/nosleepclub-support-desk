@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { analyze, previewSupport, submitSupport } from "@/services/support";
 import { extractIntake } from "@/domain/text";
 import { getSupportPreview, resetSupportTestStore, saveSupportPreview } from "@/lib/support-repository";
+import type { ModelCall } from "@/lib/support-model";
 import type { SupportInput } from "@/domain/contracts";
 
 const input = (rawText: string): SupportInput => ({
@@ -182,11 +183,26 @@ it("does not accept a broad chat label over a known access request", async () =>
 
 it("reuses the preview extraction on confirmation", async () => {
   const rawText = "Máy in cứ giữ tài liệu trong hàng đợi";
-  const run = vi.fn(async () => printerIntent(rawText));
+  const run = vi.fn(async (call: ModelCall) => call.purpose === "sentiment"
+    ? {
+        sentiment: "neutral",
+        evidence: "Máy in cứ giữ tài liệu",
+        explanation: "Câu mô tả sự cố máy in mà không thể hiện cảm xúc rõ ràng.",
+      }
+    : printerIntent(rawText));
   const preview = await previewSupport(input(rawText), { run });
-  expect(run).toHaveBeenCalledOnce();
+  expect(run).toHaveBeenCalledTimes(2);
+  expect(run.mock.calls.map(([call]) => call.purpose).sort()).toEqual([
+    "extraction",
+    "sentiment",
+  ]);
+  expect(preview.sentiment).toMatchObject({
+    sentiment: "neutral",
+    source: "model",
+    evidence: "Máy in cứ giữ tài liệu",
+  });
   const saved = await submitSupport({ ...preview.input, confirmed: true }, { run });
-  expect(run).toHaveBeenCalledOnce();
+  expect(run).toHaveBeenCalledTimes(2);
   expect(saved.canonical).toEqual(preview.canonical);
   await expect(submitSupport({ ...preview.input, rawText: "Nội dung khác", idempotencyKey: crypto.randomUUID(), confirmed: true }, { run }))
     .rejects.toMatchObject({ code: "PREVIEW_EXPIRED" });

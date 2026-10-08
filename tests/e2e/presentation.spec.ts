@@ -47,6 +47,14 @@ test("old help route and workspace alias share preview, edit and v3 submit", asy
   await expect(description).toHaveValue("Tôi tắt máy tính lúc về được không?");
   await description.fill("VPN không kết nối");
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
+  const sentiment = page.getByRole("region", {
+    name: "Sentiment nhận diện trước khi gửi",
+  });
+  await expect(sentiment).toContainText("Trung tính");
+  await expect(sentiment).toContainText("Dự phòng theo luật (rule-based)");
+  await expect(sentiment).toContainText(
+    "Câu mô tả sự cố hoặc yêu cầu, chưa có dấu hiệu cảm xúc rõ ràng.",
+  );
   await expect(
     page.getByText("Cách hỗ trợ: Hướng dẫn từng bước", { exact: true }),
   ).toBeVisible();
