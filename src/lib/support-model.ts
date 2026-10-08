@@ -59,11 +59,12 @@ export class ModelFailure extends Error {
   }
 }
 export type ModelCall = {
-  purpose: "extraction" | "assistance";
+  purpose: "extraction" | "assistance" | "sentiment";
   instructions: string;
   data: string;
   model: string;
   responseSchema?: Record<string, unknown>;
+  maxCompletionTokens?: number;
 };
 export type ModelOptions = {
   assistanceRound?: number;
@@ -86,7 +87,8 @@ export async function callModel(
   fallback: unknown,
   options: ModelOptions = {},
 ): Promise<unknown> {
-  call = { ...call, instructions: `${evidenceWorkflowPrompt}\n\n${call.instructions}` };
+  if (call.purpose !== "sentiment")
+    call = { ...call, instructions: `${evidenceWorkflowPrompt}\n\n${call.instructions}` };
   if (options.fault === "unavailable")
     throw new ModelFailure("MODEL_UNAVAILABLE", "SIMULATED");
   if (options.fault === "invalid") return "invalid synthetic JSON";
@@ -115,7 +117,7 @@ export async function callModel(
             {
               model: call.model,
               store: false,
-              max_completion_tokens: 1000,
+              max_completion_tokens: call.maxCompletionTokens ?? 1000,
               messages: [
                 { role: "system", content: call.instructions },
                 { role: "user", content: call.data },
