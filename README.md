@@ -204,7 +204,9 @@ flowchart TB
 
 #### Model nào làm việc gì?
 
-Tên model chính **được lấy từ cấu hình**, không hard-code một phiên bản GPT trong luồng runtime. `.env.example` để `AI_MODEL` và `AI_CONVERSATION_MODEL` rỗng, đặt `AI_PROVIDER=mock`; không thể suy ra model đang chạy trên website từ repo.
+Tên model chính **được lấy từ cấu hình**, không hard-code một phiên bản GPT trong luồng runtime. `.env.example` đề xuất `AI_MODEL=gpt-6-luna`, để `AI_CONVERSATION_MODEL` rỗng và giữ `AI_PROVIDER=mock` cho kiểm thử offline. Chuyển Production sang Luna theo yêu cầu chủ repo cần `AI_PROVIDER=openai`, `AI_MODEL=gpt-6-luna` và API key hợp lệ có quyền model. Health chỉ báo cấu hình (`modelConnectivity=NOT_CHECKED`), không chứng minh inference đã thành công.
+
+Theo [tài liệu GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), Luna hỗ trợ Chat Completions/Structured Outputs và effort `none`. Adapter chọn `reasoning_effort=none` riêng cho Luna để giữ đặc tính không reasoning của model cũ, giữ nguyên timeout/token cap, budget và `store:false`. Preview hiển thị mã lỗi an toàn khi fallback, gồm xác thực 401, hết budget, rate limit, timeout hoặc output/evidence không hợp lệ; không hiển thị lỗi thô hoặc credentials. [Chẩn đoán và bằng chứng](docs/SENTIMENT-MODEL-DIAGNOSTICS.md).
 
 | Công đoạn | Model / cơ chế | Đầu ra và giới hạn |
 | --- | --- | --- |

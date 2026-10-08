@@ -3,6 +3,7 @@ import { analyze, previewSupport, submitSupport } from "@/services/support";
 import { extractIntake } from "@/domain/text";
 import { getSupportPreview, resetSupportTestStore, saveSupportPreview } from "@/lib/support-repository";
 import type { ModelCall } from "@/lib/support-model";
+import { ModelFailure } from "@/lib/support-model";
 import type { SupportInput } from "@/domain/contracts";
 
 const input = (rawText: string): SupportInput => ({
@@ -12,6 +13,15 @@ const input = (rawText: string): SupportInput => ({
   fields: { department: "engineering", employeeId: "EMP-SYNTH-01" },
   confirmed: true,
   idempotencyKey: crypto.randomUUID(),
+});
+
+it("keeps extraction authentication failure visible in preview sentiment without another model call", async () => {
+  vi.stubEnv("AI_MODEL", "gpt-6-luna");
+  const run = vi.fn(async () => { throw new ModelFailure("MODEL_UNAVAILABLE", "AUTHENTICATION"); });
+  const preview = await previewSupport(input("Máy in không hoạt động"), { run });
+  expect(preview.sentiment).toMatchObject({ source: "rule-based", model: "gpt-6-luna", fallbackReason: "AUTHENTICATION" });
+  expect(preview.decision.action).toBe("ESCALATE");
+  expect(run).toHaveBeenCalledOnce();
 });
 
 function printerIntent(rawText: string) {

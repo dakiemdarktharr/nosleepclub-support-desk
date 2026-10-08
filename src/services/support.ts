@@ -43,6 +43,7 @@ import {
   analyzeSupportSentiment,
   supportRequestSentimentFallback,
 } from "@/lib/feedback-model";
+import { sentimentFallbackReason } from "@/domain/sentiment-diagnostics";
 
 export function auditEvent(
   request: SupportRequest,
@@ -227,7 +228,15 @@ export async function previewSupport(value: unknown, options: ModelOptions = {})
   requireIntakeIdentity(safe.input);
   const analysis = await completeAnalysis(safe.input, safe.markers, options);
   const sentiment = analysis.sentiment ??
-    supportRequestSentimentFallback(safe.input.rawText);
+    supportRequestSentimentFallback(
+      safe.input.rawText,
+      (process.env.AI_PROVIDER || "mock") === "mock" && !options.run
+        ? "MOCK_PROVIDER"
+        : analysis.canonical.model.failure
+          ? sentimentFallbackReason(analysis.canonical.model.failureReason ?? analysis.canonical.model.failure)
+          : "INVALID_EVIDENCE",
+      process.env.AI_MODEL,
+    );
   const preview: SupportPreview = {
     id: randomUUID(),
     fingerprint: fingerprintOf(safe.input),

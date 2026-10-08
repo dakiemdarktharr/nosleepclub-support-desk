@@ -14,6 +14,9 @@ export function GET() {
       // Adapter selection and ping do not demonstrate restart durability.
       persistenceVerification: "NOT_PERFORMED",
       provider: process.env.AI_PROVIDER || "mock",
+      model: process.env.AI_PROVIDER === "openai" ? process.env.AI_MODEL || null : null,
+      // Configuration and database ping are not an inference/API-key check.
+      modelConnectivity: "NOT_CHECKED",
       policy: POLICY_VERSION,
       sourceRevision:
         process.env.APP_REVISION ||

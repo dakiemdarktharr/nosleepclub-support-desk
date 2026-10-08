@@ -159,6 +159,30 @@ xử lý; không tự sửa/xóa dữ liệu lịch sử.
 
 `.github/workflows/qa.yml` chạy unit/lint/types/build và E2E desktop/mobile riêng bằng production build, không có deploy step. Kết quả local và hosted CI phải ghi riêng; việc có config không chứng minh GitHub Actions đã chạy thành công.
 
+## Chẩn đoán API và sentiment
+
+Model chính được chủ repo chọn là `gpt-6-luna`: đặt `AI_PROVIDER=openai`,
+`AI_MODEL=gpt-6-luna`; `AI_CONVERSATION_MODEL` để trống sẽ kế thừa cho sentiment
+sau câu trả lời. `AI_WEB_MODEL` là cấu hình riêng, không đổi theo model chính.
+Giữ `AI_MAX_ATTEMPTS` trong mức hiện có; không reset counter để làm demo đạt.
+
+Nếu preview ghi “Dự phòng theo luật”, đọc **Vì sao dùng dự phòng**:
+
+- `AUTHENTICATION`: provider trả 401. Cập nhật `OPENAI_API_KEY` hợp lệ trong
+  Vercel → vng-support → Settings → Environment Variables → Production,
+  rồi triển khai lại để nhận biến mới. Không gửi key qua chat/Git/log.
+- `NOT_CONFIGURED`: thiếu provider/model/API key.
+- `BUDGET_EXHAUSTED`: chờ ngày UTC mới (07:00 giờ Việt Nam); không nâng cap tự động.
+- `RATE_LIMIT`/`TIMEOUT`: thử lại sau; không retry vô hạn.
+- Output/evidence không hợp lệ: giữ fallback có nhãn và kiểm tra log đã lọc;
+  không bỏ validation để ép nhãn `model`.
+
+Health 200 và `provider=openai` chỉ xác nhận app/cấu hình; trường
+`modelConnectivity=NOT_CHECKED` nhắc rằng endpoint này không gọi inference.
+Kiểm tra thật bằng một preview synthetic, không xác nhận lưu ticket; chỉ coi
+sentiment dùng model khi `sentiment.source=model` và model ID đúng. Cần key
+hợp lệ, quyền model và quota API; thay tên model không sửa được key lỗi 401.
+
 ## Hệ thống ID nhân viên
 
 Hệ thống ID dùng MongoDB riêng, không thay storage Support. Không có memory/CSV fallback. Khi MongoDB không cấu hình/không khả dụng, API trả 503 và UI không xác nhận thành công. Mọi thao tác dưới đây dành cho operator đã có thẩm quyền; không chạy trên production chỉ vì có quyền push code.

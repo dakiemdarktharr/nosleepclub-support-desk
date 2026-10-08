@@ -150,8 +150,7 @@ export async function callModel(
             maxRetries: 0,
             timeout: timeoutMs,
           });
-          const response = await client.chat.completions.create(
-            {
+          const body: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
               model: call.model,
               store: false,
               max_completion_tokens: call.maxCompletionTokens ?? 1000,
@@ -169,9 +168,15 @@ export async function callModel(
                     },
                   }
                 : { type: "json_object" },
-            },
-            { signal: controller.signal },
-          );
+          };
+          // SDK 5's effort enum predates "none". Use its typed low-level transport
+          // for Luna rather than casting the request to an unsupported old enum.
+          // Preserve the previous non-reasoning latency and output-token budget.
+          const response = call.model === "gpt-6-luna"
+            ? await client.post<OpenAI.Chat.Completions.ChatCompletion>("/chat/completions", {
+                body: { ...body, reasoning_effort: "none" }, signal: controller.signal,
+              })
+            : await client.chat.completions.create(body, { signal: controller.signal });
           const choice = response.choices[0];
           if (choice?.finish_reason === "length")
             throw new ModelFailure("MODEL_OUTPUT_INVALID", "TRUNCATED");

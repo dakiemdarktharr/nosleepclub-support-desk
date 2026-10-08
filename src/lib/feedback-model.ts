@@ -5,6 +5,7 @@ import {
   type FeedbackSentiment,
 } from "@/domain/feedback";
 import type { SentimentAssessment } from "@/domain/contracts";
+import { sentimentFallbackReason } from "@/domain/sentiment-diagnostics";
 import { callModel, ModelFailure } from "@/lib/support-model";
 import type { ModelOptions } from "@/lib/support-model";
 
@@ -97,7 +98,11 @@ function classifySupportRequestSentiment(text: string): FeedbackSentiment {
   return "neutral";
 }
 
-export function supportRequestSentimentFallback(text: string): SentimentAssessment {
+export function supportRequestSentimentFallback(
+  text: string,
+  fallbackReason?: SentimentAssessment["fallbackReason"],
+  model?: string,
+): SentimentAssessment {
   if (!text.trim())
     return {
       sentiment: "neutral",
@@ -127,6 +132,8 @@ export function supportRequestSentimentFallback(text: string): SentimentAssessme
     source: "rule-based" as const,
     evidence,
     explanation,
+    ...(fallbackReason ? { fallbackReason } : {}),
+    ...(model ? { model } : {}),
   };
 }
 
@@ -150,10 +157,15 @@ export async function analyzeSupportSentiment(
     : process.env.AI_CONVERSATION_MODEL || process.env.AI_MODEL || "";
   const modelConfigured = process.env.AI_PROVIDER === "openai" &&
     !!process.env.OPENAI_API_KEY && !!model;
-  if (!options.run && !modelConfigured && !options.fault)
-    return context === "support-request"
+  const fallback = (reason: NonNullable<SentimentAssessment["fallbackReason"]>) => ({
+    ...(context === "support-request"
       ? supportRequestSentimentFallback(text)
-      : ruleBasedAssessment(text, "Model chưa được cấu hình; nhãn tạm dùng rule-based fallback.");
+      : ruleBasedAssessment(text, "Nhãn tạm dùng rule-based fallback.")),
+    fallbackReason: reason,
+    ...(model ? { model } : {}),
+  });
+  if (!options.run && !modelConfigured && !options.fault)
+    return fallback((process.env.AI_PROVIDER || "mock") === "mock" ? "MOCK_PROVIDER" : "NOT_CONFIGURED");
 
   try {
     const output = await callModel(
@@ -182,16 +194,12 @@ export async function analyzeSupportSentiment(
         ...(model ? { model } : {}),
       };
     console.warn("Sentiment model returned invalid evidence; using rule-based fallback.");
-    return context === "support-request"
-      ? supportRequestSentimentFallback(text)
-      : ruleBasedAssessment(text, "Model không trả được minh chứng hợp lệ; nhãn dùng rule-based fallback.");
+    return fallback("INVALID_EVIDENCE");
   } catch (error) {
     const reason = error instanceof ModelFailure
       ? `${error.code}${error.reason ? `:${error.reason}` : ""}`
       : "MODEL_OUTPUT_INVALID";
     console.warn(`Sentiment model unavailable (${reason}); using rule-based fallback.`);
-    return context === "support-request"
-      ? supportRequestSentimentFallback(text)
-      : ruleBasedAssessment(text, "Model chưa trả được kết quả; nhãn dùng rule-based fallback.");
+    return fallback(sentimentFallbackReason(error instanceof ModelFailure ? error.reason ?? error.code : undefined));
   }
 }

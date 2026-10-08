@@ -1,4 +1,5 @@
 import type { SentimentAssessment } from "@/domain/contracts";
+import { sentimentFallbackMessages } from "@/domain/sentiment-diagnostics";
 import { Badge, Card } from "@/components/ui";
 
 const sentimentLabels: Record<SentimentAssessment["sentiment"], string> = {
@@ -18,7 +19,7 @@ export function SentimentPreview({
       ? "danger"
       : "neutral";
   const source = assessment.source === "model"
-    ? `Model phân tích ý định${assessment.model ? `: ${assessment.model}` : ""}`
+    ? `Model${assessment.model ? `: ${assessment.model}` : ""}`
     : assessment.source === "rule-based"
       ? "Dự phòng theo luật (rule-based)"
       : "Chưa có mô tả để phân tích";
@@ -42,6 +43,12 @@ export function SentimentPreview({
       <p className="text-sm">
         <strong>Lý do:</strong> {assessment.explanation}
       </p>
+      {assessment.source === "rule-based" && assessment.fallbackReason && (
+        <p className="text-sm">
+          <strong>Vì sao dùng dự phòng:</strong> {sentimentFallbackMessages[assessment.fallbackReason]}
+          {assessment.model && <> Model đã cấu hình: {assessment.model}.</>}
+        </p>
+      )}
       <p className="text-xs text-slate-600">
         Nhãn này để bạn kiểm tra trước khi gửi; policy và quyết định xử lý vẫn do hệ thống kiểm tra riêng.
       </p>

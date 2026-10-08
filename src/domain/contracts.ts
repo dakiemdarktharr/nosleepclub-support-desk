@@ -177,6 +177,9 @@ export type SentimentAssessment = {
   evidence: string;
   explanation: string;
   model?: string;
+  fallbackReason?: "MOCK_PROVIDER" | "NOT_CONFIGURED" | "AUTHENTICATION" |
+    "BUDGET_EXHAUSTED" | "RATE_LIMIT" | "TIMEOUT" | "INVALID_OUTPUT" |
+    "INVALID_EVIDENCE" | "MODEL_UNAVAILABLE";
 };
 export type KnowledgeCandidate = {
   status: "PENDING_REVIEW";
