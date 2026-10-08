@@ -212,7 +212,8 @@ Tên model chính **được lấy từ cấu hình**, không hard-code một ph
 | M3 — trợ giúp có giải thích | `AI_MODEL` | Chọn chỉ số bước từ template và giải thích theo evidence; không tạo thêm thao tác, command hay quyền. |
 | M4 — trả lời hội thoại | `AI_CONVERSATION_MODEL`, để trống thì dùng `AI_MODEL` | JSON gồm text, knowledgeIds và trích dẫn evidence; model đọc context đã truy hồi, server kiểm tra trước khi hiển thị. |
 | M4 — tìm web công khai | `AI_WEB_MODEL`, để trống thì dùng `AI_MODEL`; giá trị mẫu là `gpt-4.1` | Responses API với `web_search`, chỉ khi `AI_WEB_SEARCH=true` và đủ cấu hình. Tối đa một tool call; không gửi nguyên ticket làm query tìm kiếm. |
-| Policy, retrieval và sentiment | TypeScript deterministic, BM25 và rule-based | Không có model embedding, reranker hoặc model sentiment riêng. |
+| Policy và retrieval | TypeScript deterministic và BM25 | Không có model embedding hoặc reranker. |
+| Sentiment sau câu trả lời | Model hội thoại (`AI_CONVERSATION_MODEL`, hoặc `AI_MODEL` nếu để trống) khi `AI_PROVIDER=openai`; rule-based làm fallback | Model trả một nhãn `positive`, `neutral` hoặc `negative` theo schema. Rủi ro vẫn được kiểm tra trước sentiment; mock, timeout hoặc lỗi đầu ra dùng rule-based fallback. |
 
 `callModel` đặt `store: false`, tối đa 1.000 completion tokens, timeout tối đa 12 giây và `maxRetries: 0`; web đặt tối đa 1.000 output tokens và timeout 18 giây. Các lần gọi thật chia sẻ counter `AI_MAX_ATTEMPTS`. Đây là giới hạn từng call, không phải cam kết thời gian hoặc tổng token của một yêu cầu. `workflow-prompt.ts` bổ sung nguyên tắc làm việc theo bằng chứng cho lời gọi qua `callModel`; nó không thay policy.
 
