@@ -6,9 +6,10 @@ import {
 } from "@/lib/support-repository";
 import { auditEvent, completeAnalysis, prepareInput } from "./support";
 import { employeeIdentityOnly } from "@/domain/employee-identity";
-import { classifyPostAnswerFeedback, isContinuationOnly, requiresFeedbackAnalysis } from "@/domain/feedback";
+import { isContinuationOnly, requiresFeedbackAnalysis } from "@/domain/feedback";
 import { redact } from "@/domain/redaction";
 import { extractIntake } from "@/domain/text";
+import { classifyFeedbackWithModel } from "@/lib/feedback-model";
 import { feedbackSupport } from "./review";
 const schema = z
   .object({
@@ -34,21 +35,25 @@ export async function continueConversation(id: string, value: unknown) {
   const reply = prepareInput({ rawText: input.question, idempotencyKey: id });
   const baseline = extractIntake(reply.input, reply.markers);
   const risky = requiresFeedbackAnalysis(baseline);
-  const sentiment = risky ? "neutral" : classifyPostAnswerFeedback(safeReply);
+  const sentiment = risky ? "neutral" : await classifyFeedbackWithModel(safeReply);
   if (sentiment === "positive")
     return feedbackSupport(id, {
       version: input.version,
       choice: "RESOLVED",
       replyText: safeReply,
-    });
+    }, sentiment);
   if (sentiment === "negative")
     return feedbackSupport(id, {
       version: input.version,
       choice: "ADMIN",
       replyText: safeReply,
-    });
+    }, sentiment);
   if (!risky && isContinuationOnly(safeReply))
-    return feedbackSupport(id, { version: input.version, choice: "STILL_BROKEN", replyText: safeReply });
+    return feedbackSupport(
+      id,
+      { version: input.version, choice: "STILL_BROKEN", replyText: safeReply },
+      sentiment,
+    );
   const safe = prepareInput({
     ...current.input,
     previewId: undefined,

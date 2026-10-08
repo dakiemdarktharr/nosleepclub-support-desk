@@ -1,10 +1,10 @@
 import { createConversationAnswer } from "@/lib/conversation-model";
 import {
-  classifyPostAnswerFeedback,
   isContinuationOnly,
   requiresFeedbackAnalysis,
   type FeedbackSentiment,
 } from "@/domain/feedback";
+import { classifyFeedbackWithModel } from "@/lib/feedback-model";
 import { explainStep } from "@/domain/guidance";
 import { z } from "zod";
 import { canReview } from "@/domain/transitions";
@@ -190,7 +190,11 @@ const feedbackSchema = z
     replyText: z.string().trim().max(2000).optional(),
   })
   .strict();
-export async function feedbackSupport(id: string, value: unknown) {
+export async function feedbackSupport(
+  id: string,
+  value: unknown,
+  classifiedSentiment?: FeedbackSentiment,
+) {
   const input = feedbackSchema.parse(value);
   if (input.replyText) {
     const safe = prepareInput({ rawText: input.replyText, idempotencyKey: id });
@@ -200,7 +204,7 @@ export async function feedbackSupport(id: string, value: unknown) {
   }
   const safeReply = input.replyText ? redact(input.replyText) : null;
   const sentiment: FeedbackSentiment = safeReply
-    ? classifyPostAnswerFeedback(safeReply.text)
+    ? classifiedSentiment ?? await classifyFeedbackWithModel(safeReply.text)
     : input.choice === "RESOLVED"
       ? "positive"
       : ["ADMIN", "CONFUSED"].includes(input.choice)
