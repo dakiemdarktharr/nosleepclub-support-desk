@@ -76,6 +76,37 @@ E2E mock. Không chạy lại benchmark 128 fixture trong nhiệm vụ bỏ OTP 
 Đối chiếu snapshot checkout gốc: 307 file và 2 thư mục được bảo toàn; không
 stage artifact kiểm thử, helper vận hành, `.env.local` hoặc credentials.
 
+## Đối chiếu sau push và sửa E2E Verify
+
+Commit ứng dụng `3e80473311a2ab59fd6595f2ff7937604dc53f34` đã triển khai;
+health live trả đúng revision. API live của tài khoản IT giả lập: login 200
+(`assurance: demo`, `canReviewIds: true`), session/review/audit 200,
+verify OTP cũ 410, logout 200 và session cũ sau logout 401. Cookie chỉ giữ
+trong bộ nhớ, không ghi vào báo cáo. Không tạo đơn hoặc nhân viên khác.
+
+[CI đầu tiên](https://github.com/dakiemdarktharr/vng-support/actions/runs/37820619382)
+đạt unit/guard/lint/typecheck/build nhưng E2E Chromium dừng 11/15 Verify
+(69 pass, 1 fail). Các cuộc gọi intake từ server Verify dùng chung hạn mức
+30/phút; hai kịch bản trước đã chạy 10 case, rồi lượt 5 + 4 + 11 chạm 30.
+Đây là giới hạn demo hiện có, không phải mismatch policy hay lỗi OTP.
+
+Sửa `tests/e2e/support.spec.ts` để nhận biết đúng HTTP 429, kiểm tra thông báo
+chờ một phút, đợi cửa sổ thật và dùng “Tiếp tục lần kiểm thử”. Không retry
+mù, tăng cap, reset counter, đổi policy hoặc đổi kỳ vọng 15/15.
+
+Kiểm tra local sau sửa E2E: lint/typecheck PASS; toàn bộ Chromium 70/70.
+Lệnh sau chạy liên tiếp 34 case Verify để tái lập quota trong cùng phút:
+
+```powershell
+$env:SUPPORT_E2E_PRODUCTION='true'
+npm run test:e2e -- --project=chromium --grep 'judge can enter from home|record a raw demo|one click Verify'
+```
+
+Kết quả 3/3 pass; kịch bản cuối đi qua nhánh chờ 61 giây, tiếp tục và đạt
+15/15. Build/application không thay đổi ở commit sửa E2E; không gọi model
+thật hoặc ghi Mongo khi chạy các kiểm thử local này. Kết quả CI đầu tiên
+được giữ để truy vết, không gọi nó là PASS.
+
 ## Giới hạn bằng chứng
 
 Bootstrap + readback thật chứng minh đường ghi transaction này hoạt động;

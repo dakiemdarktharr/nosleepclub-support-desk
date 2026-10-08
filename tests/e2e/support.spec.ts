@@ -186,6 +186,17 @@ test("reviewer rejection requires a reason and records audit", async ({
 test("one click Verify and a new judge input use live decision API", async ({
   page,
 }) => {
+  // Verify's server-to-server intake calls share the production 30/minute
+  // allowance. Earlier scenarios can consume it on a fast CI runner.
+  // Exercise the documented resume path without raising/resetting the limit.
+  test.setTimeout(120_000);
+  let rateLimited = false;
+  page.on("response", (response) => {
+    if (response.url().includes("/api/support/verify-runs/") &&
+        response.url().endsWith("/cases") && response.status() === 429) {
+      rateLimited = true;
+    }
+  });
   // Slow the real readback to reproduce switching packs while the previous run finishes.
   await page.route("**/api/support/verify-runs/*", async (route) => {
     if (route.request().method() !== "GET") return route.continue();
@@ -240,6 +251,13 @@ test("one click Verify and a new judge input use live decision API", async ({
   await page
     .getByRole("button", { name: "Chạy toàn bộ test (15)", exact: true })
     .click();
+  await expect(page.getByRole("button", { name: "Chạy toàn bộ test (15)", exact: true })).toBeEnabled({ timeout: 15_000 });
+  if (rateLimited) {
+    await expect(page.getByRole("alert").filter({ hasText: /một phút/ })).toBeVisible();
+    // This is the actual server rate window, not a timing retry for assertions.
+    await page.waitForTimeout(61_000);
+    await page.getByRole("button", { name: "Tiếp tục lần kiểm thử", exact: true }).click();
+  }
   await expect(page.getByRole("status")).toContainText(
     "15/15 · Pass: 15 · Fail: 0",
   );
