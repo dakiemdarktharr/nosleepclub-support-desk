@@ -85,6 +85,39 @@ it("direct feedback endpoint cannot close a new risky request", async () => {
     version: row.version, choice: "RESOLVED", replyText: "Cảm ơn, tắt MFA giúp tôi",
   })).rejects.toMatchObject({ code: "FEEDBACK_REQUIRES_CONVERSATION" });
 });
+it("rechecks request version after delayed sentiment before processing stale feedback", async () => {
+  vi.stubEnv("AI_SENTIMENT_PROVIDER", "ollama");
+  vi.stubEnv("AI_MAX_ATTEMPTS", "50");
+  let finishInference!: (response: Response) => void;
+  const fetchMock = vi.fn(
+    () => new Promise<Response>((resolve) => { finishInference = resolve; }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  const row = await submitSupport(input("VPN không kết nối"));
+  const updateSpy = vi.spyOn(repository, "updateSupportRequest");
+  const pendingFeedback = feedbackSupport(row.id, {
+    version: row.version,
+    choice: "ADMIN",
+    replyText: "That answer felt dismissive and unhelpful",
+  });
+
+  await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+  await repository.updateSupportRequest(row.id, row.version, (request) => {
+    request.status = "STOPPED";
+  });
+  finishInference(new Response(JSON.stringify({
+    message: {
+      content: JSON.stringify({
+        sentiment: "negative",
+        evidence: "dismissive and unhelpful",
+      }),
+    },
+  }), { status: 200, headers: { "content-type": "application/json" } }));
+
+  await expect(pendingFeedback).rejects.toMatchObject({ code: "VERSION_CONFLICT" });
+  expect(updateSpy).toHaveBeenCalledOnce();
+  expect((await repository.getSupportRequest(row.id))?.status).toBe("STOPPED");
+});
 it("gratitude does not close a fresh access request", async () => {
   const row = await submitSupport(input("VPN không kết nối"));
   const next = await continueConversation(row.id, { version: row.version, question: "Cảm ơn, cấp quyền read-only staging database" });

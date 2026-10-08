@@ -229,6 +229,18 @@ export async function feedbackSupport(
       "Câu hỏi trung tính cần đi qua luồng hội thoại để được phân tích và hỗ trợ tiếp.",
       422,
     );
+  // Sentiment inference is asynchronous. Re-read before deriving the next
+  // transition from the earlier snapshot; updateSupportRequest still applies
+  // the version condition atomically when it writes.
+  const current = await getSupportRequest(id);
+  if (!current)
+    throw new SupportError("NOT_FOUND", "Không tìm thấy yêu cầu.", 404);
+  if (current.version !== input.version)
+    throw new SupportError(
+      "VERSION_CONFLICT",
+      "Yêu cầu đã thay đổi. Tải lại.",
+      409,
+    );
   if (
     safeReply &&
     ((sentiment === "positive" && input.choice !== "RESOLVED") ||
@@ -239,7 +251,7 @@ export async function feedbackSupport(
       "Phản hồi cần được xử lý theo nhánh sentiment tương ứng.",
       422,
     );
-  if (snapshot.canonical?.workEvidence &&
+  if (current.canonical?.workEvidence &&
       ["ADMIN", "CONFUSED"].includes(input.choice))
     throw new SupportError(
       "REVIEW_NOT_READY",
@@ -248,7 +260,7 @@ export async function feedbackSupport(
     );
   if (
     ["RECEIVED", "PROCESSING", "COMPLETED", "STOPPED", "REJECTED"].includes(
-      snapshot.status,
+      current.status,
     )
   )
     throw new SupportError(
@@ -258,7 +270,7 @@ export async function feedbackSupport(
     );
   if (
     ["RESOLVED", "STILL_BROKEN", "EXPLAIN"].includes(input.choice) &&
-    (snapshot.status !== "AUTO_APPROVED" || !snapshot.assistance.length)
+    (current.status !== "AUTO_APPROVED" || !current.assistance.length)
   )
     throw new SupportError(
       "INVALID_TRANSITION",
@@ -267,7 +279,7 @@ export async function feedbackSupport(
     );
   if (input.choice === "EXPLAIN") {
     const step =
-      snapshot.assistance.at(-1)?.stepByStepInstructions[input.step ?? -1];
+      current.assistance.at(-1)?.stepByStepInstructions[input.step ?? -1];
     if (!step)
       throw new SupportError("INVALID_STEP", "Chọn bước cần giải thích.", 422);
     return updateSupportRequest(id, input.version, (request) => {
