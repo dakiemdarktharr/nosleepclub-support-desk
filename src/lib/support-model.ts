@@ -16,6 +16,9 @@ import {
 } from "@/domain/catalog";
 import {
   extractionSchema,
+  requestKinds,
+  environments,
+  riskSignals as allowedRiskSignals,
   type Assistance,
   type CanonicalRequest,
   type SentimentAssessment,
@@ -264,6 +267,7 @@ export async function extractWithModel(
   void _parts;
   void _redactions;
   void _model;
+  let output: unknown;
   try {
     const value = await callModel(
       {
@@ -278,18 +282,23 @@ export async function extractWithModel(
                 value.labels,
               ]),
             ),
-          ),
+          ) + ". Allowed values (do not translate or invent enum values): " + JSON.stringify({
+            language: ["vi", "en", "mixed"], requestKind: requestKinds,
+            environment: environments, riskSignals: allowedRiskSignals,
+            fields: [...allFields],
+          }) + ". entities must be an object of string values, not an array. Unknown entities are omitted; empty lists are [].",
         data: JSON.stringify({ rawText: input.rawText, fields: input.fields }),
       },
       facts,
       options,
     );
-    const parsed = intentRoutingSchema.safeParse(jsonValue(value));
+    output = jsonValue(value);
+    const parsed = intentRoutingSchema.safeParse(output);
     if (
       !parsed.success ||
       !validIntent(parsed.data.serviceGroup, parsed.data.intentLabel)
     )
-      throw new ModelFailure("MODEL_OUTPUT_INVALID");
+      throw new ModelFailure("MODEL_OUTPUT_INVALID", "SCHEMA_INVALID");
     const {
       route,
       conversationLabel,
@@ -443,7 +452,12 @@ export async function extractWithModel(
     }
     return withSentiment(canonical);
   } catch (error) {
-    return modelFailure(baseline, error);
+    const failed = modelFailure(baseline, error);
+    // Sentiment has its own schema/evidence checks and never authorizes a request.
+    // A valid label need not be discarded just because intent validation failed.
+    return output && typeof output === "object" && "sentiment" in output
+      ? withSentimentAssessment(failed, output.sentiment, input.rawText)
+      : failed;
   }
 }
 

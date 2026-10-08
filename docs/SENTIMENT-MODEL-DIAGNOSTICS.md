@@ -41,7 +41,7 @@ khuyến nghị giữ đặc tính reasoning cũ khi model hỗ trợ.
 - Không sửa policy, Ground Truth, expected decision hoặc tự nhận nhãn model
   khi provider chưa thành công. Risk/authority vẫn ưu tiên sentiment.
 
-## Việc chủ repo cần làm
+## Cách khắc phục key khi gặp 401
 
 1. Cập nhật `OPENAI_API_KEY` hợp lệ trong Vercel → vng-support → Settings →
    Environment Variables → Production. Key cần quyền model của project API;
@@ -51,21 +51,42 @@ khuyến nghị giữ đặc tính reasoning cũ khi model hỗ trợ.
    `sentiment.source=model` và `sentiment.model=gpt-6-luna`.
    Nếu còn lỗi, đọc lý do cụ thể; không tăng cap hoặc bỏ validation.
 
+## Sau khi chủ repo cập nhật key
+
+Chủ repo đã lưu key mới; redeploy đúng commit `e82c460` để nhận secret mới.
+Deployment `dpl_GHWtfDtB6y4PTCKWBsUiiRLnxLYJ` Ready và nhận alias website chính.
+Một preview reset synthetic trả 200, `sentiment.source=model`,
+`sentiment.model=gpt-6-luna`, nhãn negative với quote đúng input. **Lỗi 401
+đã hết ở lần kiểm chứng này**, không còn là blocker hiện tại.
+
+Một preview freeform khởi động lại laptop vẫn trả `MODEL_OUTPUT_INVALID` từ
+extraction. Đây là lỗi khác với xác thực. Code chưa đưa đầy đủ enum của schema
+vào prompt và còn bỏ sentiment hợp lệ nếu phần routing không hợp lệ. Sửa bổ
+sung cung cấp các enum từ contract hiện có, ghi `SCHEMA_INVALID` rõ ràng và
+kiểm tra sentiment độc lập. Nếu intent sai, vẫn giữ model failure/escalation;
+sentiment không đổi policy. Không tự chuyển output sai thành approval, không
+gọi lại model để che lỗi và không sửa expected labels.
+
 ## Kiểm tra
 
-- `npm test`: 667 pass, 1 skip; SDK transport giả lập kiểm tra Luna cho cả
+- `npm test` sau sửa bổ sung: 669 pass, 1 skip; SDK transport giả lập kiểm tra Luna cho cả
   hai ngữ cảnh sentiment, 401/429/500, thiếu cấu hình, budget và không retry.
 - `node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs`:
   15 pass.
 - `npm run lint`, `npm run typecheck`, `npm run build`: PASS.
 - `$env:SUPPORT_E2E_PRODUCTION='true'; npm run test:e2e -- --project=chromium`:
-  71 pass.
+  71 pass trên `e82c460`.
 - `$env:SUPPORT_E2E_PRODUCTION='true'; npm run test:e2e -- --project=mobile`:
-  70 pass, 1 skip (video chỉ desktop).
+  70 pass, 1 skip trên `e82c460` (video chỉ desktop).
   E2E chạy production build local ở port 3227, mock/memory, desktop/mobile
   tuần tự. Regression UI dùng response override, không chứng minh API thật.
+- CI `e82c460`: [PASS](https://github.com/dakiemdarktharr/vng-support/actions/runs/37831879553).
+- Sau sửa extraction bổ sung, build/lint/typecheck và 669 unit đạt; chạy lại
+  15 E2E liên quan trên mỗi project `chromium` và `mobile`: đều PASS. Lệnh:
+  `npm run test:e2e -- --project=<project> tests/e2e/sentiment-diagnostics.spec.ts tests/e2e/support.spec.ts tests/e2e/conversation.spec.ts tests/e2e/competition-readiness.spec.ts`
+  với `SUPPORT_E2E_PRODUCTION=true`; không chạy lại cả 71 ca local cho sửa bổ sung.
 
-Đây là kiểm thử code/mock và một lỗi xác thực live đã quan sát, không phải
-bằng chứng inference Luna thành công hoặc benchmark chất lượng Luna. Không
+Đã có một inference sentiment Luna thật thành công sau đổi key, cùng kiểm thử
+code/mock và lỗi xác thực trước đó. Đây không phải benchmark chất lượng Luna. Không
 chạy lại development 128, held-out, user study hay Mongo restart trong nhiệm vụ
 này; các giới hạn độc lập đó chưa được giải quyết.

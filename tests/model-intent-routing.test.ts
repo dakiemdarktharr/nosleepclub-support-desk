@@ -24,6 +24,32 @@ it("keeps extraction authentication failure visible in preview sentiment without
   expect(run).toHaveBeenCalledOnce();
 });
 
+it("keeps independently validated sentiment while invalid routing still fails safe", async () => {
+  const text = "Máy in bị kẹt, tôi rất bực mình";
+  const run = vi.fn(async (call: ModelCall) => {
+    expect(call.instructions).toContain('"requestKind":["GUIDANCE","SAFE_DIAGNOSTIC"');
+    expect(call.instructions).toContain('"environment":["sandbox","development","staging","production","unknown"]');
+    return { ...printerIntent(text), requestKind: "invented-kind", sentiment: {
+      sentiment: "negative", evidence: "rất bực mình", explanation: "Người gửi thể hiện sự bực mình.",
+    } };
+  });
+  const preview = await previewSupport(input(text), { run });
+  expect(preview.sentiment).toMatchObject({ source: "model", sentiment: "negative" });
+  expect(preview.canonical.model.failureReason).toBe("SCHEMA_INVALID");
+  expect(preview.decision.action).toBe("ESCALATE");
+  expect(run).toHaveBeenCalledOnce();
+});
+
+it("does not preserve fabricated sentiment when intent also fails validation", async () => {
+  const preview = await previewSupport(input("Máy in bị kẹt"), { run: async () => ({
+    ...printerIntent("Máy in bị kẹt"), requestKind: "invented-kind", sentiment: {
+      sentiment: "positive", evidence: "tuyệt vời", explanation: "Tuyệt vời.",
+    },
+  }) });
+  expect(preview.sentiment.source).toBe("rule-based");
+  expect(preview.decision.action).toBe("ESCALATE");
+});
+
 function printerIntent(rawText: string) {
   return {
     language: /[ăâđêôơư]/i.test(rawText) ? "vi" : "en",
