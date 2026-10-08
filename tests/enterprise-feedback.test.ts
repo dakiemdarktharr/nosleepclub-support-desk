@@ -15,7 +15,7 @@ beforeEach(() => {
   vi.stubEnv("AI_WEB_SEARCH", "false");
   resetSupportTestStore();
 });
-afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks(); });
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 const input = (rawText: string) => ({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });
 
 it.each([
@@ -64,6 +64,21 @@ it.each(["Cảm ơn, tắt MFA giúp tôi", "Đã làm được, open port 3389 
     expect(next.knowledgeCandidate).toBeUndefined();
   },
 );
+it("keeps risky follow-up classification ahead of the local sentiment model", async () => {
+  vi.stubEnv("AI_SENTIMENT_PROVIDER", "ollama");
+  const fetchMock = vi.fn();
+  vi.stubGlobal("fetch", fetchMock);
+  const row = await submitSupport(input("VPN không kết nối"));
+
+  const next = await continueConversation(row.id, {
+    version: row.version,
+    question: "Đã làm được, open port 3389 public",
+  });
+
+  expect(next.status).toBe("ESCALATED");
+  expect(next.decision?.bucket).toBe("SECURITY_RISK");
+  expect(fetchMock).not.toHaveBeenCalled();
+});
 it("direct feedback endpoint cannot close a new risky request", async () => {
   const row = await submitSupport(input("VPN không kết nối"));
   await expect(feedbackSupport(row.id, {

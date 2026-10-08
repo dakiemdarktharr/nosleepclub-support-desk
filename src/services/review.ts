@@ -1,10 +1,10 @@
 import { createConversationAnswer } from "@/lib/conversation-model";
 import {
-  classifyPostAnswerFeedback,
   isContinuationOnly,
   requiresFeedbackAnalysis,
   type FeedbackSentiment,
 } from "@/domain/feedback";
+import { classifyFeedbackSentiment } from "@/lib/feedback-sentiment-model";
 import { explainStep } from "@/domain/guidance";
 import { z } from "zod";
 import { canReview } from "@/domain/transitions";
@@ -190,7 +190,11 @@ const feedbackSchema = z
     replyText: z.string().trim().max(2000).optional(),
   })
   .strict();
-export async function feedbackSupport(id: string, value: unknown) {
+export async function feedbackSupport(
+  id: string,
+  value: unknown,
+  options: { sentiment?: FeedbackSentiment } = {},
+) {
   const input = feedbackSchema.parse(value);
   if (input.replyText) {
     const safe = prepareInput({ rawText: input.replyText, idempotencyKey: id });
@@ -199,13 +203,22 @@ export async function feedbackSupport(id: string, value: unknown) {
       throw new SupportError("FEEDBACK_REQUIRES_CONVERSATION", "Nội dung mới cần được kiểm tra policy trong luồng hội thoại.", 422);
   }
   const safeReply = input.replyText ? redact(input.replyText) : null;
-  const sentiment: FeedbackSentiment = safeReply
-    ? classifyPostAnswerFeedback(safeReply.text)
+  const snapshot = await getSupportRequest(id);
+  if (!snapshot)
+    throw new SupportError("NOT_FOUND", "Không tìm thấy yêu cầu.", 404);
+  if (snapshot.version !== input.version)
+    throw new SupportError(
+      "VERSION_CONFLICT",
+      "Yêu cầu đã thay đổi. Tải lại.",
+      409,
+    );
+  const sentiment: FeedbackSentiment = options.sentiment ?? (safeReply
+    ? await classifyFeedbackSentiment(safeReply.text)
     : input.choice === "RESOLVED"
       ? "positive"
       : ["ADMIN", "CONFUSED"].includes(input.choice)
         ? "negative"
-        : "neutral";
+        : "neutral");
   if (
     safeReply &&
     sentiment === "neutral" &&
@@ -225,15 +238,6 @@ export async function feedbackSupport(id: string, value: unknown) {
       "FEEDBACK_ROUTE_MISMATCH",
       "Phản hồi cần được xử lý theo nhánh sentiment tương ứng.",
       422,
-    );
-  const snapshot = await getSupportRequest(id);
-  if (!snapshot)
-    throw new SupportError("NOT_FOUND", "Không tìm thấy yêu cầu.", 404);
-  if (snapshot.version !== input.version)
-    throw new SupportError(
-      "VERSION_CONFLICT",
-      "Yêu cầu đã thay đổi. Tải lại.",
-      409,
     );
   if (snapshot.canonical?.workEvidence &&
       ["ADMIN", "CONFUSED"].includes(input.choice))

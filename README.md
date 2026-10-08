@@ -84,7 +84,7 @@ flowchart TD
 - **Quyết định:** Zod kiểm tra schema, evidence phải khớp input và nhánh xử lý phải nhất quán. Policy hiện tại `support-guidance-v5.9` ưu tiên `SECURITY_RISK → BEYOND_AUTHORITY → MISSING_INFO → ROUTINE`. Model không được tự phê duyệt hay bỏ qua rule. Lỗi model/schema/evidence chuyển xử lý an toàn.
 - **Hướng dẫn có nguồn:** hội thoại tìm trong corpus có revision, nguồn và hạn sử dụng bằng BM25 kết hợp chuẩn hóa Việt–Anh/typo. Không dùng vector database hay embeddings. Web search chỉ bật riêng cho các chủ đề/nguồn cho phép; URL trong ticket không tự cho app quyền đọc tài liệu riêng.
 - **Thiếu tài liệu công việc:** yêu cầu tạo/sửa một sản phẩm công việc mà chưa có tài liệu đầu vào được hỏi bổ sung cụ thể. App chưa có connector đọc Drive, repository, dashboard hoặc attachment riêng của người gửi; không giả vờ đã đọc tài liệu.
-- **Sau câu trả lời:** sentiment rule-based giúp phân biệt đã giải quyết, cần tiếp tục và cần người hỗ trợ. Rủi ro và policy vẫn ưu tiên; câu nguy hiểm không được đánh dấu hoàn tất chỉ vì có lời cảm ơn. Phản hồi positive có thể tạo gợi ý tri thức **chờ rà soát**, không tự thêm vào kho trả lời.
+- **Sau câu trả lời:** luật deterministic xử lý tín hiệu rõ, rủi ro và câu còn lỗi; có thể bật Qwen qua Ollama local cho phản hồi an toàn mà luật chưa phân loại được. Model phải trả nhãn có evidence trích nguyên văn; lỗi hoặc timeout thành neutral. Phản hồi positive có thể tạo gợi ý tri thức **chờ rà soát**, không tự thêm vào kho trả lời.
 - **Truy vết:** audit ghi thời điểm, actor, trạng thái trước/sau, rule, evidence, giải thích và câu hỏi tiếp theo. Không lưu chain-of-thought. Preview gắn phiên bản policy; thay policy làm preview/cache cũ không được dùng lại.
 
 `AUTO_APPROVE` có thể là cho phép trả hướng dẫn hoặc tiếp nhận workflow mô phỏng. Nó **không chứng minh máy đã được sửa, tài khoản đã được cấp quyền, cổng đã mở hoặc hạ tầng đã thay đổi**. Người dùng/reviewer xác nhận kết quả trong workflow; dự án chưa thực thi IAM/cloud/database thật.
@@ -205,7 +205,7 @@ Tên model chính **được lấy từ cấu hình**, không hard-code một ph
 | M3 — trợ giúp có giải thích | `AI_MODEL` | Chọn chỉ số bước từ template và giải thích theo evidence; không tạo thêm thao tác, command hay quyền. |
 | M4 — trả lời hội thoại | `AI_CONVERSATION_MODEL`, để trống thì dùng `AI_MODEL` | JSON gồm text, knowledgeIds và trích dẫn evidence; model đọc context đã truy hồi, server kiểm tra trước khi hiển thị. |
 | M4 — tìm web công khai | `AI_WEB_MODEL`, để trống thì dùng `AI_MODEL`; giá trị mẫu là `gpt-4.1` | Responses API với `web_search`, chỉ khi `AI_WEB_SEARCH=true` và đủ cấu hình. Tối đa một tool call; không gửi nguyên ticket làm query tìm kiếm. |
-| Policy, retrieval và sentiment | TypeScript deterministic, BM25 và rule-based | Không có model embedding, reranker hoặc model sentiment riêng. |
+| Policy, retrieval và sentiment | TypeScript deterministic, BM25; optional Qwen local qua Ollama | Sentiment chỉ gọi model cho phản hồi chưa được luật phân loại; risk và tín hiệu tiếp tục vẫn do server giữ. |
 
 `callModel` đặt `store: false`, tối đa 1.000 completion tokens, timeout tối đa 12 giây và `maxRetries: 0`; web đặt tối đa 1.000 output tokens và timeout 18 giây. Các lần gọi thật chia sẻ counter `AI_MAX_ATTEMPTS`. Đây là giới hạn từng call, không phải cam kết thời gian hoặc tổng token của một yêu cầu. `workflow-prompt.ts` bổ sung nguyên tắc làm việc theo bằng chứng cho lời gọi qua `callModel`; nó không thay policy.
 
@@ -294,10 +294,13 @@ Cấu hình mẫu chạy **Support/Verify bằng mock + memory-demo**, không c�
 | Lưu Support/Verify | `MONGODB_URI`, `MONGODB_DB` | Khi có URI, dùng MongoDB; lỗi kết nối không chuyển request sang bộ nhớ. Vercel production yêu cầu MongoDB. |
 | Model thật | `AI_PROVIDER=openai`, `AI_MODEL`, `OPENAI_API_KEY` | Nhận diện/hỗ trợ qua API có chi phí; không suy ra đang bật trên website từ README. |
 | Hội thoại và web | `AI_CONVERSATION_MODEL`, `AI_WEB_SEARCH`, `AI_WEB_MODEL` | Model hội thoại để trống dùng model chính; web mặc định tắt trong file mẫu. |
+| Sentiment Qwen local | `AI_SENTIMENT_PROVIDER=ollama`, `AI_SENTIMENT_MODEL=qwen3.5:4b`, `OLLAMA_BASE_URL` | Chỉ gọi `http://127.0.0.1:11434` hoặc `localhost`; Ollama phải chạy cùng máy với server Next. Không gửi feedback sentiment lên cloud. Timeout mặc định 25 giây; giới hạn dùng chung `AI_MAX_ATTEMPTS`. |
 | Hạn mức gọi model | `AI_MAX_ATTEMPTS` | Mặc định 20, code giới hạn tối đa 50 lần; là số lần gọi, không phải số token/USD. Mongo lưu counter dùng chung, không phải hạn mức tự reset hằng ngày. |
 | Giả lập lỗi Verify | `SUPPORT_VERIFY_FAULTS` | Dành cho kiểm thử/demo theo guard hiện có; không phải lỗi model thật. |
 
 Không đưa API key, URI thật hay `.env.local` vào Git. Xem [file cấu hình mẫu](.env.example) và [runbook](RUNBOOK.md) trước khi bật dịch vụ thật.
+
+Để bật sentiment local, cài/chạy Ollama, tải model bằng `ollama pull qwen3.5:4b`, rồi đặt `AI_SENTIMENT_PROVIDER=ollama` trong `.env.local`. Lượt gọi chỉ mang câu feedback đã redaction tới Ollama loopback. Với deployment serverless, `localhost` là máy chủ deployment chứ không phải máy người gửi; cấu hình này chỉ dùng khi Ollama chạy cùng host với ứng dụng.
 
 ### MongoDB cho hệ thống ID
 

@@ -38,6 +38,11 @@ const continuationPatterns = [
   /\b(?:khong|chua).{0,35}(?:duoc|thanh cong|hoat dong)|\b(?:not|never).{0,20}(?:fixed|solved|work)|\b(?:tiep theo|van loi|still broken|still failing)\b/,
 ];
 
+export function hasContinuationFeedbackSignal(text: string) {
+  const normalized = normalize(text).replace(/\bkhong con bi loi\b/g, "resolved");
+  return continuationPatterns.some((pattern) => pattern.test(normalized));
+}
+
 /** Classifies feedback about the latest support answer, not the original ticket. */
 export function classifyPostAnswerFeedback(text: string): FeedbackSentiment {
   const normalized = normalize(text);
@@ -45,8 +50,7 @@ export function classifyPostAnswerFeedback(text: string): FeedbackSentiment {
     return "negative";
   // A still-broken clause or a next-step request wins over gratitude/resolution.
   // Exclude the explicit "no longer failing" resolution from that check.
-  const continuation = normalized.replace(/\bkhong con bi loi\b/g, "resolved");
-  if (continuationPatterns.some((pattern) => pattern.test(continuation)))
+  if (hasContinuationFeedbackSignal(normalized))
     return "neutral";
   if (resolvedPatterns.some((pattern) => asserted(normalized.replace(/\bchua\b/g, "khong"), pattern)))
     return "positive";
