@@ -19,7 +19,7 @@ type Runtime = {
   supportV3Previews?: Map<string, SupportPreview>;
   supportV3Requests?: Map<string, SupportRequest>;
   supportV3Mongo?: MongoClient;
-  supportV3Budget?: number;
+  supportV3Budgets?: Map<string, number>;
   supportV3IndexReady?: Promise<string>;
 };
 const runtime = globalThis as typeof globalThis & Runtime;
@@ -167,21 +167,23 @@ export async function updateSupportRequest(
   }
   return structuredClone(draft);
 }
-export async function reserveModelAttempt(): Promise<boolean> {
+export async function reserveModelAttempt(now = new Date()): Promise<boolean> {
   const db = supportDatabase();
   const configured = Number(process.env.AI_MAX_ATTEMPTS ?? 20);
   const limit =
     Number.isInteger(configured) && configured >= 0
       ? Math.min(configured, 50)
       : 0;
+  const day = now.toISOString().slice(0, 10);
+  const bucket = `utc-day:${day}`;
   if (db) {
-    const budgets = db.collection<{ _id: string; attempts: number }>(
+    const budgets = db.collection<{ _id: string; attempts: number; day: string }>(
       "v3_model_budgets",
     );
     try {
       await budgets.updateOne(
-        { _id: "lifetime" },
-        { $setOnInsert: { attempts: 0 } },
+        { _id: bucket },
+        { $setOnInsert: { attempts: 0, day } },
         { upsert: true },
       );
     } catch (error) {
@@ -190,20 +192,24 @@ export async function reserveModelAttempt(): Promise<boolean> {
     }
     return Boolean(
       await budgets.findOneAndUpdate(
-        { _id: "lifetime", attempts: { $lt: limit } },
+        { _id: bucket, attempts: { $lt: limit } },
         { $inc: { attempts: 1 } },
         { returnDocument: "after" },
       ),
     );
   }
-  if ((runtime.supportV3Budget ?? 0) >= limit) return false;
-  runtime.supportV3Budget = (runtime.supportV3Budget ?? 0) + 1;
+  const budgets = runtime.supportV3Budgets ??= new Map();
+  for (const oldBucket of budgets.keys())
+    if (oldBucket !== bucket) budgets.delete(oldBucket);
+  const attempts = budgets.get(bucket) ?? 0;
+  if (attempts >= limit) return false;
+  budgets.set(bucket, attempts + 1);
   return true;
 }
 export function resetSupportTestStore() {
   if (process.env.NODE_ENV !== "test") throw new Error("TEST_ONLY");
   runtime.supportV3Requests = new Map();
-  runtime.supportV3Budget = 0;
+  runtime.supportV3Budgets = new Map();
   runtime.supportV3Previews = new Map();
   runtime.supportV3IndexReady = undefined;
 }

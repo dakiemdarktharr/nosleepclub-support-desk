@@ -145,7 +145,9 @@ export async function analyzeSupportSentiment(
       explanation: "Không có mô tả tự do để nhận diện sentiment.",
     };
 
-  const model = process.env.AI_CONVERSATION_MODEL || process.env.AI_MODEL || "";
+  const model = context === "support-request"
+    ? process.env.AI_MODEL || ""
+    : process.env.AI_CONVERSATION_MODEL || process.env.AI_MODEL || "";
   const modelConfigured = process.env.AI_PROVIDER === "openai" &&
     !!process.env.OPENAI_API_KEY && !!model;
   if (!options.run && !modelConfigured && !options.fault)

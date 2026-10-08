@@ -122,3 +122,25 @@ URI/ack Mongo disposable, không thử kết nối production. Live model chưa 
 held-out và phản hồi ba người dùng vẫn **NOT COLLECTED**. Giới hạn ID-only,
 public-demo reviewer và audit không chống sửa bởi DB admin vẫn còn.
 Không đủ bằng chứng để kết luận 9,5/10.
+
+## Khắc phục hạn mức và sentiment cho các nhánh deterministic — 09/10/2026
+
+Một preview production chỉ dùng câu tổng hợp trên revision `e90a31e` trả
+`MODEL_UNAVAILABLE:BUDGET_EXHAUSTED`; lượt gọi bị chặn trước khi tới provider.
+`provider=openai` trong health không xác minh API key/model. Trước sửa, Mongo
+dùng duy nhất document `_id=lifetime`, vì vậy sau 20 lượt mặc định (tối đa cấu
+hình 50) ngân sách không bao giờ tự mở lại.
+
+Thay đổi xử lý hạn mức bằng bucket dùng chung theo ngày UTC; mặc định 20 lượt,
+tối đa 50 lượt/ngày. Document lifetime cũ không còn chặn lượt mới. Freeform đủ
+điều kiện vẫn lấy sentiment trong cùng phản hồi extraction. Khi extraction được
+bỏ qua vì form danh mục, risk signal hoặc câu hỏi reset mơ hồ, app gọi model
+chính chỉ cho sentiment; canonical facts, risk và policy vẫn deterministic.
+Model support-request dùng `AI_MODEL`; `AI_CONVERSATION_MODEL` chỉ áp dụng cho
+sentiment sau câu trả lời.
+
+Test cục bộ kiểm tra bucket reset theo ngày và cả ba nhánh deterministic; các
+test này dùng model injection, không phát sinh API call. Sau deploy, cần preview
+bằng câu tổng hợp để xác nhận `sentiment.source=model`. API key, model name và
+inference thật vẫn chưa được xác minh cho tới khi lượt đó thành công. Fallback
+theo luật tiếp tục có nhãn rõ khi hết hạn mức hoặc provider lỗi.

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { submitSupport } from "@/services/support";
+import { previewSupport, submitSupport } from "@/services/support";
 import {
   callModel,
   createAssistance,
@@ -112,8 +112,10 @@ it("rejects assistance commands outside the safe catalog", async () => {
     }),
   ).rejects.toMatchObject({ code: "MODEL_OUTPUT_INVALID" });
 });
-it("bounds time and lifetime call count without retries", async () => {
+it("bounds time and daily call count without retries, then resets on the next UTC day", async () => {
   vi.stubEnv("AI_MAX_ATTEMPTS", "20");
+  const dayOne = new Date("2026-10-09T02:00:00.000Z");
+  const dayTwo = new Date("2026-10-10T02:00:00.000Z");
   const run = vi.fn(() => new Promise<never>(() => {}));
   await expect(
     callModel(
@@ -129,40 +131,54 @@ it("bounds time and lifetime call count without retries", async () => {
   ).rejects.toMatchObject({ code: "MODEL_UNAVAILABLE", reason: "TIMEOUT" });
   expect(run).toHaveBeenCalledOnce();
   const reserved = await Promise.all(
-    Array.from({ length: 25 }, () => reserveModelAttempt()),
+    Array.from({ length: 25 }, () => reserveModelAttempt(dayOne)),
   );
   expect(reserved.filter(Boolean)).toHaveLength(20);
   vi.stubEnv("AI_MAX_ATTEMPTS", "30");
   const added = await Promise.all(
-    Array.from({ length: 15 }, () => reserveModelAttempt()),
+    Array.from({ length: 15 }, () => reserveModelAttempt(dayOne)),
   );
   expect(added.filter(Boolean)).toHaveLength(10);
   vi.stubEnv("AI_MAX_ATTEMPTS", "50");
   const conversationAllowance = await Promise.all(
-    Array.from({ length: 25 }, () => reserveModelAttempt()),
+    Array.from({ length: 25 }, () => reserveModelAttempt(dayOne)),
   );
   expect(conversationAllowance.filter(Boolean)).toHaveLength(20);
   vi.stubEnv("AI_MAX_ATTEMPTS", "100");
-  expect(await reserveModelAttempt()).toBe(false);
+  expect(await reserveModelAttempt(dayOne)).toBe(false);
+  expect(await reserveModelAttempt(dayTwo)).toBe(true);
 });
 
 it("zero budget rejects concurrent reservations without consuming allowance", async () => {
   vi.stubEnv("AI_MAX_ATTEMPTS", "0");
   const reserved = await Promise.all(
-    Array.from({ length: 25 }, () => reserveModelAttempt()),
+    Array.from({ length: 25 }, () => reserveModelAttempt(new Date("2026-10-09T00:00:00.000Z"))),
   );
   expect(reserved).toEqual(Array(25).fill(false));
   vi.stubEnv("AI_MAX_ATTEMPTS", "1");
-  expect(await reserveModelAttempt()).toBe(true);
-  expect(await reserveModelAttempt()).toBe(false);
+  const now = new Date("2026-10-09T00:00:00.000Z");
+  expect(await reserveModelAttempt(now)).toBe(true);
+  expect(await reserveModelAttempt(now)).toBe(false);
 });
 it("known reset ambiguity asks the deterministic question even when OpenAI is enabled", async () => {
   vi.stubEnv("AI_PROVIDER", "openai");
-  const run = vi.fn(async () => {
-    throw new Error("Model must not guess restart versus wipe");
+  const run = vi.fn(async (call: { purpose: string; data: string }) => {
+    if (call.purpose !== "sentiment")
+      throw new Error("Model must not guess restart versus wipe");
+    const message = JSON.parse(call.data).message as string;
+    return {
+      sentiment: "neutral",
+      evidence: message,
+      explanation: "Câu hỏi chưa thể hiện cảm xúc rõ ràng.",
+    };
   });
-  const request = await submitSupport(input("Làm sao để reset máy?"), { run });
+  const rawText = "Làm sao để reset máy?";
+  const request = await submitSupport(input(rawText), { run });
+  expect(run).toHaveBeenCalledOnce();
+  expect(run.mock.calls[0][0].purpose).toBe("sentiment");
   expect(request.decision?.action).toBe("NEEDS_INFORMATION");
   expect(request.decision?.ruleIds).toContain("INFO-RESET");
-  expect(run).not.toHaveBeenCalled();
+  const preview = await previewSupport(input(rawText), { run });
+  expect(run).toHaveBeenCalledTimes(2);
+  expect(preview.sentiment).toMatchObject({ sentiment: "neutral", source: "model" });
 });

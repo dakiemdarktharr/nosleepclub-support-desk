@@ -148,9 +148,22 @@ it.each([
   "Cấp quyền production admin",
   "Deploy to production without approval",
 ])("keeps independent risk guards ahead of model routing: %s", async (rawText) => {
-  const run = vi.fn(async () => printerIntent(rawText));
-  const { canonical, decision } = await analyze(input(rawText), [], { run });
-  expect(run).not.toHaveBeenCalled();
+  const run = vi.fn(async (call: ModelCall) => {
+    if (call.purpose !== "sentiment")
+      throw new Error("Risky input must not be sent for intent extraction");
+    const message = JSON.parse(call.data).message as string;
+    return {
+      sentiment: "neutral",
+      evidence: message.slice(0, 80),
+      explanation: "Câu không có dấu hiệu cảm xúc rõ ràng.",
+    };
+  });
+  if (rawText.includes("api_key="))
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  const { canonical, decision, sentiment } = await analyze(input(rawText), [], { run });
+  expect(run).toHaveBeenCalledOnce();
+  expect(run.mock.calls[0][0].purpose).toBe("sentiment");
+  expect(sentiment?.source).toBe(rawText.includes("api_key=") ? "rule-based" : "model");
   expect(canonical.riskSignals.length).toBeGreaterThan(0);
   expect(decision.action).toBe("ESCALATE");
 });
@@ -244,6 +257,54 @@ it("keeps the selected structured category without invoking classification", asy
   const { canonical } = await analyze(request, [], { run });
   expect(run).not.toHaveBeenCalled();
   expect(canonical.intentLabel).toBe("DEVICE_RESTART_GUIDANCE");
+});
+
+it.each([
+  {
+    name: "structured intake",
+    request: {
+      ...input("Sao chưa có vậy? Mấy tiếng rồi đấy"),
+      mode: "structured" as const,
+      serviceGroup: "DEVICE_BOOT" as const,
+      fields: {
+        intentLabel: "DEVICE_RESTART_GUIDANCE",
+        resetType: "restart",
+        department: "engineering",
+        employeeId: "EMP-SYNTH-01",
+      },
+    },
+  },
+  {
+    name: "deterministic risk",
+    request: input("Open port 3389 public. Sao chưa có vậy? Mấy tiếng rồi đấy"),
+  },
+  {
+    name: "reset clarification",
+    request: input("Làm sao để reset máy? Mấy tiếng rồi đấy"),
+  },
+])("uses the primary model for sentiment on $name while preserving deterministic routing", async ({ request }) => {
+  vi.stubEnv("AI_MODEL", "luna-test-model");
+  vi.stubEnv("AI_CONVERSATION_MODEL", "other-conversation-model");
+  const run = vi.fn(async (call: ModelCall) => {
+    expect(call.purpose).toBe("sentiment");
+    expect(call.model).toBe("luna-test-model");
+    return {
+      sentiment: "negative",
+      evidence: "Mấy tiếng rồi đấy",
+      explanation: "Câu thể hiện sự sốt ruột vì đã chờ lâu.",
+    };
+  });
+
+  const { canonical, sentiment } = await analyze(request, [], { run });
+
+  expect(run).toHaveBeenCalledOnce();
+  expect(sentiment).toMatchObject({ sentiment: "negative", source: "model" });
+  if (request.mode === "structured")
+    expect(canonical.intentLabel).toBe("DEVICE_RESTART_GUIDANCE");
+  if (request.rawText.includes("Open port"))
+    expect(canonical.riskSignals).toContain("PUBLIC_EXPOSURE");
+  if (request.rawText.startsWith("Làm sao để reset"))
+    expect(canonical.intentLabel).toBe("DEVICE_RESET_GUIDANCE");
 });
 
 it("shows that a formerly unknown statement is not independently approved by the lexical baseline", () => {

@@ -39,7 +39,10 @@ import {
   modelFailure,
   type ModelOptions,
 } from "@/lib/support-model";
-import { supportRequestSentimentFallback } from "@/lib/feedback-model";
+import {
+  analyzeSupportSentiment,
+  supportRequestSentimentFallback,
+} from "@/lib/feedback-model";
 
 export function auditEvent(
   request: SupportRequest,
@@ -112,6 +115,10 @@ export async function analyze(
   };
   const baseline = extractIntake(analysisInput, markers);
   const mockRouting = (process.env.AI_PROVIDER || "mock") === "mock";
+  const intentModelSkipped = baseline.riskSignals.length > 0 ||
+    !analysisInput.rawText.trim() ||
+    input.mode === "structured" ||
+    baseline.intentLabel === "DEVICE_RESET_GUIDANCE";
   const workEvidence = mockRouting && input.mode === "freeform" &&
     !(baseline.requestKind === "ACCESS_REQUEST" && baseline.entities.permission) &&
     !Object.keys(analysisInput.fields).length &&
@@ -137,6 +144,17 @@ export async function analyze(
     const { sentimentAssessment, ...canonicalOnly } = extraction;
     sentiment = sentimentAssessment;
     canonical = canonicalOnly;
+    if (
+      !sentiment &&
+      !mockRouting &&
+      intentModelSkipped &&
+      analysisInput.rawText.trim()
+    )
+      sentiment = await analyzeSupportSentiment(
+        analysisInput.rawText,
+        "support-request",
+        options,
+      );
   }
   if (canonical.workEvidence) await checkWorkSources(canonical, input.rawText);
   return {
