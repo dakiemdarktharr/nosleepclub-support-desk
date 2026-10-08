@@ -178,11 +178,11 @@ flowchart TB
 
     subgraph IDENTITY["M7 · ID nhân viên — luồng riêng"]
         APPLY["Đơn họ tên + job/profile + scopes"] --> IDTX["identity service + identityTransaction<br/>Schema, profile/version, unique ID<br/>IT quyết định và ghi lý do"]
-        AUTH["identity-auth<br/>ID ACTIVE → phiên demo<br/>OTP + identity-admin → quyền duyệt ID"] --> IDTX
-        IDTX --> IDDB[("MongoDB identity_* riêng<br/>Đơn + profile + tài khoản + audit<br/>OTP / sessions / limits<br/>Không fallback memory hay CSV")]
+        AUTH["identity-auth<br/>ID ACTIVE → phiên demo<br/>ID + identity-admin → quyền duyệt demo"] --> IDTX
+        IDTX --> IDDB[("MongoDB identity_* riêng<br/>Đơn + profile + tài khoản + audit<br/>Sessions / limits<br/>Không fallback memory hay CSV")]
         IDDB --> SCOPE["evaluateScope tại server<br/>Đúng scope và ít rủi ro mới allowed<br/>executed: false"]
         AUTH -.->|"Phiên người gửi"| IDREF["M1 kiểm tra ID khớp phiên nếu có"]
-        AUTH -.->|"Access API cần phiên OTP"| SCOPE
+        AUTH -.->|"Access API: đánh giá demo, không thực thi"| SCOPE
     end
 
     subgraph VERIFY["M8 · Verify và đánh giá"]
@@ -238,7 +238,7 @@ Request, assistance, feedback và mảng `events` cùng nằm trong **một docu
 
 `/api/support/events` và `support-query.ts` đọc các event đã lưu để phục vụ lịch sử, bộ lọc và phân trang; metrics/Verify đối chiếu dữ liệu ứng dụng thay vì sinh KPI giả. Đây là audit ở mức app, **không phải kho WORM hoặc nhật ký chống sửa bởi quản trị viên database**. Actor reviewer công khai là `public-demo-reviewer`, không chứng minh danh tính người thật. Redaction có phạm vi hữu hạn như phần giới hạn bên dưới.
 
-**Identity:** `identityAudit` lưu riêng vào collection `identity_audit`. Đơn đăng ký và quyết định cấp ID/profile/account được ghi cùng audit qua Mongo transaction; unique index và version guard chặn cấp trùng/ghi đè quyết định. OTP, phiên và bộ đếm có collection riêng; không phải mọi thao tác OTP/rate-limit đều ghi một audit event. Quyền xem audit/duyệt ID cần phiên OTP cùng role `identity-admin`; khác với audit Support public demo.
+**Identity:** `identityAudit` lưu riêng vào collection `identity_audit`. Đơn đăng ký và quyết định cấp ID/profile/account được ghi cùng audit qua Mongo transaction; unique index và version guard chặn cấp trùng/ghi đè quyết định. Phiên và bộ đếm có collection riêng; không phải mọi thao tác rate-limit đều ghi một audit event. Quyền xem audit/duyệt ID cần phiên đăng nhập ID cùng role `identity-admin`; khác với audit Support public demo.
 
 #### Bản đồ module nhỏ và nơi đọc code
 
@@ -250,16 +250,20 @@ Request, assistance, feedback và mảng `events` cùng nằm trong **một docu
 | M4 — RAG | Corpus, schema/revision filter, BM25, optional web, answer validation/cache | [knowledge](src/domain/knowledge.ts), [knowledge-extra](src/domain/knowledge-extra.ts), [support-knowledge](src/lib/support-knowledge.ts), [knowledge-search](src/domain/knowledge-search.ts), [conversation-model](src/lib/conversation-model.ts), [answer-cache](src/lib/answer-cache.ts) |
 | M5 — Lifecycle | Preview/confirm, hỏi rõ/hỏi tiếp, sentiment, reviewer, transition guards | [support](src/services/support.ts), [conversation service](src/services/conversation.ts), [review](src/services/review.ts), [feedback](src/domain/feedback.ts), [transitions](src/domain/transitions.ts) |
 | M6 — Storage/audit | Atomic request document, optimistic version, audit query, metrics | [support-repository](src/lib/support-repository.ts), [support-query](src/lib/support-query.ts), [events API](src/app/api/support/events/route.ts), [metrics API](src/app/api/support/metrics/route.ts) |
-| M7 — Identity | ID formula, job/version/scope, application/decision, OTP/session, transaction/audit | [identity domain](src/domain/identity.ts), [identity service](src/services/identity.ts), [identity-store](src/lib/identity-store.ts), [identity-auth](src/lib/identity-auth.ts) |
+| M7 — Identity | ID formula, job/version/scope, application/decision, ID/session, transaction/audit | [identity domain](src/domain/identity.ts), [identity service](src/services/identity.ts), [identity-store](src/lib/identity-store.ts), [identity-auth](src/lib/identity-auth.ts) |
 | M8 — Verify/evaluation | Pack, execution, readback, resume, metrics, bounded threshold proposal | [verification](src/services/verification.ts), [support-verify](src/lib/support-verify.ts), [verify-repository](src/lib/verify-repository.ts), [evaluation](src/services/evaluation.ts), [escalation-threshold](src/domain/escalation-threshold.ts) |
 
 ## Đăng nhập, cấp ID và phạm vi quyền
 
 ### Đăng nhập không mật khẩu
 
-Màn hình `/login` chỉ yêu cầu ID. Theo chế độ demo hiện tại, ID đã cấp và còn `ACTIVE` được đăng nhập để gửi hỗ trợ mà không cần OTP. ID sai, chưa cấp hoặc bị vô hiệu hóa bị từ chối; đơn bị từ chối không tạo tài khoản. **Biết ID không chứng minh danh tính**: phiên có assurance `demo`, không được duyệt ID, đọc danh bạ hoặc kiểm tra quyền thực thi.
+Màn hình `/login` chỉ yêu cầu ID. Theo yêu cầu demo, đã bỏ OTP cho cả người gửi và người xử lý ID. ID đã cấp và còn `ACTIVE` được đăng nhập; ID sai, chưa cấp hoặc bị vô hiệu hóa bị từ chối. Tài khoản có role `identity-admin` do operator cấp được đưa tới trang cấp ID; tài khoản thường tới form hỗ trợ. Tên job, level CSV hoặc header `X-Employee-ID` không cấp role này.
 
-Người xử lý ID chọn **Dành cho người xử lý ID → Xác minh OTP để dùng quyền IT**. Kênh nhận mã phải được IT xác minh và cấu hình ngoài form đăng ký. OTP dùng một lần, hết hạn sau 5 phút, tối đa 5 lần thử; phiên cookie HttpOnly có hạn 8 giờ. Cần cả phiên OTP và role `identity-admin` do operator cấp. Tên job, level CSV hoặc header `X-Employee-ID` không cấp role này. Chưa có relay/kênh thì xác minh IT chưa hoạt động.
+**Biết ID không chứng minh danh tính.** Mọi phiên có assurance `demo`; người biết ID IT có thể mạo danh và duyệt đơn. Chỉ dùng dữ liệu giả lập, không coi đây là xác thực production an toàn. Cookie HttpOnly/SameSite Strict hết hạn sau 8 giờ; server kiểm tra lại trạng thái ACTIVE, expiry và role mỗi request. API kiểm tra scope chỉ mô phỏng, luôn `executed: false` và không bỏ policy rủi ro.
+
+OTP relay không còn là cấu hình bắt buộc; `/api/identity/verify` trả 410. Dữ liệu OTP/kênh cũ không bị xóa tự động, không được dùng để đăng nhập hoặc trả ra danh bạ. Hướng dẫn khởi tạo IT demo nằm trong [RUNBOOK](RUNBOOK.md#khởi-tạo-người-xử-lý-id).
+
+[Báo cáo ID-only demo](docs/IDENTITY-ID-ONLY-DEMO.md) ghi phạm vi thay đổi, kiểm thử local và bootstrap/readback Mongo thật; không thay thế kiểm chứng persistence qua restart.
 
 ### Nhân viên mới
 
@@ -311,18 +315,17 @@ Không đưa API key, URI thật hay `.env.local` vào Git. Xem [file cấu hìn
 
 ### MongoDB cho hệ thống ID
 
-Hệ thống ID chỉ dùng MongoDB cho nhân viên, profile/version, đơn, quyết định, audit, OTP và phiên. Cần **replica set hoặc cluster hỗ trợ transaction**; standalone không đủ.
+Hệ thống ID chỉ dùng MongoDB cho nhân viên, profile/version, đơn, quyết định, audit và phiên. Cần **replica set hoặc cluster hỗ trợ transaction**; standalone không đủ.
 
 - `IDENTITY_MONGODB_URI`: URI riêng hoặc để trống để dùng `MONGODB_URI`.
 - `IDENTITY_MONGODB_DB`: **bắt buộc chỉ định database riêng** cho identity; không tự dùng tên database Support.
-- `IDENTITY_OTP_RELAY_URL`, `IDENTITY_OTP_RELAY_TOKEN`, `IDENTITY_OTP_SIGNING_KEY`: cần cho xác minh OTP, dùng endpoint HTTPS do IT quản lý và signing key tối thiểu 32 ký tự.
 
-Các biến identity có mẫu trong `.env.example`; URI/token/key để trống. Tên database
+Các biến identity có mẫu trong `.env.example`; URI để trống. Tên database
 riêng được chủ repo chọn là `vng_support_identity`. Trên hosting phải cấu hình
 `IDENTITY_MONGODB_DB` cho đúng môi trường; file mẫu không tự cấu hình Vercel.
 URI identity để trống dùng `MONGODB_URI` hiện có. Xem [cấu hình và bootstrap IT](RUNBOOK.md#hệ-thống-id-nhân-viên).
 Database mới không có tài khoản/profile seed tự động. Operator khởi tạo người xử lý
-qua `scripts/identity-bootstrap.mjs` với dữ liệu được xác minh ngoài repository.
+qua `scripts/identity-bootstrap.mjs` với tên giả lập và căn cứ được chủ repo cho phép, lưu ngoài repository.
 
 Code cài schema validator, unique index và ghi cấp ID/profile/quyết định/audit trong transaction. Thiếu cấu hình hoặc MongoDB unavailable trả lỗi 503, không báo đã lưu/cấp ID thành công. Kiểm thử adapter giả lập không thay thế xác minh transaction/index/concurrency trên MongoDB thật.
 
@@ -358,7 +361,7 @@ Stack hiện tại: **Next.js 15 App Router · React 19 · TypeScript · Tailwin
 | Verify/evaluation/health | `/api/support/verify-runs`, `/api/support/evaluation`, `/api/support/health` |
 | Identity API | `/api/identity/*`, `/api/employees` |
 
-`GET /api/employees` yêu cầu phiên OTP cùng role `identity-admin`, chỉ đọc MongoDB và bỏ kênh xác minh khỏi response; thiếu phiên 401, không đủ quyền 403, Mongo unavailable 503. Đây không còn là API dùng level CSV hoặc header tự khai báo để cấp quyền.
+`GET /api/employees` yêu cầu phiên đăng nhập ID cùng role `identity-admin`, chỉ đọc MongoDB và bỏ kênh xác minh khỏi response; thiếu phiên 401, không đủ quyền 403, Mongo unavailable 503. Đây không còn là API dùng level CSV hoặc header tự khai báo để cấp quyền.
 
 ## Kiểm thử và bằng chứng
 
@@ -376,7 +379,7 @@ npm run test:e2e -- --project=chromium
 npm run test:e2e -- --project=mobile
 ```
 
-Playwright khởi động server riêng `127.0.0.1:3227`, không dùng server port 3000. Desktop/mobile chạy riêng để mỗi lượt có server/hạn mức mới. Cấu hình E2E dùng mock/memory, xóa biến Mongo/OTP/model key khỏi môi trường server. CI ở [qa.yml](.github/workflows/qa.yml) chạy các nhóm kiểm tra này; cấu hình CI không tự chứng minh một workflow run đã đạt.
+Playwright khởi động server riêng `127.0.0.1:3227`, không dùng server port 3000. Desktop/mobile chạy riêng để mỗi lượt có server/hạn mức mới. Cấu hình E2E dùng mock/memory, xóa biến Mongo/model key khỏi môi trường server. CI ở [qa.yml](.github/workflows/qa.yml) chạy các nhóm kiểm tra này; cấu hình CI không tự chứng minh một workflow run đã đạt.
 
 **Bằng chứng local đã ghi cho bản sửa `c2b2aec` (base `a4f7ff2`):** 589 unit/integration đạt, 11 Mongo guard đạt, 62 E2E desktop + 61 E2E mobile đạt; lint, typecheck và build đạt. Một benchmark opt-in và một bài quay video mobile được skip theo cấu hình. [Báo cáo và phạm vi kiểm chứng](docs/INTENT-REVIEW-FIXES.md). Đây là kết quả của lượt sửa code đó, không phải toàn bộ kiểm thử được chạy lại khi sửa README.
 
@@ -384,7 +387,7 @@ Tests bao phủ nhận diện câu kể, output model sai schema/evidence, rủi
 
 ## Giới hạn cần hiểu trước khi sử dụng
 
-- **Demo và xác thực:** hỗ trợ/reviewer có đường public demo; đăng nhập người gửi chỉ bằng ID có thể bị mạo danh. Chưa có SSO, reviewer RBAC theo team hoặc ACL đầy đủ cho dữ liệu hỗ trợ. Chỉ dùng dữ liệu giả lập/đã ẩn danh trước; chưa coi đây là hệ thống production chứa dữ liệu nhân viên thật.
+- **Demo và xác thực:** hỗ trợ/reviewer có đường public demo; đăng nhập người gửi và IT chỉ bằng ID có thể bị mạo danh. Chưa có SSO, reviewer RBAC theo team hoặc ACL đầy đủ cho dữ liệu hỗ trợ. Chỉ dùng dữ liệu giả lập/đã ẩn danh trước; chưa coi đây là hệ thống production chứa dữ liệu nhân viên thật.
 - **Quyền và tích hợp:** policy/approval fixtures là mô phỏng. Không có connector thực thi hạ tầng, cấp quyền IAM, đọc tài liệu riêng hoặc thông báo reviewer thật. Hệ thống ID lưu tài khoản của app khi Mongo được cấu hình, không tạo tài khoản VNG bên ngoài.
 - **Riêng tư:** redaction che một số mẫu credential/OTP, email ASCII, CCCD/điện thoại có nhãn và employee ID có nhãn trong nội dung. Không ẩn danh toàn diện; tên/địa chỉ tự do và metadata ID vẫn có thể nhận diện. Xem [inventory và ranh giới đã kiểm thử](docs/PRIVACY-INVENTORY.md). Không nhập credentials hay dữ liệu production để thử.
 - **Nhận diện:** câu nhiều ý có thể bị chuyển reviewer thận trọng; evidence là trích dẫn đúng chưa chứng minh model hiểu đúng nghĩa. Không tuyên bố độ chính xác từ số test đạt.

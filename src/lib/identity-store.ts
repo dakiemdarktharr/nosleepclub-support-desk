@@ -40,8 +40,6 @@ export async function identityStore(): Promise<{ db: Db; client: MongoClient }> 
       db.collection("identity_audit").createIndex({ subject: 1, at: -1 }),
       db.collection("identity_sessions").createIndex({ hash: 1 }, { unique: true }),
       db.collection("identity_sessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-      db.collection("identity_challenges").createIndex({ id: 1 }, { unique: true }),
-      db.collection("identity_challenges").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
       db.collection("identity_limits").createIndex({ key: 1 }, { unique: true }),
       db.collection("identity_limits").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     ])).then(() => undefined).catch((error: unknown) => { runtime.identityIndexes = undefined; throw error; });

@@ -176,7 +176,7 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
     <main className="page page-narrow page-enter" data-guide-stage={guest ? undefined : preview ? "sender-preview" : "sender-form"}>
       <h1>Tôi cần hỗ trợ</h1>
       {guest && <p className="guest-notice">Bạn đang dùng hỗ trợ không cần tài khoản. Hỏi đáp và hướng dẫn thông thường có thể dùng ngay; yêu cầu nhạy cảm vẫn cần kiểm tra hoặc chuyển người phụ trách.</p>}
-      {account && <Alert>ID {account.id} · {account.assurance === "verified" ? "Đã xác minh OTP" : "Truy cập demo, chưa xác minh danh tính"}. <button type="button" className="identity-text-link" onClick={async () => { try { await identityApi("logout", {}); setAccount(null); edit({ fields: { ...input.fields, employeeId: "" } }); } catch (cause) { setError((cause as Error).message); } }}>Đăng xuất</button></Alert>}
+      {account && <Alert>ID {account.id} · Truy cập demo, chưa xác minh danh tính. <button type="button" className="identity-text-link" onClick={async () => { try { await identityApi("logout", {}); setAccount(null); edit({ fields: { ...input.fields, employeeId: "" } }); } catch (cause) { setError((cause as Error).message); } }}>Đăng xuất</button></Alert>}
       <p className="page-description">
         Bạn cứ mô tả vấn đề bằng lời của mình. Chúng tôi sẽ giúp bạn tìm hướng
         xử lý phù hợp.

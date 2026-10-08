@@ -61,7 +61,7 @@ test("existing job shows fixed scope; tracking reveals issued ID only after appr
   await page.goto(`/identity/track#id=${id}&token=${"a".repeat(64)}`);
   await expect(page.getByText("alphanvgl", { exact: true })).toBeVisible(); await expect(page.getByRole("link", { name: "Đăng nhập bằng ID" })).toBeVisible();
 });
-test("IT controls require verified server authority; guide remains reachable on mobile", async ({ page }) => {
+test("IT controls require server-assigned authority; guide remains reachable on mobile", async ({ page }) => {
   await page.goto("/identity/review"); await expect(page.getByRole("main").getByRole("alert")).toContainText("Đăng nhập");
   await expect(page.getByRole("button", { name: "Duyệt và cấp ID" })).toHaveCount(0);
   await page.goto("/help"); await expect(page.getByRole("heading", { name: "Bắt đầu từ việc bạn cần làm" })).toBeVisible();
@@ -85,4 +85,21 @@ test("IT approves only selected scopes and receives an explicit success result",
   await page.getByRole("button", { name: "Duyệt và cấp ID", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Đã cấp ID alphanvgl" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Duyệt và cấp ID", exact: true })).toHaveCount(0);
+});
+
+// UI mocks verify navigation only; they do not prove Mongo transaction behavior.
+test("ID-only login routes an IT role to review without an OTP step", async ({ page, request }) => {
+  await page.route("**/api/identity/login", async route => {
+    expect(route.request().postDataJSON()).toEqual({ employeeId: "itnvgl" });
+    await route.fulfill({ json: { success: true, data: { assurance: "demo", canReviewIds: true } } });
+  });
+  await page.goto("/login");
+  await expect(page.getByText("Xác minh OTP", { exact: false })).toHaveCount(0);
+  await page.getByLabel("ID nhân viên", { exact: true }).fill("itnvgl");
+  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  await expect(page).toHaveURL(/\/identity\/review$/);
+  await expect(page.getByText(/người biết ID IT/i)).toBeVisible();
+  const retired = await request.post("/api/identity/verify", { data: {} });
+  expect(retired.status()).toBe(410);
+  expect(retired.headers()["set-cookie"]).toBeUndefined();
 });

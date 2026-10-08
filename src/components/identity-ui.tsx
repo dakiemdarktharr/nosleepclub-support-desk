@@ -18,34 +18,26 @@ export function ScopeList({ scopes }: { scopes: Scope[] }) {
 export function LoginPanel() {
   const router = useRouter();
   const [id, setId] = useState("");
-  const [verified, setVerified] = useState(false);
-  const [challenge, setChallenge] = useState("");
-  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const codeRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (challenge) codeRef.current?.focus(); }, [challenge]);
   return <section className="identity-login" aria-labelledby="login-title">
     <h1 id="login-title">Đăng nhập</h1>
     <form className="identity-form" onSubmit={async (event) => {
       event.preventDefault(); setError(""); setBusy(true);
       try {
-        const result = await identityApi<{ challengeId?: string }>(challenge ? "verify" : "login", challenge ? { challengeId: challenge, code } : { employeeId: id, verified });
-        if (result.challengeId) setChallenge(result.challengeId);
-        else { router.push(verified ? "/identity/review" : "/send-help"); router.refresh(); }
+        const result = await identityApi<{ canReviewIds: boolean }>("login", { employeeId: id });
+        router.push(result.canReviewIds ? "/identity/review" : "/send-help"); router.refresh();
       } catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa đăng nhập được. Thử lại."); }
       finally { setBusy(false); }
     }}>
-      <label htmlFor="login-id">ID nhân viên</label><input id="login-id" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={32} value={id} disabled={busy || !!challenge} onChange={(event) => setId(event.target.value)} placeholder="Ví dụ: alphanvgl" />
-      {challenge ? <><p role="status">Mã đã gửi qua kênh IT xác minh. Mã có hiệu lực 5 phút.</p><label htmlFor="login-otp">Mã xác minh 6 số</label><input ref={codeRef} id="login-otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(event) => setCode(event.target.value)} /></> : <details><summary>Dành cho người xử lý ID</summary><label className="check-row"><input type="checkbox" checked={verified} onChange={(event) => setVerified(event.target.checked)} />Xác minh OTP để dùng quyền IT</label><p>Kênh nhận mã do IT cấu hình trước. Tên job không cấp quyền xử lý ID.</p></details>}
+      <label htmlFor="login-id">ID nhân viên</label><input id="login-id" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={32} value={id} disabled={busy} onChange={(event) => setId(event.target.value)} placeholder="Ví dụ: alphanvgl" />
       {error && <Alert tone="error">{error}</Alert>}
-      <Button disabled={busy}>{busy ? "Đang xử lý…" : challenge ? "Xác minh và tiếp tục" : "Đăng nhập"}</Button>
-      {challenge && <Button variant="quiet" type="button" disabled={busy} onClick={() => { setChallenge(""); setCode(""); setError(""); }}>Nhập lại ID / yêu cầu mã mới</Button>}
+      <Button disabled={busy}>{busy ? "Đang xử lý…" : "Đăng nhập"}</Button>
     </form>
     <Link className="button secondary guest-entry" href="/guest">Đăng nhập không cần tài khoản</Link>
     <Link className="identity-text-link" href="/identity/new">Nhân viên mới?</Link>
 
-    <details className="login-options"><summary>Hướng dẫn & tùy chọn</summary><div className="identity-links"><Link href="/identity/track">Theo dõi đơn cấp ID</Link><Link href="/help">Hướng dẫn sử dụng</Link><button type="button" onClick={() => window.dispatchEvent(new Event("vng-open-guide"))}>Hướng dẫn demo</button><Link href="/send-help">Trải nghiệm demo</Link></div></details>
+    <details className="login-options"><summary>Hướng dẫn & tùy chọn</summary><p>Đăng nhập chỉ bằng ID là chế độ demo, chưa xác minh người sử dụng. ID có vai trò IT mở trang cấp ID; người biết ID IT có thể mạo danh. Chỉ dùng dữ liệu giả lập.</p><div className="identity-links"><Link href="/identity/track">Theo dõi đơn cấp ID</Link><Link href="/help">Hướng dẫn sử dụng</Link><button type="button" onClick={() => window.dispatchEvent(new Event("vng-open-guide"))}>Hướng dẫn demo</button><Link href="/send-help">Trải nghiệm demo</Link></div></details>
   </section>;
 }
 export function ScopeEditor({ value, onChange }: { value: Scope[]; onChange: (value: Scope[]) => void }) {
@@ -108,5 +100,5 @@ export function IdentityTracking() {
   const [data, setData] = useState<Tracking | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   async function load(key: string, secret: string) { setBusy(true); setData(null); setError(""); try { setData(await identityApi<Tracking>(`applications/${encodeURIComponent(key)}`, undefined, { "x-tracking-token": secret })); } catch (cause) { setError((cause as Error).message); } finally { setBusy(false); } }
   useEffect(() => { const hash = new URLSearchParams(window.location.hash.slice(1)); const key = hash.get("id") ?? "", secret = hash.get("token") ?? ""; setId(key); setToken(secret); if (key && secret) void load(key, secret); }, []);
-  return <main className="identity-page"><section className="identity-card"><Link href="/login">← Đăng nhập</Link><h1>Theo dõi đơn cấp ID</h1><p>Mở liên kết riêng trong biên nhận hoặc nhập mã và khóa theo dõi.</p><form className="identity-form" onSubmit={(e) => { e.preventDefault(); void load(id, token); }}><label>Mã đơn<input required value={id} onChange={(e) => { setId(e.target.value); setData(null); }} /></label><label>Khóa theo dõi<input required autoComplete="off" value={token} onChange={(e) => { setToken(e.target.value); setData(null); }} /></label><Button disabled={busy}>{busy ? "Đang tải…" : "Xem trạng thái"}</Button></form>{error && <Alert tone="error">{error}</Alert>}{data && <section className="identity-result" aria-live="polite"><span className="eyebrow">{identityStatus[data.status]}</span><h2>{data.fullName}</h2><p>{data.jobName}</p>{data.reason && <Alert>{data.reason}</Alert>}{data.employeeId ? <><h3>ID chính thức của bạn</h3><p className="issued-id">{data.employeeId}</p><p>Về Đăng nhập, nhập đúng ID này để gửi yêu cầu. Truy cập bằng ID hiện là demo; quyền IT cần OTP và quyền riêng.</p><Link className="button primary" href="/login">Đăng nhập bằng ID</Link></> : <p>Chưa cấp ID. {data.status === "REJECTED" ? "Xem lý do và gửi đơn mới với thông tin phù hợp." : "IT sẽ xem xét đơn; dùng nút Xem trạng thái để cập nhật."}</p>}<h3>Phạm vi đã yêu cầu</h3><ScopeList scopes={data.scopes} />{data.grantedScopes && <><h3>Phạm vi IT đã duyệt</h3><ScopeList scopes={data.grantedScopes} /></>}{data.status === "REJECTED" && <Link href="/identity/new">Gửi đơn mới</Link>}</section>}</section></main>;
+  return <main className="identity-page"><section className="identity-card"><Link href="/login">← Đăng nhập</Link><h1>Theo dõi đơn cấp ID</h1><p>Mở liên kết riêng trong biên nhận hoặc nhập mã và khóa theo dõi.</p><form className="identity-form" onSubmit={(e) => { e.preventDefault(); void load(id, token); }}><label>Mã đơn<input required value={id} onChange={(e) => { setId(e.target.value); setData(null); }} /></label><label>Khóa theo dõi<input required autoComplete="off" value={token} onChange={(e) => { setToken(e.target.value); setData(null); }} /></label><Button disabled={busy}>{busy ? "Đang tải…" : "Xem trạng thái"}</Button></form>{error && <Alert tone="error">{error}</Alert>}{data && <section className="identity-result" aria-live="polite"><span className="eyebrow">{identityStatus[data.status]}</span><h2>{data.fullName}</h2><p>{data.jobName}</p>{data.reason && <Alert>{data.reason}</Alert>}{data.employeeId ? <><h3>ID chính thức của bạn</h3><p className="issued-id">{data.employeeId}</p><p>Về Đăng nhập, nhập đúng ID này để gửi yêu cầu. Truy cập bằng ID hiện là demo; quyền IT chỉ có ở tài khoản được operator cấp vai trò riêng.</p><Link className="button primary" href="/login">Đăng nhập bằng ID</Link></> : <p>Chưa cấp ID. {data.status === "REJECTED" ? "Xem lý do và gửi đơn mới với thông tin phù hợp." : "IT sẽ xem xét đơn; dùng nút Xem trạng thái để cập nhật."}</p>}<h3>Phạm vi đã yêu cầu</h3><ScopeList scopes={data.scopes} />{data.grantedScopes && <><h3>Phạm vi IT đã duyệt</h3><ScopeList scopes={data.grantedScopes} /></>}{data.status === "REJECTED" && <Link href="/identity/new">Gửi đơn mới</Link>}</section>}</section></main>;
 }

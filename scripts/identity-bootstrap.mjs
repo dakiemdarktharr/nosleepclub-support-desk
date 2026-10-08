@@ -7,10 +7,10 @@ const args = process.argv.slice(2);
 const file = args[args.indexOf('--file') + 1];
 const database = args[args.indexOf('--database') + 1];
 const uri = process.env.IDENTITY_MONGODB_URI || process.env.MONGODB_URI;
-if (!args.includes('--apply') || !args.includes('--file') || !args.includes('--database') || !file || !database || database !== process.env.IDENTITY_MONGODB_DB || !uri) {
-  console.error('Cần --apply --file <private.json> --database <IDENTITY_MONGODB_DB> và MongoDB đã cấu hình. Không ghi dữ liệu.'); process.exit(1);
+if ((!args.includes('--apply') || !args.includes('--demo-id-only')) || !args.includes('--file') || !args.includes('--database') || !file || !database || database !== process.env.IDENTITY_MONGODB_DB || !uri) {
+  console.error('Cần --apply --demo-id-only --file <private.json> --database <IDENTITY_MONGODB_DB> và MongoDB đã cấu hình. Không ghi dữ liệu.'); process.exit(1);
 }
-const schema = z.object({ fullName: z.string().trim().min(2).max(120), destination: z.string().trim().min(3).max(254), verifiedBy: z.string().trim().min(3).max(120), reason: z.string().trim().min(8).max(1000) }).strict();
+const schema = z.object({ fullName: z.string().trim().min(2).max(120), actor: z.string().trim().min(3).max(120), reason: z.string().trim().min(8).max(1000) }).strict();
 let client;
 try {
   const input = schema.parse(JSON.parse(await readFile(file, 'utf8')));
@@ -28,14 +28,14 @@ try {
   if (!indexes.some((index) => index.unique && index.key.id === 1)) throw new Error('UNIQUE_INDEX_REQUIRED');
   const session = client.startSession();
   try { await session.withTransaction(async () => {
-    // Refuse overwriting any existing account. Subsequent role/channel changes require an audited operator workflow.
+    // Refuse overwriting any existing account. Subsequent role changes require an audited operator workflow.
     if (await db.collection('identity_employees').findOne({ id }, { session })) throw new Error('EXISTING_ID');
     const now = new Date().toISOString(), profileId = randomUUID();
-    await db.collection('identity_profiles').insertOne({ id: profileId, version: 1, name: 'IT Identity Operator (operator bootstrap)', scopes: [{ environment: 'sandbox', resource: 'project', operation: 'read', target: 'identity-console' }], active: true, createdAt: now, createdBy: input.verifiedBy }, { session });
-    await db.collection('identity_employees').insertOne({ id, fullName: input.fullName, status: 'ACTIVE', profileId, profileVersion: 1, roles: ['identity-admin'], createdAt: now, applicationId: 'operator-bootstrap', verifiedChannel: { destination: input.destination, verifiedBy: input.verifiedBy, verifiedAt: now } }, { session });
-    await db.collection('identity_audit').insertOne({ id: randomUUID(), at: now, actor: input.verifiedBy, action: 'OPERATOR_BOOTSTRAP', subject: id, reason: input.reason }, { session });
+    await db.collection('identity_profiles').insertOne({ id: profileId, version: 1, name: 'IT Identity Operator — demo', scopes: [{ environment: 'sandbox', resource: 'project', operation: 'read', target: 'identity-console' }], active: true, createdAt: now, createdBy: input.actor }, { session });
+    await db.collection('identity_employees').insertOne({ id, fullName: input.fullName, status: 'ACTIVE', profileId, profileVersion: 1, roles: ['identity-admin'], createdAt: now, applicationId: 'operator-bootstrap-demo' }, { session });
+    await db.collection('identity_audit').insertOne({ id: randomUUID(), at: now, actor: input.actor, action: 'OPERATOR_BOOTSTRAP_DEMO', subject: id, reason: input.reason + " Đăng nhập chỉ bằng ID, chưa xác minh danh tính; chỉ dùng dữ liệu giả lập." }, { session });
   }, { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } }); }
   finally { await session.endSession(); }
-  console.log('Đã tạo tài khoản IT và audit trong MongoDB. ID:', id);
+  console.log('Đã tạo tài khoản IT demo, profile và audit trong MongoDB. ID:', id);
 } catch { console.error('Không hoàn tất bootstrap. Kiểm tra private JSON, trùng ID, validator/index, replica set và quyền MongoDB. Không in dữ liệu riêng hoặc credentials.'); process.exitCode = 1; }
 finally { await client?.close(); }

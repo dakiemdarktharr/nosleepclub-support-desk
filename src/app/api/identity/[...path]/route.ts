@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { applicationInputSchema, evaluateScope, profileSchema, scopeSchema, type IdentityApplication, type JobProfile } from "@/domain/identity";
 import { successResponse } from "@/lib/api-response";
-import { identityRateLimit, identitySessionCookie, logoutIdentity, requireIdentitySession, startIdentityLogin, verifyIdentityLogin } from "@/lib/identity-auth";
+import { identityRateLimit, identitySessionCookie, logoutIdentity, requireIdentitySession, startIdentityLogin } from "@/lib/identity-auth";
 import { identityStore, identityTransaction } from "@/lib/identity-store";
 import { supportApi, supportBody } from "@/lib/support-http";
 import { SupportError } from "@/lib/support-repository";
@@ -15,7 +15,7 @@ export async function GET(request: Request, context: Context) {
     if (path.join("/") === "profiles") return listIdentityProfiles();
     if (path.join("/") === "session") {
       const { employee, assurance } = await requireIdentitySession(request);
-      return { id: employee.id, name: employee.fullName, assurance, canReviewIds: assurance === "verified" && employee.roles.includes("identity-admin") };
+      return { id: employee.id, name: employee.fullName, assurance, canReviewIds: employee.roles.includes("identity-admin") };
     }
     if (path.length === 2 && path[0] === "applications") return trackIdentityApplication(z.string().uuid().parse(path[1]), z.string().regex(/^[a-f0-9]{64}$/).parse(request.headers.get("x-tracking-token")));
     await requireIdentitySession(request, true);
@@ -37,11 +37,12 @@ export async function POST(request: Request, context: Context) {
     const { path } = await context.params;
     const route = path.join("/");
     const body = await supportBody(request);
-    if (route === "login" || route === "verify") {
+    if (route === "verify") throw new SupportError("OTP_REMOVED", "OTP đã được bỏ khỏi bản demo. Đăng nhập lại bằng ID.", 410);
+    if (route === "login") {
       await identityRateLimit("authentication", 100);
-      const result = route === "login" ? await startIdentityLogin(body) : await verifyIdentityLogin(body);
+      const result = await startIdentityLogin(body);
       if ("token" in result && result.token) {
-        const response = successResponse({ assurance: result.assurance });
+        const response = successResponse({ assurance: result.assurance, canReviewIds: result.canReviewIds });
         response.headers.set("set-cookie", identitySessionCookie(result.token));
         return response;
       }
@@ -60,7 +61,6 @@ export async function POST(request: Request, context: Context) {
     }
     if (route === "access") {
       const { employee, assurance } = await requireIdentitySession(request);
-      if (assurance !== "verified") throw new SupportError("VERIFICATION_REQUIRED", "Phiên demo không được dùng để thực thi quyền tài nguyên.", 403);
       const scope = scopeSchema.parse(body);
       const result = await identityTransaction(async (db, session) => {
         const row = await db.collection<JobProfile>("identity_profiles").findOne({ id: employee.profileId, version: employee.profileVersion, active: true }, { session });
@@ -68,7 +68,7 @@ export async function POST(request: Request, context: Context) {
         await identityAudit(db, session, employee.id, "SCOPE_CHECK", employee.id, JSON.stringify({ scope, ...decision }));
         return decision;
       });
-      return successResponse({ ...result, executed: false });
+      return successResponse({ ...result, assurance, executed: false });
     }
     if (path.length === 2 && path[0] === "review") {
       const { employee } = await requireIdentitySession(request, true);

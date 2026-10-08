@@ -64,7 +64,7 @@ export type IdentityApplication = {
 export type EmployeeAccount = {
   id: string; fullName: string; status: "ACTIVE" | "DISABLED"; profileId: string; profileVersion: number;
   roles: Array<"identity-admin">; createdAt: string; applicationId: string;
-  // Populated only by the trusted operator provisioning workflow, never public forms.
+  // Legacy delivery metadata; not used by ID-only login and never returned publicly.
   verifiedChannel?: { destination: string; verifiedBy: string; verifiedAt: string };
 };
 export const decisionSchema = z.object({
@@ -72,7 +72,7 @@ export const decisionSchema = z.object({
   reason: z.string().trim().min(8).max(1000),
   approvedScopes: scopesSchema.optional(), suffix: z.string().regex(/^[1-9][0-9]{0,3}$/).optional(),
 }).strict();
-export const loginSchema = z.object({ employeeId: z.string().trim().transform(normalizeEmployeeId).pipe(z.string().regex(employeeIdPattern)), verified: z.boolean().default(false) }).strict();
+export const loginSchema = z.object({ employeeId: z.string().trim().transform(normalizeEmployeeId).pipe(z.string().regex(employeeIdPattern)) }).strict();
 export function evaluateScope(granted: Scope[], requested: Scope) {
   if (!granted.some((scope) => scopeKey(scope) === scopeKey(requested)))
     return { allowed: false, bucket: "OUT_OF_SCOPE", reason: "Thao tác hoặc đích không nằm trong profile đã duyệt." };

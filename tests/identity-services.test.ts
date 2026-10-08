@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import type { Scope } from "@/domain/identity";
 import { decideIdentityApplication, submitIdentityApplication, trackIdentityApplication } from "@/services/identity";
-import { requireIdentitySession, startIdentityLogin, verifyIdentityLogin } from "@/lib/identity-auth";
+import { requireIdentitySession, startIdentityLogin } from "@/lib/identity-auth";
 import { identityHash } from "@/services/identity";
 import { requireEmployeeIdentity } from "@/lib/support-http";
 // Test-only adapter models rollback and compare-and-set; it is never a runtime fallback.
@@ -103,8 +103,8 @@ it("fails all application writes when Mongo is unavailable", async () => {
   fake.unavailable = true; await expect(submitIdentityApplication(input())).rejects.toThrow("DB_UNAVAILABLE"); expect(fake.rows).toEqual({});
 });
 async function account() { const request = input(); await submitIdentityApplication(request); await decideIdentityApplication(request.id, decision, "verified-it"); return fake.rows.identity_employees[0]; }
-it("permits an active issued ID in labelled demo mode but never grants IT authority", async () => {
-  const employee = await account(); employee.roles = ["identity-admin"];
+it("permits an active issued ID but ordinary accounts cannot approve identities", async () => {
+  const employee = await account();
   const login = await startIdentityLogin({ employeeId: "ALPHANVGL" }); expect(login.assurance).toBe("demo");
   const request = new Request("http://localhost", { headers: { cookie: `vng_identity=${login.token}` } });
   expect((await requireIdentitySession(request)).assurance).toBe("demo");
@@ -124,37 +124,38 @@ it("binds submitted Support identity to the active session instead of trusting c
   await expect(requireEmployeeIdentity(body, request)).rejects.toMatchObject({ code: "IDENTITY_MISMATCH", status: 403 });
   expect((await requireEmployeeIdentity({ ...body, fields: { ...body.fields, employeeId: "ALPHANVGL" } }, request)).fields.employeeId).toBe("alphanvgl");
 });
-it("does not silently upgrade demo sessions when OTP relay/channel is missing", async () => {
-  await account(); await expect(startIdentityLogin({ employeeId: "alphanvgl", verified: true })).rejects.toMatchObject({ code: "VERIFICATION_UNAVAILABLE" });
-  expect(fake.rows.identity_sessions ?? []).toHaveLength(0);
-});
-it("delivers OTP only to the trusted channel, consumes once and checks admin separately", async () => {
-  const employee = await account(); employee.verifiedChannel = { destination: "synthetic@example.invalid", verifiedBy: "operator", verifiedAt: new Date().toISOString() };
-  vi.stubEnv("IDENTITY_OTP_RELAY_URL", "https://relay.example.invalid/send"); vi.stubEnv("IDENTITY_OTP_RELAY_TOKEN", "synthetic-token"); vi.stubEnv("IDENTITY_OTP_SIGNING_KEY", "x".repeat(32));
-  const relay = vi.fn().mockResolvedValue({ ok: true }); vi.stubGlobal("fetch", relay);
-  const started = await startIdentityLogin({ employeeId: "alphanvgl", verified: true }); expect(started).not.toHaveProperty("code");
-  const delivered = JSON.parse(relay.mock.calls[0][1].body); expect(delivered.destination).toBe("synthetic@example.invalid");
-  const login = await verifyIdentityLogin({ challengeId: started.challengeId, code: delivered.code });
+it("allows only operator-assigned IT roles and rechecks revocation on every request", async () => {
+  const employee = await account(); employee.roles = ["identity-admin"];
+  const relay = vi.fn(); vi.stubGlobal("fetch", relay);
+  const login = await startIdentityLogin({ employeeId: "alphanvgl" });
+  expect(login).toMatchObject({ assurance: "demo", canReviewIds: true });
+  expect(login).not.toHaveProperty("challengeId"); expect(relay).not.toHaveBeenCalled();
   expect(fake.rows.identity_sessions[0].hash).toBe(identityHash(login.token));
-  await expect(verifyIdentityLogin({ challengeId: started.challengeId, code: delivered.code })).rejects.toMatchObject({ status: 401 });
+  expect(fake.rows.identity_sessions[0]).not.toHaveProperty("token");
   const request = new Request("http://localhost", { headers: { cookie: `vng_identity=${login.token}` } });
+  expect((await requireIdentitySession(request, true)).assurance).toBe("demo");
+  employee.roles = [];
   await expect(requireIdentitySession(request, true)).rejects.toMatchObject({ status: 403 });
-  employee.roles = ["identity-admin"]; expect((await requireIdentitySession(request, true)).assurance).toBe("verified");
 });
-it.each(['expired', 'exhausted', 'channel-changed', 'delivery-failed'])("rejects unusable OTP: %s", async (failure) => {
-  const employee = await account(); employee.verifiedChannel = { destination: "synthetic@example.invalid", verifiedBy: "operator", verifiedAt: new Date().toISOString() };
-  vi.stubEnv("IDENTITY_OTP_RELAY_URL", "https://relay.example.invalid/send"); vi.stubEnv("IDENTITY_OTP_RELAY_TOKEN", "synthetic-token"); vi.stubEnv("IDENTITY_OTP_SIGNING_KEY", "x".repeat(32));
-  const relay = vi.fn().mockResolvedValue({ ok: failure !== "delivery-failed" }); vi.stubGlobal("fetch", relay);
-  if (failure === "delivery-failed") {
-    await expect(startIdentityLogin({ employeeId: "alphanvgl", verified: true })).rejects.toMatchObject({ code: "OTP_DELIVERY_FAILED" });
-    expect(fake.rows.identity_challenges[0].used).toBe(true);
-  } else {
-    const started = await startIdentityLogin({ employeeId: "alphanvgl", verified: true });
-    const delivered = JSON.parse(relay.mock.calls[0][1].body);
-    if (failure === "expired") fake.rows.identity_challenges[0].expiresAt = new Date(0);
-    if (failure === "channel-changed") employee.verifiedChannel = { destination: "changed@example.invalid", verifiedBy: "operator", verifiedAt: new Date().toISOString() };
-    if (failure === "exhausted") for (let attempt = 0; attempt < 5; attempt++) await expect(verifyIdentityLogin({ challengeId: started.challengeId, code: "000000" })).rejects.toMatchObject({ code: "INVALID_OTP" });
-    await expect(verifyIdentityLogin({ challengeId: started.challengeId, code: delivered.code })).rejects.toMatchObject({ code: "INVALID_OTP" });
-  }
+it.each([{ verified: true }, { roles: ["identity-admin"] }, { assurance: "verified" }])(
+  "rejects client-supplied verification or authority: %j", async (extra) => {
+    await account(); await expect(startIdentityLogin({ employeeId: "alphanvgl", ...extra })).rejects.toThrow();
+    expect(fake.rows.identity_sessions ?? []).toHaveLength(0);
+  },
+);
+it("rejects expired sessions even for an IT account", async () => {
+  const employee = await account(); employee.roles = ["identity-admin"];
+  const login = await startIdentityLogin({ employeeId: "alphanvgl" });
+  fake.rows.identity_sessions[0].expiresAt = new Date(0);
+  await expect(requireIdentitySession(new Request("http://localhost", { headers: { cookie: `vng_identity=${login.token}` } }), true)).rejects.toMatchObject({ status: 401 });
+});
+it("rolls back a new session when its audit cannot be written", async () => {
+  await account(); fake.failAudit = true;
+  await expect(startIdentityLogin({ employeeId: "alphanvgl" })).rejects.toThrow("AUDIT_UNAVAILABLE");
   expect(fake.rows.identity_sessions ?? []).toHaveLength(0);
+});
+it("does not advertise legacy session assurance as current identity verification", async () => {
+  await account(); const login = await startIdentityLogin({ employeeId: "alphanvgl" });
+  fake.rows.identity_sessions[0].assurance = "verified";
+  expect((await requireIdentitySession(new Request("http://localhost", { headers: { cookie: `vng_identity=${login.token}` } }))).assurance).toBe("demo");
 });

@@ -165,47 +165,37 @@ Hệ thống ID dùng MongoDB riêng, không thay storage Support. Không có me
 
 ### Cấu hình
 
-Trên web Vercel, lỗi chưa cấu hình có thể do đã có `MONGODB_URI` nhưng thiếu
-`IDENTITY_MONGODB_DB`. Đối chiếu **tên biến và target**, không xuất giá trị secret.
-Chủ repo chọn database riêng `vng_support_identity`; đặt
-`IDENTITY_MONGODB_DB=vng_support_identity` ở Production. Không đổi `MONGODB_DB`
-của Support. Deployment mới mới nhận biến vừa thêm; sửa file `.env.example`
-không cập nhật môi trường hosting. Không tự bootstrap nhân viên hoặc giả OTP.
+- `IDENTITY_MONGODB_URI`: URI riêng; nếu bỏ trống dùng `MONGODB_URI`. Không đưa URI vào Git/log.
+- `IDENTITY_MONGODB_DB=vng_support_identity`: database riêng của hệ thống ID, không thay `MONGODB_DB` của Support.
+- MongoDB cần replica set/sharded cluster để dùng transaction. User cần đọc/ghi các collection `identity_*`, tạo collection/index và `collMod` để cài validator. Không cần quyền quản trị toàn cluster.
+- Bản demo hiện đăng nhập chỉ bằng ID cho cả người gửi và IT. Không cần OTP relay/signing key. Biến OTP cũ không được đọc; collection challenge và metadata kênh cũ được giữ nguyên, không sử dụng để đăng nhập.
 
-Mongo user cần quyền trên database identity mới, replica set/transaction và
-quyền tạo validator/index như bên dưới. Tên database được cấu hình không chứng
-minh đã có tài khoản, quyền Mongo đúng, transaction hoặc OTP relay hoạt động.
-Nếu đăng nhập nhân viên chưa sẵn sàng, dùng nút **Đăng nhập không cần tài khoản**
-để vào `/guest`; đây là luồng hỗ trợ riêng, không phải memory fallback cho tài khoản.
-
-- `IDENTITY_MONGODB_URI`: URI MongoDB lấy từ secret manager; nếu bỏ trống dùng `MONGODB_URI` hiện có. Không đưa URI thật vào Git/log.
-- `IDENTITY_MONGODB_DB`: tên database riêng, bắt buộc, không tự lấy `MONGODB_DB` của Support.
-- MongoDB phải hỗ trợ transaction: replica set hoặc sharded cluster. Standalone không đủ. Tài khoản DB cần đọc/ghi các collection `identity_*`, tạo index/collection và `collMod` để cài validator. Runtime khởi tạo validator/index một lần mỗi tiến trình; thiếu quyền thì từ chối phục vụ identity.
-- `IDENTITY_OTP_RELAY_URL`: endpoint HTTPS tin cậy do IT quản lý, không nhận URL từ client; không redirect.
-- `IDENTITY_OTP_RELAY_TOKEN`: token bearer cho relay.
-- `IDENTITY_OTP_SIGNING_KEY`: khóa bí mật ngẫu nhiên tối thiểu 32 ký tự để HMAC mã OTP; dùng secret manager. Đổi khóa làm OTP đang chờ hết hiệu lực.
-
-Relay nhận JSON `{ destination, code, expiresInSeconds: 300, purpose: "VNG Support sign-in" }` bằng POST, Authorization Bearer, timeout 8 giây. Relay phải xác thực token, gửi qua kênh đã xác minh, trả 2xx khi chấp nhận; không ghi OTP, token hoặc destination vào log công khai. Không có relay thật được triển khai bởi thay đổi này. Mã không được trả cho browser hoặc log app. Hash phiên và challenge, giới hạn lần thử và TTL lưu trong MongoDB; expiry còn được kiểm tra trong query, không phụ thuộc TTL cleanup.
+`GET /api/identity/profiles` khởi tạo schema/index nếu chưa có. HTTP 200 cùng `data: []` là kết nối thành công nhưng chưa có profile active, không phải lỗi thiếu Mongo. MongoDB rỗng không tự tạo tài khoản hay nhập CSV. Khi Mongo lỗi, UI không báo lưu thành công; người gửi vẫn có thể dùng `/guest` nếu storage Support hoạt động.
 
 ### Khởi tạo người xử lý ID
 
-1. Cấu hình database thử nghiệm riêng và khởi động app. Gọi `GET /api/identity/profiles` một lần để cài validator/index. Danh sách rỗng là hợp lệ; không có seed tự động.
-2. Qua quy trình IT tin cậy, xác minh người được quyền xử lý ID và kênh nhận OTP. Chuẩn bị JSON riêng **ngoài repository** với đúng bốn trường `fullName`, `destination`, `verifiedBy`, `reason`. Không thu thập kênh từ đơn công khai. `verifiedBy` và reason ghi căn cứ quyết định operator; bản ghi audit này không tự chứng minh xác minh ngoài hệ thống đã diễn ra.
-3. Kiểm tra database đích, rồi operator chạy:
+Chỉ operator được chủ repo cho phép mới chạy. Đây là cấp quyền IT cho demo, không phải xác minh danh tính thật.
+
+1. Xác nhận database đích và quyền thực hiện. Gọi profiles endpoint để cài schema/index trước.
+2. Chuẩn bị JSON riêng ngoài repository gồm `fullName`, `actor`, `reason`. Dùng tên giả lập rõ ràng. Actor ghi người/công cụ thực hiện; reason ghi căn cứ chủ repo cho phép, không giả xác minh nhân sự hoặc review của người thật.
+3. Nạp URI qua môi trường riêng, rồi chạy:
 
 ```powershell
-node scripts/identity-bootstrap.mjs --file C:\private\identity-operator.json --database $env:IDENTITY_MONGODB_DB --apply
+node scripts/identity-bootstrap.mjs --file C:\private\identity-operator.json --database $env:IDENTITY_MONGODB_DB --demo-id-only --apply
 ```
 
-Script không sửa account đã tồn tại: gặp trùng ID thì dừng. Script tạo profile khởi tạo, tài khoản `identity-admin`, kênh đã xác minh và audit trong cùng transaction. Profile tên IT không tự tạo role ở luồng đăng ký công khai. Không chạy script bằng dữ liệu nhân viên thật trong kiểm thử tự động. Các thay đổi/revoke account, role hoặc kênh sau bootstrap cần operator có thẩm quyền thực hiện qua quy trình MongoDB có audit; chưa có UI quản trị các thay đổi này. Session luôn kiểm tra lại `ACTIVE` và role từ MongoDB nên vô hiệu hóa/thu hồi vai trò có hiệu lực ở request tiếp theo.
-4. Từ trang đầu chọn **Tôi cần hỗ trợ** để mở Đăng nhập. Mở “Dành cho người xử lý ID”, chọn OTP rồi xác minh. Chọn **Cấp ID nhân viên**; xác minh nhân sự ngoài hệ thống trước khi duyệt. Hệ thống không tự biến họ tên trong đơn thành danh tính đáng tin cậy.
+Script từ chối database khác cấu hình, thiếu cờ chấp nhận ID-only demo, schema/index chưa cài hoặc ID đã tồn tại. Tạo profile sandbox/read, account `identity-admin` và audit `OPERATOR_BOOTSTRAP_DEMO` trong cùng transaction. Không sửa account cũ. Job tên IT không tự tạo role trong luồng đăng ký công khai.
 
-### Trình diễn và giới hạn
+4. Vào `/login`, nhập ID vừa cấp; server trả vai trò phù hợp và mở `/identity/review`. Chỉ xử lý đơn giả lập. Mọi cấp ID/từ chối/trùng ID vẫn qua validation, unique index, version, transaction và audit. Không thực thi IAM/cloud/database bên ngoài.
 
-Theo yêu cầu demo, người gửi có ID được cấp còn ACTIVE có thể đăng nhập chỉ bằng ID. Đây không phải xác thực production an toàn: người biết ID có thể mạo danh. Phiên có assurance `demo`, không được dùng API duyệt/danh bạ/kiểm tra quyền thực thi. Với production có dữ liệu thật, cần quyết định lại chế độ người gửi và áp dụng xác minh bắt buộc, đánh giá bảo mật, vận hành kênh tin cậy và kiểm soát dữ liệu. Quyền IT luôn cần OTP cùng role; tuyệt đối không thay bằng header hoặc tên job.
+### Giới hạn và thu hồi quyền
 
-Profile đã gắn được pin theo id/version. Không có API sửa ngầm profile. Job có sẵn phải active khi gửi và khi duyệt; job mới chỉ nhận tập con scope đã yêu cầu. Các scope nhạy cảm vẫn bị server chặn ở bước kiểm tra, kể cả đã có trong profile. API access chỉ đánh giá và audit, không thực thi IAM/cloud/database thật; deterministic policy của Support vẫn nguyên vẹn. Liên kết theo dõi là bearer capability chỉ đọc đơn, cần giữ kín và lưu biên nhận; hiện chưa có khôi phục link hoặc xác minh chủ đơn.
+Mọi phiên là `demo`, kể cả session cũ có nhãn verified. Người biết ID IT có thể mạo danh; không dùng với nhân sự/dữ liệu production thật. Role IT, ACTIVE và expiry được đọc lại từ Mongo ở mỗi request. Operator có thẩm quyền thu hồi role/vô hiệu hóa account qua quy trình có audit; chưa có UI quản trị các thao tác này. Không xóa dữ liệu hoặc thay đổi account có sẵn chỉ để làm bài demo đạt.
 
-### Kiểm tra an toàn ở local
+API access chỉ đánh giá scope và ghi audit, trả `assurance: demo`, `executed: false`. Sensitive scopes vẫn bị chặn; profile được pin id/version, không sửa ngầm. Theo dõi đơn dùng bearer capability chỉ đọc, chưa có khôi phục link hoặc xác minh chủ đơn.
 
-`npm test`, `npm run lint`, `npm run typecheck`, `npm run build`; sau build chạy `SUPPORT_E2E_PRODUCTION=true` với Playwright server riêng `127.0.0.1:3227`. E2E đặt các biến Mongo/OTP rỗng để kiểm tra fail-closed, dùng route mocks cho trạng thái UI; không gọi OTP thật. Adapter trong `tests/identity-services.test.ts` chỉ là test double kiểm tra quy tắc/rollback giả lập, không phải Mongo thực. Chưa có bằng chứng transaction, index, restart persistence hoặc concurrency trên MongoDB thật từ bộ mock này. Trước production phải kiểm tra trên replica set disposable với dữ liệu giả lập, không production credentials và không model trả phí.
+### Kiểm tra
+
+`npm test`, Mongo guard/report tests, lint, typecheck, build; sau build chạy E2E desktop/mobile tuần tự ở port3227 với mock/memory. Tests identity dùng adapter giả lập để kiểm tra role/rollback; E2E route mocks chỉ kiểm tra UI. Không suy ra Mongo transaction/restart thật từ chúng. Muốn chứng minh restart Support cần Mongo disposable như phần trên; bootstrap thành công trên database identity không thay thế bài đó.
+
+User yêu cầu bỏ OTP nên các test hợp đồng OTP được thay bằng ID-only, thu hồi role, phiên hết hạn, chống client tự khai báo verified/role và endpoint OTP đã ngừng. Giữ nguyên Ground Truth quyết định Support.

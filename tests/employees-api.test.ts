@@ -11,14 +11,14 @@ it("retains 36 validated legacy fixtures without using them as runtime accounts"
   expect(new Set(rows.map((row) => row.id)).size).toBe(36);
   for (const row of rows) expect(row.id).toBe(generateEmployeeId(row.name));
 });
-it("requires verified IT instead of trusting an ID header", async () => {
+it("requires a server-side IT session instead of trusting an ID header", async () => {
   mocks.auth.mockRejectedValue(new SupportError("AUTHENTICATION_REQUIRED", "Đăng nhập", 401));
   const response = await GET(new Request("http://localhost/api/employees", { headers: { "X-Employee-ID": "alphanvgl" } }));
   expect(response.status).toBe(401); expect(mocks.auth).toHaveBeenCalledWith(expect.any(Request), true);
   expect(mocks.store).not.toHaveBeenCalled(); expect(await response.json()).not.toHaveProperty("data");
 });
 it("returns Mongo directory without trusted delivery channels and never caches", async () => {
-  mocks.auth.mockResolvedValue({ employee: { id: "operator" }, assurance: "verified" });
+  mocks.auth.mockResolvedValue({ employee: { id: "operator" }, assurance: "demo" });
   const find = vi.fn().mockReturnValue({ sort: () => ({ limit: () => ({ toArray: async () => [{ id: "alphanvgl" }] }) }) });
   mocks.store.mockResolvedValue({ db: { collection: () => ({ find }) } });
   const response = await GET(new Request("http://localhost/api/employees"));
