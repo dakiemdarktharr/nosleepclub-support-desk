@@ -3,6 +3,24 @@ import type { CanonicalRequest } from "./contracts";
 
 export type FeedbackSentiment = "positive" | "neutral" | "negative";
 
+/** Explicit user intent, independent of a model's emotional-tone prediction. */
+export function explicitFeedbackChoice(text: string): "RESOLVED" | "ADMIN" | null {
+  const normalized = normalize(text);
+  if (asserted(normalized, /(?:chuyen|noi|ket noi|transfer|connect).{0,35}\b(?:nhan vien|nguoi ho tro|admin|it support|human|agent|support|staff member)\b|need a human|speak to support/))
+    return "ADMIN";
+  // Questions, reported/conditional statements and unresolved clauses do not
+  // confirm completion. A frustrated user may still explicitly report success.
+  const unresolved = normalized.replace(/\bkhong con bi loi\b/g, "resolved");
+  if (/[?？]|\b(?:neu|if|khi nao|when|ban noi|you said|van loi|van con|van vuong|chua|still|next step|buoc tiep theo)\b|\bkhong.{0,25}(?:duoc|ket noi|hoat dong)|\b(?:not|never).{0,20}(?:fixed|solved|work)/.test(unresolved))
+    return null;
+  return resolvedPatterns.some((pattern) => asserted(normalized, pattern)) ? "RESOLVED" : null;
+}
+
+/** Only whole courtesy/affect statements; never swallow a new task or question. */
+export function isFeedbackComment(text: string) {
+  return /^(?:(?:toi|minh)\s+)?(?:(?:rat |that su )?(?:hai long|buc minh|that vong)|cam on(?: ban| nhe)?|thanks|thank you)[.! ]*$/.test(normalize(text));
+}
+
 export function requiresFeedbackAnalysis(request: CanonicalRequest) {
   // USER_HANDOFF is a policy rule too: emotional tone cannot cancel it.
   return [request, ...request.subrequests].some((part) =>
@@ -39,7 +57,7 @@ const continuationPatterns = [
   /\b(?:khong|chua).{0,35}(?:duoc|thanh cong|hoat dong)|\b(?:not|never).{0,20}(?:fixed|solved|work)|\b(?:tiep theo|van loi|still broken|still failing)\b/,
 ];
 
-/** Classifies feedback about the latest support answer, not the original ticket. */
+/** Legacy development-corpus heuristic; never use its label as workflow authority. */
 export function classifyPostAnswerFeedback(text: string): FeedbackSentiment {
   const normalized = normalize(text);
   if (negativePatterns.some((pattern) => asserted(normalized, pattern)))

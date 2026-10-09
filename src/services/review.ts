@@ -1,9 +1,10 @@
 import { createConversationAnswer } from "@/lib/conversation-model";
 import {
   isContinuationOnly,
+  explicitFeedbackChoice,
   requiresFeedbackAnalysis,
-  type FeedbackSentiment,
 } from "@/domain/feedback";
+import type { SentimentAssessment } from "@/domain/contracts";
 import { analyzeSupportSentiment } from "@/lib/feedback-model";
 import { explainStep } from "@/domain/guidance";
 import { z } from "zod";
@@ -193,7 +194,7 @@ const feedbackSchema = z
 export async function feedbackSupport(
   id: string,
   value: unknown,
-  classifiedSentiment?: FeedbackSentiment,
+  precomputedAssessment?: SentimentAssessment,
 ) {
   const input = feedbackSchema.parse(value);
   // Reject invalid/stale targets before spending the shared model budget.
@@ -240,33 +241,21 @@ export async function feedbackSupport(
       throw new SupportError("FEEDBACK_REQUIRES_CONVERSATION", "Nội dung mới cần được kiểm tra policy trong luồng hội thoại.", 422);
   }
   const safeReply = input.replyText ? redact(input.replyText) : null;
-  const sentiment: FeedbackSentiment = safeReply
-    ? classifiedSentiment ?? (await analyzeSupportSentiment(safeReply.text, "post-answer")).sentiment
-    : input.choice === "RESOLVED"
-      ? "positive"
-      : ["ADMIN", "CONFUSED"].includes(input.choice)
-        ? "negative"
-        : "neutral";
   if (
     safeReply &&
-    sentiment === "neutral" &&
-    !(input.choice === "STILL_BROKEN" && isContinuationOnly(safeReply.text))
+    !(input.choice === "STILL_BROKEN" && isContinuationOnly(safeReply.text)) &&
+    explicitFeedbackChoice(safeReply.text) !== input.choice
   )
     throw new SupportError(
       "FEEDBACK_REQUIRES_CONVERSATION",
-      "Câu hỏi trung tính cần đi qua luồng hội thoại để được phân tích và hỗ trợ tiếp.",
+      "Chưa có xác nhận kết quả hoặc yêu cầu chuyển người khớp lựa chọn; hãy tiếp tục qua hội thoại.",
       422,
     );
-  if (
-    safeReply &&
-    ((sentiment === "positive" && input.choice !== "RESOLVED") ||
-      (sentiment === "negative" && input.choice !== "ADMIN"))
-  )
-    throw new SupportError(
-      "FEEDBACK_ROUTE_MISMATCH",
-      "Phản hồi cần được xử lý theo nhánh sentiment tương ứng.",
-      422,
-    );
+  const assessment = safeReply
+    ? precomputedAssessment ?? await analyzeSupportSentiment(safeReply.text, "post-answer")
+    : undefined;
+  // Clicking a workflow option is not an expression of emotion.
+  const sentiment = assessment?.sentiment ?? "neutral";
   if (input.choice === "EXPLAIN") {
     const step =
       snapshot.assistance.at(-1)?.stepByStepInstructions[input.step ?? -1];
@@ -314,11 +303,12 @@ export async function feedbackSupport(
       choice: input.choice,
       timestamp: new Date().toISOString(),
       sentiment,
+      ...(assessment ? { sentimentAssessment: assessment } : {}),
       ...(safeReply?.text ? { replyText: safeReply.text } : {}),
     });
     if (nextAssistance) request.assistance.push(nextAssistance);
     if (
-      sentiment === "positive" &&
+      input.choice === "RESOLVED" &&
       request.canonical &&
       !request.canonical.conversation &&
       request.assistance.length > 0

@@ -161,6 +161,22 @@ xử lý; không tự sửa/xóa dữ liệu lịch sử.
 
 ## Chẩn đoán API và sentiment
 
+Đánh giá fallback offline riêng (không model/API/Mongo), tại repository root:
+
+```powershell
+$env:SENTIMENT_REPORT_OUT='sentiment-evaluation-local.json'
+npm run evaluate:sentiment
+Remove-Item Env:SENTIMENT_REPORT_OUT
+```
+
+Đầu ra JSON ghi revision, hash runtime/dataset/evaluator, confusion matrix,
+precision/recall/F1, coverage, mismatch và hàng đợi ambiguous. File đích phải
+chưa tồn tại; không ghi đè baseline. Không đặt biến output thì chỉ kiểm tra
+schema/metrics, không xuất báo cáo. Không stage artifact này.
+Xem [nguồn dữ liệu, kết quả và giới hạn](docs/SENTIMENT-EVALUATION.md).
+Nhánh sentiment sau trả lời không tự đóng/chuyển ticket; nút xác nhận kết quả,
+yêu cầu chuyển người và policy được xét độc lập với nhãn cảm xúc.
+
 Model chính được chủ repo chọn là `gpt-6-luna`: đặt `AI_PROVIDER=openai`,
 `AI_MODEL=gpt-6-luna`; `AI_CONVERSATION_MODEL` để trống sẽ kế thừa cho sentiment
 sau câu trả lời. `AI_WEB_MODEL` là cấu hình riêng, không đổi theo model chính.

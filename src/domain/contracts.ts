@@ -268,9 +268,10 @@ export type SupportRequest = {
   decision: Decision | null;
   assistance: Assistance[];
   feedback: Array<{
-    choice: "RESOLVED" | "STILL_BROKEN" | "CONFUSED" | "ADMIN" | "EXPLAIN";
+    choice: "RESOLVED" | "STILL_BROKEN" | "CONFUSED" | "ADMIN" | "EXPLAIN" | "COMMENT";
     timestamp: string;
     sentiment?: FeedbackSentiment;
+    sentimentAssessment?: SentimentAssessment;
     replyText?: string;
   }>;
   knowledgeCandidate?: KnowledgeCandidate;

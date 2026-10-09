@@ -6,7 +6,7 @@ import {
 } from "@/lib/support-repository";
 import { auditEvent, completeAnalysis, prepareInput } from "./support";
 import { employeeIdentityOnly } from "@/domain/employee-identity";
-import { isContinuationOnly, requiresFeedbackAnalysis } from "@/domain/feedback";
+import { explicitFeedbackChoice, isFeedbackComment, isContinuationOnly, requiresFeedbackAnalysis } from "@/domain/feedback";
 import { redact } from "@/domain/redaction";
 import { extractIntake } from "@/domain/text";
 import { analyzeSupportSentiment } from "@/lib/feedback-model";
@@ -35,26 +35,26 @@ export async function continueConversation(id: string, value: unknown) {
   const reply = prepareInput({ rawText: input.question, idempotencyKey: id });
   const baseline = extractIntake(reply.input, reply.markers);
   const risky = requiresFeedbackAnalysis(baseline);
-  const sentiment = risky
-    ? "neutral"
-    : (await analyzeSupportSentiment(safeReply, "post-answer")).sentiment;
-  if (sentiment === "positive")
+  const assessment = risky ? undefined : await analyzeSupportSentiment(safeReply, "post-answer");
+  const sentiment = assessment?.sentiment ?? "neutral";
+  const choice = risky ? null : explicitFeedbackChoice(safeReply);
+  if (choice)
     return feedbackSupport(id, {
       version: input.version,
-      choice: "RESOLVED",
+      choice,
       replyText: safeReply,
-    }, sentiment);
-  if (sentiment === "negative")
-    return feedbackSupport(id, {
-      version: input.version,
-      choice: "ADMIN",
-      replyText: safeReply,
-    }, sentiment);
+    }, assessment);
+  if (!risky && isFeedbackComment(safeReply))
+    return updateSupportRequest(id, input.version, (request) => {
+      request.feedback.push({ choice: "COMMENT", sentiment, sentimentAssessment: assessment, replyText: safeReply, timestamp: new Date().toISOString() });
+      request.events.push(auditEvent(request, request.status, "FEEDBACK", "employee-demo",
+        `Ghi nhận cảm xúc ${sentiment}; chưa có xác nhận giải quyết hoặc yêu cầu chuyển người. Không đổi trạng thái.`));
+    });
   if (!risky && isContinuationOnly(safeReply))
     return feedbackSupport(
       id,
       { version: input.version, choice: "STILL_BROKEN", replyText: safeReply },
-      sentiment,
+      assessment,
     );
   const safe = prepareInput({
     ...current.input,
@@ -71,7 +71,8 @@ export async function continueConversation(id: string, value: unknown) {
     request.feedback.push({
       choice: "STILL_BROKEN",
       timestamp: new Date().toISOString(),
-      sentiment: "neutral",
+      sentiment,
+      ...(assessment ? { sentimentAssessment: assessment } : {}),
       replyText: safeReply,
     });
     request.input = safe.input;
@@ -90,7 +91,7 @@ export async function continueConversation(id: string, value: unknown) {
         current.status,
         "CONVERSATION",
         "employee-demo",
-        `Phản hồi sentiment neutral; tiếp tục hội thoại. ${result.decision.adminReason}`,
+        `Phản hồi sentiment ${sentiment}; quyết định từ policy, không từ cảm xúc. ${result.decision.adminReason}`,
       ),
     );
     if (result.assistance?.answer)

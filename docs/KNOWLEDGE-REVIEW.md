@@ -6,7 +6,7 @@ Demo có reviewer công khai, chưa có phân quyền đọc tài liệu. Chỉ 
 
 ## Quy trình thêm/sửa bài
 
-Phản hồi positive của người dùng tạo một gợi ý tri thức gắn với ticket đã giải quyết, hiển thị trong bộ lọc **Gợi ý tri thức cần rà soát** của reviewer. Đây chưa phải knowledge được duyệt: không có API public nào ghi trực tiếp câu trả lời AI hoặc nội dung ticket vào corpus/retrieval. Người phụ trách cần kiểm tra nguồn, scope và safety, sau đó biên tập thành revision mới theo các bước bên dưới.
+Xác nhận giải quyết rõ ràng của người dùng tạo một gợi ý tri thức gắn với ticket đã giải quyết, hiển thị trong bộ lọc **Gợi ý tri thức cần rà soát** của reviewer. Nhãn sentiment positive đơn thuần không tạo gợi ý hoặc đóng ticket. Đây chưa phải knowledge được duyệt: không có API public nào ghi trực tiếp câu trả lời AI hoặc nội dung ticket vào corpus/retrieval. Người phụ trách cần kiểm tra nguồn, scope và safety, sau đó biên tập thành revision mới theo các bước bên dưới.
 
 1. Xác định câu hỏi thực tế và nguồn gốc. Có URL gốc, quyền công bố, phạm vi public/project, ngày kiểm tra và người review thật. Không đưa secret/PII vào file hay fixture.
 2. Viết hướng dẫn ngắn bằng lời của nhóm, phân biệt thông tin được nguồn hỗ trợ và lời khuyên chung. Nguồn công khai Google không bảo đảm khôi phục được tài khoản; thông tin VNG công khai không là approval.

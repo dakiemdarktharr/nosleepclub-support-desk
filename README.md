@@ -92,7 +92,7 @@ flowchart TD
 - **Hướng dẫn có nguồn:** hội thoại tìm trong corpus có revision, nguồn và hạn sử dụng bằng BM25 kết hợp chuẩn hóa Việt–Anh/typo. Không dùng vector database hay embeddings. Web search chỉ bật riêng cho các chủ đề/nguồn cho phép; URL trong ticket không tự cho app quyền đọc tài liệu riêng.
 - **Thiếu tài liệu công việc:** yêu cầu tạo/sửa một sản phẩm công việc mà chưa có tài liệu đầu vào được hỏi bổ sung cụ thể. App chưa có connector đọc Drive, repository, dashboard hoặc attachment riêng của người gửi; không giả vờ đã đọc tài liệu.
 - **Sentiment trước khi gửi:** khi trích xuất ý định chạy, model chính trả thêm nhãn `positive`, `neutral` hoặc `negative` cùng bằng chứng và giải thích trong cùng phản hồi. Với input danh mục, rủi ro rõ hoặc “reset” mơ hồ, app gọi model chính chỉ để phân tích sentiment; deterministic policy vẫn giữ nguyên ưu tiên. Không có mô tả tự do thì ghi `not-assessed`. Người gửi rà soát kết quả trong preview. Khi model lỗi hoặc hết hạn mức, giao diện ghi rõ rule-based fallback; sentiment không thay đổi quyết định policy.
-- **Sau câu trả lời:** sentiment model hỗ trợ phân biệt phản hồi đã giải quyết, cần tiếp tục và cần người hỗ trợ. Rủi ro và policy vẫn ưu tiên; câu nguy hiểm không được đánh dấu hoàn tất chỉ vì có lời cảm ơn. Rule chuyển người `USER_HANDOFF` cũng phải qua policy, không bị model sentiment hủy. Phản hồi positive có thể tạo gợi ý tri thức **chờ rà soát**, không tự thêm vào kho trả lời.
+- **Sau câu trả lời:** cảm xúc chỉ là thông tin quan sát. Ticket chỉ hoàn tất khi người dùng xác nhận kết quả rõ ràng hoặc bấm nút xác nhận; nhãn positive không tự đóng ticket, negative không tự chuyển người. Rủi ro, authority và `USER_HANDOFF` vẫn qua policy trước. Lời cảm ơn/cảm xúc đơn thuần được ghi nhận và giữ yêu cầu mở. Xác nhận giải quyết có thể tạo gợi ý tri thức **chờ rà soát**, không tự thêm vào kho trả lời.
 - **Truy vết:** audit ghi thời điểm, actor, trạng thái trước/sau, rule, evidence, giải thích và câu hỏi tiếp theo. Không lưu chain-of-thought. Preview gắn phiên bản policy; thay policy làm preview/cache cũ không được dùng lại.
 
 `AUTO_APPROVE` có thể là cho phép trả hướng dẫn hoặc tiếp nhận workflow mô phỏng. Nó **không chứng minh máy đã được sửa, tài khoản đã được cấp quyền, cổng đã mở hoặc hạ tầng đã thay đổi**. Người dùng/reviewer xác nhận kết quả trong workflow; dự án chưa thực thi IAM/cloud/database thật.
@@ -163,7 +163,7 @@ flowchart TB
         RESULT --> PREVIEW["previewSupport<br/>Fingerprint + policyVersion<br/>Preview TTL 10 phút, chưa tạo ticket"]
         PREVIEW --> CONFIRM["Người gửi xác nhận → submitSupport<br/>Idempotency, TTL, fingerprint<br/>Kiểm tra lại policy / approval"]
         CONFIRM --> SAVE["Tiếp nhận RECEIVED<br/>Sau đó lưu quyết định / assistance / events"]
-        FOLLOWUP["clarifySupport / continueConversation / feedbackSupport<br/>Kiểm tra risk và USER_HANDOFF trước sentiment<br/>Neutral hỏi tiếp; negative chuyển người<br/>Positive hợp lệ hoàn tất + gợi ý tri thức"] --> REANALYZE["Cần phân tích lại → M1–M4<br/>Sau đó lưu thay đổi qua M6"]
+        FOLLOWUP["clarifySupport / continueConversation / feedbackSupport<br/>Risk và USER_HANDOFF qua policy trước<br/>Sentiment chỉ quan sát, không đổi trạng thái<br/>Xác nhận kết quả / yêu cầu chuyển người tách riêng"] --> REANALYZE["Cần phân tích lại → M1–M4<br/>Sau đó lưu thay đổi qua M6"]
         FOLLOWUP -->|"Cập nhật trạng thái"| AUDIT
         REVIEW["reviewSupport<br/>Reason + transition + version<br/>Chặn duyệt Security risk / thiếu căn cứ"] --> AUDIT
         STORED["Hồ sơ đã lưu, đọc từ M6"] --> REVIEW
@@ -366,6 +366,12 @@ Stack hiện tại: **Next.js 15 App Router · React 19 · TypeScript · Tailwin
 `GET /api/employees` yêu cầu phiên đăng nhập ID cùng role `identity-admin`, chỉ đọc MongoDB và bỏ kênh xác minh khỏi response; thiếu phiên 401, không đủ quyền 403, Mongo unavailable 503. Đây không còn là API dùng level CSV hoặc header tự khai báo để cấp quyền.
 
 ## Kiểm thử và bằng chứng
+
+[Bộ đánh giá sentiment riêng](docs/SENTIMENT-EVALUATION.md) gồm 16 ví dụ helpdesk
+synthetic viết mới có AI assistance, nhãn tạm chưa được người độc lập thẩm định.
+Không thu thập review Google Maps. Các sao 3–4 chỉ là tình huống giả định, không
+phải nhãn sentiment hay review thật. Kết quả fallback local không đo chất lượng
+Luna, policy IT hoặc sự chấp nhận của người dùng. Ground Truth/Verify cũ giữ nguyên.
 
 Chạy từ repository root; build và E2E chạy tuần tự:
 

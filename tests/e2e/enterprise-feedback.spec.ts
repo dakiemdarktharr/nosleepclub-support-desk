@@ -1,6 +1,28 @@
 import { expect, test } from "./fixtures";
 import { employeeIdentity, fillEmployeeIdentity } from "./intake-helpers";
 
+test("affect-only feedback keeps the ticket open until an explicit outcome", async ({ page, request }) => {
+  const response = await request.post("/api/support/requests", { data: {
+    ...employeeIdentity, rawText: "VPN không kết nối", confirmed: true, idempotencyKey: crypto.randomUUID(),
+  } });
+  expect(response.status()).toBe(201);
+  const { data: row } = await response.json();
+  await page.goto(`/requests/${row.id}`);
+  for (const text of ["Tôi rất hài lòng.", "Tôi rất bực mình."]) {
+    await page.getByLabel("Hỏi tiếp", { exact: true }).fill(text);
+    await page.getByRole("button", { name: "Gửi câu hỏi", exact: true }).click();
+    await expect(page.getByLabel("Hỏi tiếp", { exact: true })).toHaveValue("");
+    await expect(page.getByRole("status").filter({ hasText: "Đã ghi nhận phản hồi" })).toBeVisible();
+    await expect(page.getByText("Trạng thái:")).toContainText("Đã có hướng dẫn");
+  }
+  const saved = (await (await request.get(`/api/support/requests/${row.id}`)).json()).data;
+  expect(saved.feedback.map((item: { choice: string }) => item.choice)).toEqual(["COMMENT", "COMMENT"]);
+  expect(saved.knowledgeCandidate).toBeUndefined();
+  await page.getByLabel("Hỏi tiếp", { exact: true }).fill("Cảm ơn, đã làm được.");
+  await page.getByRole("button", { name: "Gửi câu hỏi", exact: true }).click();
+  await expect(page.getByText("Trạng thái:")).toContainText("Đã hoàn tất");
+});
+
 for (const text of ["tôi không vào acc youtube được", "tôi không vào acc youtube được, làm sao để vào?"]) {
   test(`account help works without question syntax: ${text}`, async ({ page }) => {
     await page.goto("/send-help");

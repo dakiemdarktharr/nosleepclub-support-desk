@@ -170,6 +170,12 @@ export function RequestDetail({ id }: { id: string }) {
           ))}
           {canGuide && (
             <Card className="followup-card">
+              {request.feedback.at(-1)?.choice === "COMMENT" && (
+                <p role="status">
+                  Đã ghi nhận phản hồi. Yêu cầu vẫn mở; hãy xác nhận kết quả
+                  hoặc chọn chuyển cho nhân viên nếu cần.
+                </p>
+              )}
               <form
                 onSubmit={(event) => {
                   event.preventDefault();

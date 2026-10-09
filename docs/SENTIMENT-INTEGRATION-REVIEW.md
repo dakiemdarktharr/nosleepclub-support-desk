@@ -1,5 +1,9 @@
 # Rà soát tích hợp sentiment — 09/10/2026 (ICT)
 
+Đây là báo cáo lịch sử. [Bản sửa và đánh giá riêng ngày 10/10](SENTIMENT-EVALUATION.md)
+tách cảm xúc khỏi đóng/chuyển ticket, có dataset synthetic mới và không dùng
+review Google Maps. Các số bên dưới chỉ áp dụng revision được ghi ở báo cáo này.
+
 ## Phạm vi và revision
 
 Base: `1677fa7e22595f03deae56102d314e7965d851fe` trên GitHub main,

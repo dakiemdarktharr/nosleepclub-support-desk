@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "evaluate:sentiment": "vitest run tests/sentiment-evaluation.test.ts",
     "test:e2e": "playwright test",
     "test:persistence": "node --test scripts/mongo-restart.integration.test.mjs"
   },

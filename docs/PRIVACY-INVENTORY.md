@@ -34,10 +34,19 @@ từng tên, không tái sử dụng tên đó trong test mới hoặc claim đ�
 
 ## Quyền và quyết định cần owner
 
+Bộ [sentiment synthetic mới](SENTIMENT-EVALUATION.md) không chứa review được
+thu thập, người đánh giá hoặc địa điểm Google Maps. Schema chỉ nhận bản nháp
+synthetic development và từ chối provenance/split khác; khai báo không tự chứng
+minh giấy phép hay ẩn danh. Không nhập review bên ngoài vào schema bằng cách đổi
+nhãn nguồn. Nội dung, evidence và explanation sentiment vẫn đi qua redaction/
+validation trước persistence. Feedback lưu assessment đã kiểm tra cùng nguồn
+model/fallback khi có; dữ liệu lịch sử thiếu trường này không được backfill.
+
 - Reviewer Support là **public demo**, không xác thực thành viên/team. Bộ lọc
   hàng đợi chỉ để tìm hồ sơ. Nhãn này được hiển thị trong reviewer cả mobile.
 - Sender ID-only có assurance demo; không phải production authentication.
-  IT duyệt ID yêu cầu OTP + role server; tên job/header không tạo quyền.
+  IT duyệt ID cũng dùng phiên ID-only demo + role server theo cấu hình hiện tại;
+  tên job/header không tạo quyền. Không coi ID-only là xác minh chủ tài khoản.
 - Identity Mongo có transaction/index/session controls nhưng chưa có integration
   evidence trên replica set thật trong lượt này. Support smoke standalone không
   chứng minh transaction của identity.

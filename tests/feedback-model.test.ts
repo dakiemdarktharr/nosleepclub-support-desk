@@ -83,3 +83,22 @@ it("does not claim to assess an empty structured request", () => {
   expect(supportRequestSentimentFallback(""))
     .toMatchObject({ sentiment: "neutral", source: "not-assessed" });
 });
+
+it.each([
+  ["Tôi không bực mình; chỉ cần biết bước tiếp theo.", "neutral"],
+  ["I am not frustrated. The screen is blank.", "neutral"],
+  ["Tôi không rất hài lòng.", "neutral"],
+  ["Không cần đổi máy; tôi vẫn bực mình.", "negative"],
+  ["I am not frustrated, but I am angry.", "negative"],
+] as const)("respects local negation without canceling a later cue: %s", (text, sentiment) => {
+  expect(supportRequestSentimentFallback(text).sentiment).toBe(sentiment);
+});
+
+it.each([
+  ["Cảm ơn", "neutral"],
+  ["Tôi rất hài lòng nhưng vẫn chưa kết nối được.", "positive"],
+  ["Vui lòng chuyển cho nhân viên.", "neutral"],
+] as const)("keeps fallback emotion separate from courtesy, resolution and handoff: %s", async (text, sentiment) => {
+  const result = await analyzeSupportSentiment(text, "post-answer", { run: async () => ({}) });
+  expect(result).toMatchObject({ source: "rule-based", sentiment });
+});
