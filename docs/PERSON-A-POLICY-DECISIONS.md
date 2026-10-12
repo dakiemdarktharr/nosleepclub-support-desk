@@ -7,8 +7,13 @@ AI hỗ trợ triển khai và kiểm tra; chưa có human cross-review của B/
 
 Base trước thay đổi policy: `ab633ea0db88752a51d532cd1bc53257e2044edd`, nhánh
 `codex/person-a-benchmark`. Ground Truth, input và expected gốc được giữ nguyên.
-Runtime policy hiện tại: `support-guidance-v5.11`; các nguồn policy lịch sử trong
+Runtime policy hiện tại: `support-guidance-v5.12`; các nguồn policy lịch sử trong
 `mlai26_new/data/policy/` được giữ nguyên theo manifest.
+
+Người dùng đã giao quyền chọn các contract còn lại. Quyết định v5.12, lệnh và
+evidence mới nhất ở [PERSON-A-CONTRACT-DECISIONS.md](PERSON-A-CONTRACT-DECISIONS.md).
+Các benchmark v5.10/v5.11 bên dưới là lịch sử; 18 expected AUTO vẫn chưa đủ
+approval/thời hạn theo runtime hiện hành, không đổi nhãn gốc.
 
 ## Những quyết định đã được cung cấp
 
@@ -56,11 +61,11 @@ chứng minh an toàn để hệ thống tự xóa bảng.
 
 Required fields là thông tin tối thiểu cần có để quyết định, ví dụ cấu hình và
 ngày thu hồi khi xin VM, hoặc repo/mức quyền/thời hạn khi xin quyền Git. Contract
-cho VPN provisioning và database provisioning, cùng mapping Git collaborator/
-push và Jira/Confluence User/Editor, vẫn cần quyết định. Việc soạn câu hỏi tự
-nhiên không tự quyết danh sách fields hoặc công nhận approval.
+cho VPN/database provisioning và mapping quyền đã được chốt ở v5.12 theo quyền
+người dùng giao. Git collaborator đơn thuần vẫn cần làm rõ mức quyền; push rõ
+ràng được map Write. Quyết định về contract không tự công nhận approval claim.
 
-Ví dụ đề xuất câu hỏi phù hợp nhu cầu, chưa đổi required-fields contract:
+Ví dụ câu hỏi đã đề xuất trước vòng v5.12:
 
 - Xin cấp VPN: “Bạn cần vào mạng nào, từ máy nào và dùng đến khi nào?”
 - Xin database mới: “Bạn cần loại database nào, ở môi trường nào và dự kiến dùng

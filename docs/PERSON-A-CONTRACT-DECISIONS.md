@@ -52,3 +52,147 @@ chỉ vì requestKind được khai báo đúng thao tác.
 - 6 quyết định đã chốt ở v5.10/v5.11 vẫn khớp expected gốc.
 - Baseline/candidate giữ dataset/evaluator digest; typecheck/lint/tests/build đạt.
 - Ghi từng thay đổi ngoài cohort A và mọi thử nghiệm bị loại trong handoff.
+
+## Handoff trên commit sạch
+
+Code cuối: `433382bbd840f96e594cc91319a4ac8810bdb5ea`, sau các bước triển khai
+`e991b648f264d9eacc3607eb7dbf8f66f7f73a18` và
+`163f1faa81a40dacef582b385ee6fa6332fe47fa`. Không amend hoặc viết lại history.
+Diff code/decision từ base 755f098 đến 433382b: 10 file, 430 insertions,
+16 deletions; phần lớn dòng thêm là regression và tài liệu.
+
+- `policy-source.ts`: FACT-VPN-001, FACT-DB-PROVISION-001, FACT-COLLAB-001;
+  mapping quyền; AUTH-VPN-001, AUTH-DB-PROVISION-001, AUTH-COLLAB-001.
+- `policy.ts`: chọn facts theo intent/kind/system, kiểm tra duration, audit
+  contract, chuyển team đã biết sau khi whitelist AUTO không áp dụng.
+- `text.ts`: giữ dấu/số thập phân của duration, map quyền có khẳng định,
+  trích project/space/page và mục đích VPN; giữ đúng intent ở structured intake.
+- `catalog.ts`, `questions.ts`: cung cấp fields và câu hỏi phù hợp loại yêu cầu.
+- Test mới: 55 regression; thêm một kiểm tra preview v5.11 hết hiệu lực.
+- README/RUNBOOK/decision log ghi policy v5.12 và quyền người dùng giao.
+
+Các vòng sửa có căn cứ gồm: giữ duration âm thay vì biến thành số dương;
+không lấy “5 hours” từ “8.5 hours”; chặn ngày ISO không tồn tại; không map quyền
+bị phủ định; chuyển request đủ facts về đúng team; phân biệt structured VPN
+access với diagnostics và DB provision operation với DB access.
+Thời hạn cloud dạng thập phân vẫn ngoài safe path hiện có và chuyển reviewer;
+không mở thêm whitelist AUTO. Không có thử nghiệm làm giảm exact-pass được giữ.
+
+### Kết quả trước–sau
+
+| Chỉ số | Baseline v5.11 | Candidate v5.12 |
+| --- | ---: | ---: |
+| Exact development | 63/128 (49,22%) | 63/128 (49,22%) |
+| Coverage / readback | 128/128 | 128/128 |
+| Expected ESC thành AUTO | 0/94 | 0/94 |
+| Expected ESC thành NEEDS_INFORMATION | 3/94 | 3/94 |
+| Expected AUTO bị ESCALATE | 28/34 | 28/34 |
+| Exact-pass regression | — | 0 |
+| Case A khớp expected | 6/24 | 6/24 |
+| Tổng entries missing fields trong lô A | 101 | 87 |
+| Full tests | 778 pass, 1 skip đã lưu | 834 pass, 1 skip |
+| Lint / typecheck / build | Pass đã lưu | Pass |
+
+Missing-field count là số liệu chẩn đoán, không phải accuracy độc lập. 22 case
+đổi rules/fields/yêu cầu con theo comparator: 10 trong A, 12 ngoài A. Không có
+action/bucket nào đổi trong 128 case. Sáu quyết định đã chốt ở các vòng trước
+vẫn đạt. 18 expected AUTO đều chưa có approval verified; một số còn thiếu
+TTL/provider/quota/disk hoặc facts cho từng resource. Theo contract đã chọn,
+chưa đủ điều kiện AUTO; chưa kết luận nhãn gốc sai.
+
+Một test skip đã có từ trước: `intent-stage-benchmark.test.ts` chỉ chạy khi
+SUPPORT_INTENT_BENCH=1. Không thêm skip. Không chạy E2E, Mongo thật, provider
+thật, held-out hoặc người dùng thật. Benchmark là mock/no API, memory-demo,
+Node v26.0.0, legacy-original-128, development chưa adjudicate độc lập.
+
+### Provenance và artifact local
+
+- Baseline trên SHA 755f098:
+  `/tmp/vng-support-member-a-contract-baseline-755f098.json`, SHA-256
+  `7a3d422fb94d49ae575daff31ffc7f966df2b4eaef2040d92dc2bbe22b5cf9d8`.
+- Candidate trên SHA 433382b:
+  `/tmp/vng-support-member-a-contract-completed-committed.json`, SHA-256
+  `096a872b33f4ff0b4dab0f8065a46740e48a56aee9781613c8d6a4887a7774a7`.
+- Comparison:
+  `/tmp/vng-support-member-a-contract-comparison-completed.json`, SHA-256
+  `a6c2ccd45d302a733a6d3f46ab56958bea1e95c04c09c9800b49f4332d6862ed`.
+
+Candidate runtimeDirty=false, evaluator dirty=false; runtime digest
+`2f738c0f001f78f9475a239a9e3713ee1e896f9c69c529a2964542c00b23745f`.
+Dataset SHA-256 `e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da`;
+evaluator SHA-256 `71c404b66badc9e951245ddebd7a1d5f29369ecbe004f4308656c47b00820ef9`.
+Comparison datasetIdentity=digest-verified. Input/expected, evaluator và
+approval registry không đổi. Tracked artifacts được backup/restore sau mỗi
+lượt; original-fixture-evaluation.json giữ SHA-256
+`c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
+
+### Lệnh kiểm tra và pass/fail
+
+```sh
+cd /private/tmp/vng-support-person-a-benchmark
+git status --short --branch
+git diff --exit-code 755f098 -- mlai26_new/data artifacts src/services/approvals.ts
+git diff 755f098 433382b -- src tests README.md RUNBOOK.md
+npx vitest run tests/person-a-contract-decisions.test.ts tests/person-a-policy-decisions.test.ts tests/security-control-bypass.test.ts
+npm run lint
+npm run typecheck
+```
+
+Pass: branch A, clean sau bàn giao; protected diff trống; 103/103 targeted tests,
+lint/typecheck exit 0. Source mới có 55 contract tests, 32 policy-decision tests,
+16 security-control/preview tests. Sáu case đã chốt giữ nguyên expected/actual.
+
+Full tests/build dùng wrapper để giữ artifact gốc và tạo output mới:
+
+```sh
+node <<'NODE'
+const fs = require('node:fs');
+const cp = require('node:child_process');
+const path = require('node:path');
+const output = fs.mkdtempSync('/tmp/vng-member-a-contract-recheck-');
+const tracked = cp.execFileSync('git', ['ls-files', '-z', 'artifacts'],
+  { encoding: 'utf8' }).split('\0').filter(Boolean);
+for (const file of tracked) {
+  const backup = path.join(output, 'backup', file);
+  fs.mkdirSync(path.dirname(backup), { recursive: true });
+  fs.copyFileSync(file, backup);
+}
+try {
+  cp.execFileSync('npm', ['test'], { stdio: 'inherit' });
+  const candidate = path.join(output, 'candidate.json');
+  fs.copyFileSync('artifacts/original-fixture-evaluation.json', candidate);
+  cp.execFileSync('node', ['scripts/development-report.mjs', candidate,
+    '--baseline', '/tmp/vng-support-member-a-contract-baseline-755f098.json',
+    '--out', path.join(output, 'comparison.json')], { stdio: 'inherit' });
+  cp.execFileSync('npm', ['run', 'build'], { stdio: 'inherit' });
+} finally {
+  for (const file of tracked)
+    fs.copyFileSync(path.join(output, 'backup', file), file);
+}
+console.log('Evidence and backups:', output);
+NODE
+```
+
+Pass: 834 pass / 1 skip, build exit 0; exact=63/128, readback=128,
+datasetIdentity=digest-verified, regressedExactPass=[], không action/bucket đổi.
+Nếu dataset/evaluator khác hoặc regression xuất hiện, điều tra trước bàn giao.
+
+### Cross-review và giới hạn còn lại
+
+12 case ngoài A cần B/C review:
+
+- gt-routine-013-confluence-kafka-docs; gt-routine-014-jira-dataops-board;
+  gt-missing-008-postgres-uat.
+- xcf-routine-001-hr-confluence-onboarding; xcf-routine-002-finance-vpn-month-end;
+  xcf-routine-003-legal-jira-dsar; xcf-routine-005-salesops-jira-crm.
+- xcf-routine-007-customer-care-vpn; xcf-routine-008-facilities-jira-maintenance;
+  xcf-routine-009-audit-confluence-controls; xcf-routine-011-eventops-vpn;
+  xcf-routine-012-executive-confluence-boardpack.
+
+Lexical extraction/mapping chưa bao phủ mọi cách diễn đạt, URL tài nguyên hay
+calendar/sprint; structured intake dùng giá trị quyền canonical. Timestamp
+kiểm tra format/ngày hợp lệ; verification approval vẫn do server registry.
+Không tạo record cho approval claim gốc. 18 nhãn AUTO cần evidence approval đúng
+scope và formal adjudication riêng; contract không còn chờ quyết định. B/C cần
+review diff/biên và tác động audit-production-read của v5.10. Chưa có human
+cross-review; commit chỉ ở local trên branch A, chưa push/mở PR/deploy.
