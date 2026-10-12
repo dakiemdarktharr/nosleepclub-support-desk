@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import official from "../mlai26_new/data/verify/verify_cases.json";
 import development from "../mlai26_new/data/ground-truth/synthetic_tickets.json";
-import type { SupportInput } from "@/domain/contracts";
+import type { Environment, ServiceGroup, SupportInput } from "@/domain/contracts";
 import { evaluatePolicy } from "@/domain/policy";
 import { extractIntake } from "@/domain/text";
 import { resetSupportTestStore } from "@/lib/support-repository";
@@ -52,6 +52,79 @@ it("requires database authority for a business production export with no uncontr
     expect(decision.ruleIds).toEqual(expect.arrayContaining(["AUTH-001", "AUTH-EXPORT-001"]));
     expect(decision.ruleIds).not.toContain("SEC-005");
   }
+});
+it("routes the original production table deletion to Security/DBA even with verified approval", () => {
+  const request = extractIntake(intake(originalText("TC015")));
+  for (const status of ["pending", "verified", "unverifiable"] as const) {
+    const decision = evaluatePolicy(request, { status });
+    expect(decision).toMatchObject({
+      action: "ESCALATE", bucket: "SECURITY_RISK", handlingMode: "HUMAN_REVIEW",
+      uncertaintyClass: "OUT_OF_POLICY", assignedTeam: "Security / DBA/Data",
+    });
+    expect(decision.ruleIds).toEqual(expect.arrayContaining(["SEC-007", "AUTH-008", "AUTH-001"]));
+    expect(decision.reviewerQuestions?.join(" ")).toContain("backup");
+  }
+});
+it("persists destructive production database work as escalated rather than approved", async () => {
+  const row = await submitSupport(intake(originalText("TC015")));
+  expect(row.status).toBe("ESCALATED");
+  expect(row.decision).toMatchObject({ action: "ESCALATE", bucket: "SECURITY_RISK" });
+  expect(row.decision?.ruleIds).toContain("SEC-007");
+});
+it.each([
+  "Please drop table orders in the production database to fix a slow report; backup is available.",
+  "Nhờ drop bảng payments trong production DB để xử lý lỗi đối soát, nếu cần sẽ restore sau.",
+])("applies the destructive production policy without depending on case IDs or the users table: %s", (rawText) => {
+  const decision = evaluatePolicy(extractIntake(intake(rawText)));
+  expect(decision).toMatchObject({ action: "ESCALATE", bucket: "SECURITY_RISK" });
+  expect(decision.ruleIds).toContain("SEC-007");
+});
+function structuredDestruction(serviceGroup: ServiceGroup, environment: Environment) {
+  return extractIntake({
+    ...intake("", {
+      environment, requestedAction: "delete",
+      intentLabel: serviceGroup === "DATABASE" ? "DATABASE_SCHEMA_CHANGE" : "DEVICE_WIPE",
+      system: "demo-db", resourceScope: "orders",
+    }),
+    mode: "structured", serviceGroup,
+  });
+}
+it("applies the same Security policy to structured production database deletion", () => {
+  const decision = evaluatePolicy(structuredDestruction("DATABASE", "production"), { status: "verified" });
+  expect(decision).toMatchObject({ action: "ESCALATE", bucket: "SECURITY_RISK" });
+  expect(decision.ruleIds).toContain("SEC-007");
+});
+it.each(["sandbox", "development", "staging", "unknown"] as const)(
+  "keeps database destruction outside production on the existing authority path: %s", (environment) => {
+    const decision = evaluatePolicy(structuredDestruction("DATABASE", environment));
+    expect(decision).toMatchObject({ action: "ESCALATE", bucket: "BEYOND_AUTHORITY" });
+    expect(decision.ruleIds).toContain("AUTH-008");
+    expect(decision.ruleIds).not.toContain("SEC-007");
+  },
+);
+it("keeps device wiping outside the database Security rule", () => {
+  const decision = evaluatePolicy(structuredDestruction("DEVICE_BOOT", "production"));
+  expect(decision).toMatchObject({ action: "ESCALATE", bucket: "BEYOND_AUTHORITY" });
+  expect(decision.ruleIds).toContain("AUTH-008");
+  expect(decision.ruleIds).not.toContain("SEC-007");
+});
+it("does not turn an explicitly negated drop into destructive database work", () => {
+  const request = extractIntake(intake(
+    "Do not drop table users in production database; need read-only SELECT access for reconciliation.",
+  ));
+  expect(request.riskSignals).not.toContain("DESTRUCTIVE");
+  const decision = evaluatePolicy(request);
+  expect(decision).toMatchObject({ action: "ESCALATE", bucket: "BEYOND_AUTHORITY" });
+  expect(decision.ruleIds).not.toContain("SEC-007");
+});
+it("keeps production schema changes without deletion on the authority path", () => {
+  const request = structuredDestruction("DATABASE", "production");
+  const decision = evaluatePolicy({
+    ...request, requestedAction: "alter",
+    riskSignals: request.riskSignals.filter((signal) => signal !== "DESTRUCTIVE"),
+  });
+  expect(decision).toMatchObject({ action: "ESCALATE", bucket: "BEYOND_AUTHORITY" });
+  expect(decision.ruleIds).not.toContain("SEC-007");
 });
 it.each([
   "Export production database to a personal laptop để đối soát doanh thu",
