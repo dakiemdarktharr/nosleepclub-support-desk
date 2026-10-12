@@ -6,12 +6,13 @@ hỗ trợ, chưa phải phân xử độc lập. Không đổi fixture, input, 
 expected action/bucket/rule hay approval registry. Policy runtime cập nhật theo
 decision log của người dùng bên dưới.
 
-Cập nhật 12/10/2026: sau chỉ dẫn của người dùng, runtime policy v5.10 chuyển bốn
-case thiếu thông tin thành ESC/MISSING và TC010 thành ESC/BEYOND. Candidate mới
-đạt 62/128 exact so với baseline v5.9 56/128; 5/24 case A đạt, còn 19 mismatch.
+Cập nhật 12/10/2026: runtime policy v5.11 chuyển bốn case thiếu thông tin thành
+ESC/MISSING, TC010 thành ESC/BEYOND và TC015 thành ESC/SECURITY theo quyết định
+người dùng. Candidate đạt 63/128 exact; trước vòng TC015 là 62/128 ở v5.10,
+baseline v5.9 là 56/128. Có 6/24 case A đạt, còn 18 mismatch expected AUTO.
 Decision log, phạm vi rule và evidence mới ở
 [PERSON-A-POLICY-DECISIONS.md](PERSON-A-POLICY-DECISIONS.md). Các đoạn benchmark
-v11 bên dưới là lịch sử trước thay đổi policy; bảng 24 case dùng actual mới v5.10.
+v11 bên dưới là lịch sử trước thay đổi policy; bảng 24 case dùng actual v5.11.
 
 ## Phạm vi và cách chạy
 
@@ -70,7 +71,7 @@ Candidate provenance: source revision `163a7940bd98ee6492b21fc1c3f3411338e648aa`
 runtime dirty `true`, runtime digest
 `e955570552ce06068654bdda8030f04f053a13dff91779dcdfa81708c2fda3bd`.
 
-## Phân tích 24 case — actual v5.10
+## Phân tích 24 case — actual v5.11
 
 `INFO` = `NEEDS_INFORMATION`; `ESC` = `ESCALATE`; `AUTO` = `AUTO_APPROVE`.
 Độ tin cậy dưới đây nói về chẩn đoán nguyên nhân theo trace và policy đang có,
@@ -91,7 +92,7 @@ trích xuất cũ đã được sửa; mismatch còn lại vẫn cần xử lý 
 | 10 `TC007` | ESC/MISSING | ESC/MISSING · INFO-001, INFO-PROVISION-001; thiếu `resourceScope`, `permission`, `duration`. Input xin PostgreSQL staging DB để reconcile; CPU/RAM và ngày release chưa chốt. | Action đã khớp quyết định người dùng; required fields DATABASE_PROVISION vẫn dùng contract DB access. **Cao** về action; contract fields còn mở. | ESC/MISSING đã chốt. Database provisioning cần bộ fields nào khác DB access? |
 | 11 `TC008` | ESC/MISSING | ESC/MISSING · INFO-001, INFO-005, INFO-PROVISION-001; thiếu provider/environment/TTL/quota/sizing/approval. Input nêu Kafka Connect worker; throughput/retention/instance size/timeframe chưa chốt. | Quyết định human review trước cấp worker đã áp dụng. **Cao**; regression và benchmark đạt. | Đã chốt ESC/MISSING; Infra xác nhận sizing/TTL. |
 | 12 `TC010` | ESC/BEYOND | ESC/BEYOND · AUTH-002, AUTH-EXPORT-001, AUTH-001; input yêu cầu SELECT/export từ production DB để reconcile; có business purpose nhưng chưa có DBA sign-off, không nêu đích ngoài kiểm soát. | Quyết định người dùng đã áp dụng theo scope nghiệp vụ; action vẫn ESCALATE, security indicators vẫn giữ Security. **Cao**; regression và benchmark đạt. | Đã chốt BEYOND_AUTHORITY. DBA xác minh tables/quyền/TTL/destination trước xử lý. |
-| 13 `TC015` | ESC/SECURITY | ESC/BEYOND · AUTH-002, AUTH-008, AUTH-001, INFO-001; input yêu cầu drop bảng users trong production DB; câu laptop freeze/restore là context. | Code đã đưa destructive DB request lên đúng nhánh DB; policy hiện kích AUTHORITY, không SECURITY. **Cao** về observed rules; nhãn bucket chưa adjudicate. | Destructive production DB change thuộc SECURITY hay BEYOND_AUTHORITY? |
+| 13 `TC015` | ESC/SECURITY | ESC/SECURITY · SEC-007, AUTH-002, AUTH-008, AUTH-001, INFO-001; input yêu cầu drop bảng users trong production DB; laptop freeze/restore là context. | Rule Security cho destructive production DB đã được người dùng chấp nhận và triển khai. **Cao**; fixture gốc, regression và benchmark API/persistence cùng đạt. | Đã chốt SECURITY_RISK; Security/DBA xác nhận scope, backup và phương án xử lý. |
 | 14 `gt-routine-001-github-monorepo` | AUTO/ROUTINE | ESC/BEYOND · AUTH-007; thiếu duration/verifiedApproval. Input nêu GitHub Write, branch/PR, sprint 42 và approval reference. | Code đã bỏ task phụ giả; approval chưa xác minh và TTL không rõ. **Cao** về actual gate. | TTL của sprint có đủ không; registry chứa approval reference này không? |
 | 15 `gt-routine-002-confluence-rdp-runbook` | AUTO/ROUTINE | INFO/MISSING · INFO-001, INFO-005; thiếu environment/accessType/duration/approval. Input nêu quyền edit Confluence cho tài liệu RDP/port, đồng thời nói không mở network port. | Code đã sửa false port request; còn access contract và approval. **Cao** về code fix/missing fields. | Required fields/approval cho quyền Confluence là gì; manager email có thể verify thế nào? |
 | 16 `gt-routine-003-jira-firewall-review` | AUTO/ROUTINE | ESC/BEYOND · AUTH-007; thiếu environment/accessType/duration/verifiedApproval. Input chỉ xin Browse/Create Issue để review external-port tasks và nói không đổi firewall. | Code đã sửa false network task; approval reference chưa verify, access fields còn thiếu. **Cao** về actual. | Jira Browse/Create có mapping chuẩn nào và approval reference cần kiểm tra gì? |
@@ -173,7 +174,7 @@ Không chạy E2E, Mongo thật, held-out hay test với dịch vụ/credentials
 ## Các quyết định owner tại v11
 
 Bảng dưới là trạng thái v11. Người dùng đã chốt nhóm 4 ESC/MISSING và TC010 ở
-decision log mới. Hiện còn 18 AUTO, TC015 và các required-fields/mapping contract
+decision log mới; TC015 được chốt ở v5.11. Hiện còn 18 AUTO và required-fields/mapping
 cần xác nhận; quyền tự soạn câu hỏi không tự xác minh approval hay đổi contract.
 
 | Nhóm trong 24 case A | Số case | Căn cứ và đề xuất phân xử |
@@ -200,8 +201,8 @@ quyết mâu thuẫn contract. Cross-review và đánh giá độc lập chưa �
 2. Chủ policy/adjudicator ghi quyết định cho ba nhóm và required-fields contract
    nêu trên. Chỉ cập nhật policy/nhãn sau adjudication được ghi lại.
 3. Code candidate mới theo quyết định người dùng ở commit
-   `183ef1edf97229e4cd5085d923fdc302bb939266`; chưa push/mở PR và chưa có B/C
-   cross-review. Runtime policy/cache đã tăng v5.10, preview/cache v5.9 phải tạo
+   `aff9b586706687dc0b73dceae97fe0e403fe29d9`; chưa push/mở PR và chưa có B/C
+   cross-review. Runtime policy/cache đã tăng v5.11, preview/cache v5.10 phải tạo
    lại. Evidence trên commit sạch được ghi trong decision log mới. Candidate v11
    và benchmark lịch sử tại c682c7d được giữ ở phần xác nhận bên trên.
 
