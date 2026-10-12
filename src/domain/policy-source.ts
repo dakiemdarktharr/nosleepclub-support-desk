@@ -1,7 +1,7 @@
-import type { Decision, Environment, RiskSignal, ServiceGroup } from "./contracts";
+import type { Decision, Environment, RequestKind, RiskSignal, ServiceGroup } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.11";
+export const POLICY_VERSION = "support-guidance-v5.12";
 export const demoResourceLimits = {
   gpuCount: 2,
   gpuTypes: ["t4", "a10"],
@@ -226,6 +226,51 @@ export const provisioningInformationRule = {
   question: "Infra/DBA đề xuất cấu hình CPU, RAM, dung lượng đĩa và thời hạn sử dụng nào phù hợp với công việc này?",
   nextStep: "Team Infra/DBA xác nhận cấu hình, thời hạn sử dụng và phê duyệt trước khi cấp tài nguyên.",
 };
+
+export const requiredFactRules: Array<{
+  id: string;
+  serviceGroup: ServiceGroup;
+  intentLabels: readonly string[];
+  requestKind: RequestKind;
+  systems?: readonly string[];
+  fields: readonly string[];
+}> = [
+  {
+    id: "FACT-VPN-001", serviceGroup: "NETWORK_VPN",
+    intentLabels: ["VPN_SETUP"], requestKind: "ACCESS_REQUEST",
+    fields: ["service", "source", "target", "environment", "duration", "reason"],
+  },
+  {
+    id: "FACT-DB-PROVISION-001", serviceGroup: "DATABASE",
+    intentLabels: ["DATABASE_PROVISION"], requestKind: "ROUTINE_WORKFLOW",
+    fields: ["system", "environment", "cpu", "ram", "disk", "duration", "reason"],
+  },
+  {
+    id: "FACT-COLLAB-001", serviceGroup: "ACCOUNT_ACCESS",
+    intentLabels: ["REQUEST_STANDARD_ACCESS", "REQUEST_READ_ACCESS", "REQUEST_WRITE_ACCESS"],
+    requestKind: "ACCESS_REQUEST", systems: ["jira", "confluence"],
+    fields: ["targetSystem", "resourceScope", "accessType", "duration", "reason"],
+  },
+];
+
+export const permissionMappings: Array<{
+  serviceGroup: ServiceGroup;
+  system?: string;
+  field: "permission" | "accessType";
+  value: string;
+  pattern: RegExp;
+}> = [
+  { serviceGroup: "GIT_PERMISSION", field: "permission", value: "write",
+    pattern: /\b(?:push (?:a |the )?(?:branch|code)|day (?:branch|code))\b/ },
+  { serviceGroup: "ACCOUNT_ACCESS", system: "jira", field: "accessType", value: "standard",
+    pattern: /\b(?:browse|create (?:issues?|tickets?)|transition (?:issues?|tickets?)|role user|user(?:\/editor)? role)\b/ },
+  { serviceGroup: "ACCOUNT_ACCESS", system: "confluence", field: "accessType", value: "write",
+    pattern: /\b(?:role editor|editor role|quyen editor|editor|quyen edit|edit (?:access|permission|confluence))\b/ },
+  { serviceGroup: "ACCOUNT_ACCESS", system: "confluence", field: "accessType", value: "read-only",
+    pattern: /\b(?:quyen view|view (?:access|permission|confluence|page))\b/ },
+  { serviceGroup: "ACCOUNT_ACCESS", system: "confluence", field: "accessType", value: "standard",
+    pattern: /\b(?:quyen comment|comment (?:access|permission|in|trong))\b/ },
+];
 
 export const securityServiceRule = {
   id: "AUTH-010",

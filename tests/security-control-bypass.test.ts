@@ -12,7 +12,7 @@ it.each(["Bypass MFA", "skip 2FA", "ignore EDR", "Bỏ qua xác thực", "bypass
 it.each(["Do not bypass MFA", "Không bỏ qua xác thực", "MFA login is failing"])("does not mark benign or negated control requests as bypass: %s", (text) => {
   expect(detectedRisks(text)).not.toContain("BYPASS");
 });
-it.each(["support-guidance-v5.1", "support-guidance-v5.9", "support-guidance-v5.10"])("requires a new preview after policy version %s", async (policyVersion) => {
+it.each(["support-guidance-v5.1", "support-guidance-v5.9", "support-guidance-v5.10", "support-guidance-v5.11"])("requires a new preview after policy version %s", async (policyVersion) => {
   const preview = await previewSupport({ rawText: "Restart my laptop", fields: { department: "engineering", employeeId: "EMP-TEST-01" }, mode: "freeform", serviceGroup: "OTHER", confirmed: false, idempotencyKey: crypto.randomUUID() });
   const cached = (await getSupportPreview(preview.input.previewId!))!;
   await saveSupportPreview({ ...cached, decision: { ...cached.decision, policyVersion } });

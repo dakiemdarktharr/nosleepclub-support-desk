@@ -15,10 +15,11 @@ import {
   productionDatabaseRule,
   productionExportAuthorityRule,
   provisioningInformationRule,
+  requiredFactRules,
   riskRules,
   securityServiceRule,
 } from "./policy-source";
-import { normalize, teamFor } from "./text";
+import { normalize, normalizeFact, teamFor } from "./text";
 
 // Verified approval is supplied by a server-only verifier, never by input fields or model output.
 export type Approval = {
@@ -45,6 +46,15 @@ const placeholder =
 
 function isMissing(field: string, value?: string) {
   if (!value?.trim() || placeholder.test(normalize(value))) return true;
+  if (field === "duration") {
+    const interval = !/^[-−–]/.test(value.trim().normalize("NFKC")) && /^(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\s*(?:hours?|hrs?|h|days?|minutes?|phut)$/.test(
+      normalizeFact(value),
+    );
+    const timestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/.test(value.trim()) &&
+      Number.isFinite(Date.parse(value.trim())) &&
+      new Date(`${value.trim().slice(0, 10)}T00:00:00Z`).toISOString().slice(0, 10) === value.trim().slice(0, 10);
+    if (!interval && !timestamp) return true;
+  }
   if (
     field === "reason" &&
     (/^(debug|test|needed|can gap|khac phuc|support)$/i.test(
@@ -59,6 +69,14 @@ function isMissing(field: string, value?: string) {
   )
     return true;
   return false;
+}
+
+function requiredFactRuleFor(request: CanonicalRequest) {
+  return requiredFactRules.find((rule) =>
+    rule.serviceGroup === request.serviceGroup && rule.requestKind === request.requestKind &&
+    rule.intentLabels.includes(request.intentLabel) &&
+    (!rule.systems || rule.systems.includes(normalize(request.entities.targetSystem || request.entities.system || ""))),
+  );
 }
 
 export function missingFacts(request: CanonicalRequest): string[] {
@@ -242,6 +260,8 @@ export function missingFacts(request: CanonicalRequest): string[] {
     required = ["pathOrBucket", "permission", "duration", "reason"];
   else if (requestKind === "INCIDENT")
     required = ["symptom", "affectedScope", "startTime"];
+  const contract = requiredFactRuleFor(request);
+  if (contract) required = [...contract.fields];
   return [
     ...new Set([
       ...required.filter((field) => isMissing(field, e[field])),
@@ -528,6 +548,7 @@ function evaluateSinglePolicy(
     const uniqueMissing = [...new Set(missing)];
     const plan = clarificationPlan(request, uniqueMissing);
     const questions = plan.questions;
+    const factRule = requiredFactRuleFor(request);
     const provisioningReview =
       provisioningInformationRule.intentLabels.includes(request.intentLabel) &&
       uniqueMissing.some((field) =>
@@ -547,6 +568,7 @@ function evaluateSinglePolicy(
           ? "INFO-RESET"
           : "INFO-001",
         ...(missing.includes("verifiedApproval") ? ["INFO-005"] : []),
+        ...(factRule ? [factRule.id] : []),
         ...(provisioningReview ? [provisioningInformationRule.id] : []),
       ],
       userReason:
@@ -555,7 +577,7 @@ function evaluateSinglePolicy(
           : request.intentLabel === "DEVICE_RESET_GUIDANCE"
           ? questions[0]
           : "Cần thêm dữ kiện cụ thể để đánh giá đúng phạm vi.",
-      adminReason: `${provisioningReview ? provisioningInformationRule.id + ": " : ""}Thiếu hoặc mơ hồ: ${uniqueMissing.join(", ")}. Không suy diễn scope/approval.`,
+      adminReason: `${factRule ? factRule.id + ": " : ""}${provisioningReview ? provisioningInformationRule.id + ": " : ""}Thiếu hoặc mơ hồ: ${uniqueMissing.join(", ")}. Không suy diễn scope/approval.`,
     };
   }
 
@@ -579,11 +601,11 @@ function evaluateSinglePolicy(
   }
   if (
     request.serviceGroup === "CLOUD_GPU" &&
-    (!Number.isFinite(Number(request.entities.duration?.match(/\d+/)?.[0])) ||
+    (!Number.isFinite(Number(request.entities.duration?.match(/\d+(?:\.\d+)?/)?.[0])) ||
       !/^(\d+)\s*(hours?|hrs?|h|gio|tieng)$/i.test(
         normalize(request.entities.duration ?? ""),
       ) ||
-      Number(request.entities.duration?.match(/\d+/)?.[0]) >
+      Number(request.entities.duration?.match(/\d+(?:\.\d+)?/)?.[0]) >
         demoResourceLimits.hours ||
       (/GPU/.test(request.intentLabel) &&
         (!/^\d+$/.test(request.entities.quantity ?? "") ||

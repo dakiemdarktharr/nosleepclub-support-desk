@@ -10,6 +10,7 @@ import type {
 } from "./contracts";
 import { redact } from "./redaction";
 import { isEmployeeIdentityField } from "./employee-identity";
+import { permissionMappings } from "./policy-source";
 
 // One vocabulary for extracting a labelled fact and keeping it with its request.
 const factLabels: Record<string, string> = {
@@ -644,9 +645,9 @@ export function extractText(rawText: string): Extraction {
   if (system) entities.system = system[1];
   const permission = asserted(text, /\badmin\b|\broot\b|\bowner\b/)
     ? text.match(/\b(admin|root|owner)\b/)?.[1]
-    : /read.only|\bread\b|\bselect\b|chi doc|chi xem/.test(text)
+    : asserted(text, /read.only|\bread\b|\bselect\b|chi doc|chi xem/)
       ? "read-only"
-      : /write|quyen ghi/.test(text)
+      : asserted(text, /write|quyen ghi/)
         ? "write"
         : undefined;
   if (
@@ -654,8 +655,8 @@ export function extractText(rawText: string): Extraction {
     (requestKind === "ACCESS_REQUEST" || riskSignals.includes("PRIVILEGED"))
   )
     entities.permission = permission;
-  const duration = text.match(
-    /\b\d+\s*(?:hours?|hrs?|h\b|days?|ngay|gio|tieng|phut|minutes?)/,
+  const duration = rawText.normalize("NFKC").match(
+    /(?<![\w.])[-+−–]?\d+(?:\.\d+)?\s*(?:hours?|hrs?|h\b|days?|ngày|ngay|giờ|gio|tiếng|tieng|phút|phut|minutes?)(?![A-Za-z])/i,
   );
   if (duration) entities.duration = duration[0];
   const environment = environmentOf(text);
@@ -683,7 +684,8 @@ export function extractText(rawText: string): Extraction {
     const repository = rawText.match(/\b(?:repo|repository)\s+([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+){1,5})(?=\s|[,;.!?]|$)/i);
     if (repository) entities.repository = repository[1].replace(/\.+$/, "");
   }
-  if (["GIT_PERMISSION", "CLOUD_GPU", "ACCOUNT_ACCESS", "DATABASE"].includes(serviceGroup)) {
+  if (["GIT_PERMISSION", "CLOUD_GPU", "ACCOUNT_ACCESS", "DATABASE"].includes(serviceGroup) ||
+      (intentLabel === "VPN_SETUP" && requestKind === "ACCESS_REQUEST")) {
     const purpose = rawText.match(/\s(?:để|de|cho mục đích|cho muc dich)\s+([^;.\n,]{1,250})/i) ||
       rawText.match(/\s(?:to|for)\s+((?:test|support|review|replay|benchmark|render|backfill|sync|train|open|follow|update)\b[^;.\n,]{0,240})/i);
     if (purpose) entities[serviceGroup === "CLOUD_GPU" ? "purpose" : "reason"] = purpose[1].trim();
@@ -706,6 +708,19 @@ export function extractText(rawText: string): Extraction {
     if (entities.system && !entities.targetSystem)
       entities.targetSystem = entities.system;
     if (entities.permission) entities.accessType = entities.permission;
+    const scope = rawText.match(/\b(?:jira (?:project|board)|confluence space)\s+([A-Za-z0-9_-]+)/i);
+    const page = rawText.match(/\bconfluence page\s+([^;.,\n]{1,120})/i);
+    if (!entities.resourceScope && scope) entities.resourceScope = scope[1];
+    if (!entities.resourceScope && page)
+      entities.resourceScope = page[1].split(/\s(?:để|de|for|cho mục đích|cho muc dich|with|với|voi)\s/i)[0].trim();
+  }
+  for (const mapping of permissionMappings) {
+    if (mapping.serviceGroup !== serviceGroup ||
+        (mapping.system && mapping.system !== entities.system) ||
+        !asserted(text, mapping.pattern)) continue;
+    const previous = entities[mapping.field];
+    if (previous && previous !== mapping.value) riskSignals.push("CONFLICT");
+    else entities[mapping.field] = mapping.value;
   }
   const gpu = text.match(/\b(a100|h100|t4|a10)\b/);
   if (gpu) entities.gpuType = gpu[1];

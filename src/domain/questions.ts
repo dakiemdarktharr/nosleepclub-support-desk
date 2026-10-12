@@ -53,6 +53,12 @@ export function questionFor(field: string, request?: CanonicalRequest) {
     return "Bạn dự kiến dùng tài nguyên đến khi nào? Có thể ghi số giờ/ngày hoặc ngày thu hồi cụ thể.";
   if (field === "permission" && request?.serviceGroup === "GIT_PERMISSION")
     return "Bạn cần chỉ đọc code hay có quyền đẩy branch lên repo?";
+  if (field === "resourceScope" && request?.serviceGroup === "ACCOUNT_ACCESS")
+    return "Bạn cần quyền ở project, space hoặc trang nào? Gửi tên hoặc mã tài nguyên, không gửi nội dung nhạy cảm.";
+  if (field === "accessType" && request?.entities.system === "jira")
+    return "Bạn cần xem issue, tạo issue hay chuyển trạng thái ticket?";
+  if (field === "accessType" && request?.entities.system === "confluence")
+    return "Bạn cần đọc, bình luận hay sửa nội dung trang?";
   if (field === "accessType")
     return "Bạn cần xem, tạo ticket hay sửa nội dung trong ứng dụng này?";
   if (field === "resourceScope" && request?.entities.system)
