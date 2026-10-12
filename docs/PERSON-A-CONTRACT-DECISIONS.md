@@ -40,6 +40,9 @@ AUTH-COLLAB-001, thay vì hỏi lại policy owner bằng AUTH-005. Rule này ch
 whitelist AUTO hiện có; không làm case đang được phép AUTO chuyển sang ESC.
 Structured VPN_SETUP với requestKind ACCESS_REQUEST đi qua contract cấp quyền;
 VPN_SETUP không yêu cầu cấp quyền vẫn giữ chẩn đoán/hướng dẫn.
+Structured DATABASE_PROVISION với operation=provision dùng cùng sizing
+contract khi requestKind là CONFIGURATION_CHANGE; không tạo CONFLICT giả
+chỉ vì requestKind được khai báo đúng thao tác.
 
 ## Tiêu chí kiểm tra
 

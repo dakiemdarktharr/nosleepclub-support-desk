@@ -196,6 +196,18 @@ it("routes complete database provisioning to DBA", () => {
   });
   expect(evaluatePolicy(request)).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-DB-PROVISION-001"] });
 });
+it.each([undefined, "CONFIGURATION_CHANGE"] as const)(
+  "uses provisioning facts for a structured provision operation with requestKind %s", (requestKind) => {
+    const request = completeStructured("DATABASE", requestKind, {
+      intentLabel: "DATABASE_PROVISION", operation: "provision", system: "postgresql", environment: "staging",
+      cpu: "2", ram: "4", disk: "20",
+    });
+    expect(request.requestKind).toBe("CONFIGURATION_CHANGE");
+    expect(request.riskSignals).not.toContain("CONFLICT");
+    expect(missingFacts(request)).not.toContain("permission");
+    expect(evaluatePolicy(request)).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-DB-PROVISION-001"] });
+  },
+);
 it("routes complete Confluence editing to the known IAM/resource owner", () => {
   const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
     intentLabel: "REQUEST_WRITE_ACCESS", targetSystem: "confluence", resourceScope: "TEAM", accessType: "write",
