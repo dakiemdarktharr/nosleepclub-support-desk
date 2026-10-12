@@ -25,7 +25,7 @@ export const catalog: Record<ServiceGroup, Service> = {
       "ACCOUNT_LOGIN ACCOUNT_LOCKED PASSWORD_RESET MFA_SETUP MFA_FAILURE SSO_FAILURE REQUEST_STANDARD_ACCESS REQUEST_READ_ACCESS REQUEST_WRITE_ACCESS REQUEST_ADMIN_ACCESS REQUEST_ROOT_ACCESS GROUP_MEMBERSHIP ROLE_CHANGE REVOKE_ACCESS SERVICE_ACCOUNT ACCOUNT_DEACTIVATION",
     ),
     fields: words(
-      "targetSystem environment accessType duration reason approvalStatus approvalReference",
+      "targetSystem resourceScope environment accessType duration reason approvalStatus approvalReference",
     ),
   },
   DATABASE: {
@@ -35,7 +35,7 @@ export const catalog: Record<ServiceGroup, Service> = {
       "DATABASE_CONNECTION DATABASE_READ_ACCESS DATABASE_WRITE_ACCESS DATABASE_QUERY_HELP DATABASE_QUERY_ERROR DATABASE_PERFORMANCE DATABASE_PROVISION DATABASE_SCHEMA_CHANGE DATABASE_DATA_CORRECTION DATABASE_EXPORT DATABASE_IMPORT DATABASE_BACKUP DATABASE_RESTORE DATABASE_MIGRATION DATABASE_PRODUCTION_INCIDENT",
     ),
     fields: words(
-      "databaseType system resourceScope environment operation permission dataSensitivity dataVolume destination duration rollbackPlan approvalReference reason",
+      "databaseType system resourceScope environment cpu ram disk operation permission dataSensitivity dataVolume destination duration rollbackPlan approvalReference reason",
     ),
   },
   NETWORK_VPN: {
@@ -45,7 +45,7 @@ export const catalog: Record<ServiceGroup, Service> = {
       "VPN_SETUP VPN_LOGIN VPN_NOT_CONNECTING WIFI_NOT_WORKING NETWORK_UNREACHABLE DNS_RESOLUTION DNS_CHANGE PROXY_CONFIG FIREWALL_DIAGNOSTIC FIREWALL_CHANGE PORT_OPEN_REQUEST PUBLIC_EXPOSURE REMOTE_ACCESS BANDWIDTH_ISSUE CERTIFICATE_ERROR",
     ),
     fields: words(
-      "service source target environment protocol port publicExposure requestedAction affectedUsers symptom urgency",
+      "service source target environment duration reason approvalReference protocol port publicExposure requestedAction affectedUsers symptom urgency",
     ),
   },
   SOFTWARE_LICENSE: {

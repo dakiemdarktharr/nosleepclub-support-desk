@@ -102,6 +102,14 @@ Security/DBA. Approval đã xác minh hoặc lời hứa restore không bỏ qua
 AUTH-008 và các authority rule vẫn có trong audit. Scope khác tiếp tục theo
 rule hiện có; preview/cache v5.10 phải tạo lại. Ground Truth giữ nguyên.
 
+Version v5.12 áp dụng [contract do người dùng giao quyền quyết định](docs/PERSON-A-CONTRACT-DECISIONS.md):
+cấp VPN hỏi facts của access; cấp database hỏi sizing; Jira/Confluence hỏi
+project/space/page và mức quyền. Mapping push/User/Editor cần evidence khẳng
+định, không tự xác minh approval. Thời hạn phải dương và có đơn vị hoặc là
+timestamp ISO rõ múi giờ; thời hạn cloud dạng số thập phân không được làm tròn
+để vượt giới hạn. Giữ whitelist AUTO, provider/quota, registry và Ground Truth.
+Preview/cache v5.11 phải tạo lại.
+
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
 - [Hợp đồng đánh giá](docs/EVALUATION.md) mô tả đầu vào và cách tính kết quả.
