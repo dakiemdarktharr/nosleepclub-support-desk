@@ -56,6 +56,19 @@ cho VPN provisioning và database provisioning, cùng mapping Git collaborator/
 push và Jira/Confluence User/Editor, vẫn cần quyết định. Việc soạn câu hỏi tự
 nhiên không tự quyết danh sách fields hoặc công nhận approval.
 
+Ví dụ đề xuất câu hỏi phù hợp nhu cầu, chưa đổi required-fields contract:
+
+- Xin cấp VPN: “Bạn cần vào mạng nào, từ máy nào và dùng đến khi nào?”
+- Xin database mới: “Bạn cần loại database nào, ở môi trường nào và dự kiến dùng
+  cho workload gì? Team có sizing và ngày thu hồi chưa?”
+- Xin quyền database có sẵn: “Bạn cần vào database/bảng nào, chỉ đọc hay ghi,
+  và dùng quyền đó trong bao lâu?”
+- Xin quyền Git: “Bạn cần vào repo nào, chỉ đọc code hay đẩy branch lên repo,
+  và cần quyền đến khi nào?”
+
+Approval vẫn được xác minh qua server; câu hỏi bổ sung là “Bạn có mã phê duyệt
+cho đúng yêu cầu này không?”.
+
 ## Kiểm chứng
 
 Benchmark baseline trước sửa: `/tmp/vng-support-member-a-policy-baseline-ab633ea.json`,
@@ -98,3 +111,26 @@ File output mới phải chưa tồn tại. Mọi artifact tracked sinh lại b�
 Các implementation test thay expected hành vi thiếu sizing theo quyết định
 đã chốt, ví dụ ETL provisioning trong `tests/safety-boundaries.test.ts`.
 Các nhãn Ground Truth và expected fixture gốc không thay đổi.
+
+## Xác nhận trên commit sạch
+
+Code commit: `183ef1edf97229e4cd5085d923fdc302bb939266`, parent
+`ab633ea0db88752a51d532cd1bc53257e2044edd`. Benchmark trên commit này có
+`runtimeDirty=false`, runtime digest vẫn là
+`c4610c199ccfcd53615bdd323b71f82f412e4c8755691fb01a06ed775de8bf69`.
+Command `npx vitest run tests/support-verify.test.ts` đạt 22/22 harness tests,
+62/128 exact, 128/128 readback, không có exact-pass regression.
+
+Artifact: `/tmp/vng-support-member-a-policy-183ef1e.json`, SHA-256
+`8a03e6851547554212a2112ae43e234db66c5c9ad09453d48922b7586fe65d89`.
+Comparison: `/tmp/vng-support-member-a-policy-comparison-183ef1e.json`, SHA-256
+`cb3e4bd063ef9dec3c87d4e6b5613f480a9e70926aceab7a2f0cb28034ed7468`.
+Dataset SHA-256
+`e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da`
+và evaluator SHA-256
+`71c404b66badc9e951245ddebd7a1d5f29369ecbe004f4308656c47b00820ef9`
+đều giữ nguyên; comparison có datasetIdentity=digest-verified.
+
+Commit hiện chỉ ở local, chưa push/mở PR, chưa có B/C human cross-review.
+Không chạy E2E, Mongo thật, held-out hoặc provider thật. TC015, 18 nhãn AUTO và
+required-fields/mapping contract là các điểm còn mở.
