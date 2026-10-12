@@ -4,6 +4,7 @@ import { POST as preview } from "@/app/api/support/preview/route";
 import { resetSupportTestStore, getSupportRequest } from "@/lib/support-repository";
 import { GET as detail } from "@/app/api/support/requests/[id]/route";
 import { createVerifyRun } from "@/services/verification";
+import { POLICY_VERSION } from "@/domain/policy-source";
 
 beforeEach(() => {
   vi.stubEnv("MONGODB_URI", "");
@@ -141,7 +142,7 @@ it("preview and submission apply the same policy; detail survives a new GET", as
     requestId: saved.data.id,
     actor: "deterministic-policy",
     ruleIds: ["GUIDE-001"],
-    policyVersion: "support-guidance-v5.9",
+    policyVersion: POLICY_VERSION,
     approvalStatus: "not_required",
     nextStep: expect.any(String),
     questions: [],

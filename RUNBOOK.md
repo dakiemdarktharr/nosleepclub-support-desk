@@ -89,6 +89,13 @@ Version v5.9 chỉ vô hiệu preview/cache sau sửa extraction: giữ mã appr
 nhiều đoạn nguyên vẹn và không coi câu cảm ơn hoàn chỉnh là tác vụ riêng.
 Rule, quota, safety threshold và registry approval không đổi.
 
+Version v5.10 áp dụng [quyết định Member A](docs/PERSON-A-POLICY-DECISIONS.md):
+cấp VM/database thiếu sizing hoặc TTL được ESCALATE/MISSING_INFO. Export DB
+production có mục đích công việc, không nêu dữ liệu nhạy cảm/đích ngoài kiểm
+soát, chuyển DBA/Data reviewer với BEYOND_AUTHORITY; các trường hợp Security
+giữ ưu tiên. Preview/cache v5.9 phải tạo lại. Ground Truth, quota và registry
+approval giữ nguyên.
+
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
 - [Hợp đồng đánh giá](docs/EVALUATION.md) mô tả đầu vào và cách tính kết quả.
