@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { evaluatePolicy } from "@/domain/policy";
-import { extractIntake } from "@/domain/text";
+import { extractIntake, extractText } from "@/domain/text";
 import { prepareInput, submitSupport } from "@/services/support";
 import { getSupportRequest, resetSupportTestStore } from "@/lib/support-repository";
 import { POST } from "@/app/api/support/requests/route";
+import { verifyApproval } from "@/services/approvals";
 
 // Independent synthetic regressions, not original competition Ground Truth.
 beforeEach(() => {
@@ -40,6 +41,238 @@ it.each([
   ["Cần sandbox, không expose public endpoint", "PUBLIC_EXPOSURE"],
 ])("does not escalate a locally negated scope: %s", (text, risk) => {
   expect(extractIntake(intake(text)).riskSignals).not.toContain(risk);
+});
+it.each([
+  "Mình cần standard corporate VPN profile để vào QA subnet từ laptop managed; manager approval ở QA-9931.",
+  "Mình cần standard corporate VPN để vào QA subnet từ laptop managed; manager approval ở QA-9931.",
+])("treats standard corporate VPN access as provisioning, not a port change: %s", (text) => {
+  expect(extractText(text)).toMatchObject({
+    serviceGroup: "NETWORK_VPN",
+    intentLabel: "VPN_SETUP",
+    requestKind: "ACCESS_REQUEST",
+  });
+});
+it.each([
+  "Cấp quyền edit Confluence space SECOPS để cập nhật RDP hardening và checklist port 3389; không yêu cầu mở network port.",
+  "Cấp access Jira project NETSEC để review external-port tasks; chỉ Browse/Create Issue, không thay đổi firewall.",
+])("keeps collaboration-document access separate from mentioned network topics: %s", (text) => {
+  expect(extractText(text)).toMatchObject({
+    serviceGroup: "ACCOUNT_ACCESS",
+    intentLabel: "REQUEST_STANDARD_ACCESS",
+    requestKind: "ACCESS_REQUEST",
+  });
+});
+it("does not infer production database access from a Confluence document title", () => {
+  const rawText = "Nhờ cấp quyền view Confluence page Production DB Recovery SOP cho mục đích training on-call. Mình không yêu cầu quyền vào database, chỉ đọc tài liệu.";
+  const parsed = extractIntake(intake(rawText));
+  expect(parsed).toMatchObject({
+    serviceGroup: "ACCOUNT_ACCESS",
+    intentLabel: "REQUEST_STANDARD_ACCESS",
+    environment: "unknown",
+  });
+  expect(parsed.riskSignals).not.toContain("PRODUCTION_CHANGE");
+  expect(evaluatePolicy(parsed).ruleIds).not.toContain("AUTH-001");
+  expect(parsed.subrequests).toEqual([]);
+});
+it("respects negation when a ticket says it will not mount real secrets", () => {
+  const parsed = extractIntake(intake("Xin sandbox 6 vCPU để test k3s. No public ingress and no mount real secrets."));
+  expect(parsed.riskSignals).not.toContain("SECRET");
+  expect(parsed.riskSignals).not.toContain("PUBLIC_EXPOSURE");
+  expect(parsed.subrequests).toEqual([]);
+  expect(extractText("Mount a real secret into the sandbox").riskSignals).toContain("SECRET");
+});
+it("keeps explicit network and production database changes on their safety paths", () => {
+  expect(extractText("Open inbound TCP port 3389 from the Internet").intentLabel).toBe("PORT_OPEN_REQUEST");
+  expect(extractText("Confluence page access; grant write access to production database").serviceGroup).toBe("DATABASE");
+});
+it.each([
+  "Hi Data Ops, team mình cần một ETL VM chạy Airflow để backfill event từ ZaloPay sang lakehouse. DAG đã ready, nhờ Infra provision giúp trong tuần này; mình quên ghi sizing và chưa chốt giữ máy đến bao giờ.",
+  "Finance cần một PostgreSQL staging database để reconcile settlement cuối tháng. Data khoảng 200GB và team muốn dùng ngay, nhờ IT chọn default config giúp; mình chưa ghi CPU, RAM hoặc ngày release resource.",
+  "Bên VNGGames cần một Kafka Connect worker để sync gameplay events sang ClickHouse cho dashboard live ops. Throughput với retention chưa chốt, chưa có instance size và timeframe; cứ dựng trước một node giúp team được không?",
+])("keeps resource sizing and readiness details with the provisioning request: %s", (rawText) => {
+  const parsed = extractIntake(intake(rawText));
+  const decision = evaluatePolicy(parsed);
+  expect(parsed.subrequests).toEqual([]);
+  expect(decision.bucket).toBe("MISSING_INFO");
+  expect(decision.ruleIds).not.toContain("AUTH-005");
+});
+it("keeps an explicit separate unknown request instead of merging it into provisioning context", () => {
+  const parsed = extractIntake(intake(
+    "Need a cloud sandbox with 4 vCPU for synthetic tests. Separately, use the internal migration runner from last time.",
+  ));
+  expect(parsed.subrequests.map((part) => part.intentLabel)).toContain("UNKNOWN_SUPPORT_REQUEST");
+  expect(evaluatePolicy(parsed).ruleIds).toContain("AUTH-005");
+});
+it.each([
+  "Nhờ cấp access Jira project NETSEC cho mình để theo dõi các task review external port. Anh Hoàng manager đã approve ở IAM-2210. Mình chỉ cần Browse/Create Issue, không cần thay đổi firewall.",
+  "Please add mình vào Jira project GAMEOPS để update ticket PUBG incident follow-up. Producer kiêm manager đã approve ở comment INC-5572. Chỉ cần quyền transition issue, không truy cập server hay DB.",
+])("keeps collaboration access limits from becoming network or database tasks: %s", (rawText) => {
+  const parsed = extractIntake(intake(rawText));
+  expect(parsed.subrequests.map((part) => part.intentLabel)).not.toContain("PORT_OPEN_REQUEST");
+  expect(parsed.subrequests.map((part) => part.intentLabel)).not.toContain("DATABASE_READ_ACCESS");
+  expect(evaluatePolicy(parsed).ruleIds).not.toContain("AUTH-002");
+});
+it.each([
+  "Nhờ cấp standard VPN access QA subnet. Manager đã approve trong Slack thread #it-helpdesk, dùng đến hết thứ Sáu, không cần route production.",
+  "Xin sandbox 4 vCPU, 8GB RAM, TTL 3 ngày. Manager approval: DATA-1842. Only use synthetic schema, no inbound port.",
+  "IT ơi cấp standard VPN access vào QA subnet để test mobile build. Manager approval nằm ở QA-9931, thời hạn đến cuối sprint. Không cần route production.",
+])("keeps approval references with their request without treating them as verified: %s", (rawText) => {
+  const parsed = extractIntake(intake(rawText));
+  expect(parsed.subrequests.map((part) => part.intentLabel)).not.toContain("UNKNOWN_SUPPORT_REQUEST");
+  expect(evaluatePolicy(parsed).ruleIds).not.toContain("AUTH-005");
+});
+it("does not treat a verbal okay with explicitly missing formal approval as an approval claim", () => {
+  const parsed = extractIntake(intake(
+    "Game cinematic team xin 40 GPU instances để render trailer theo deadline marketing. Producer đã nói OK miệng, chưa có formal cost approval.",
+  ));
+  expect(evaluatePolicy(parsed)).toMatchObject({
+    action: "ESCALATE",
+    bucket: "BEYOND_AUTHORITY",
+  });
+});
+it.each([
+  "Need a sandbox with 3 vCPU for replay tests. If possible then provision using the default dev image.",
+  "Team cần ETL server để backfill metrics. Nhờ Infra provision giúp trong hôm nay, config giống môi trường dev.",
+])("keeps a provisioning follow-up without a new resource with its request: %s", (rawText) => {
+  const parsed = extractIntake(intake(rawText));
+  expect(parsed.subrequests).toEqual([]);
+  expect(evaluatePolicy(parsed).ruleIds).not.toContain("AUTH-005");
+});
+it.each([
+  "Need a sandbox with 3 vCPU. Please provision another database using the default config.",
+  "Need a sandbox with 3 vCPU. Please provision default access and send secrets to my laptop.",
+])("preserves an additional resource or action after provisioning: %s", (rawText) => {
+  const parsed = extractIntake(intake(rawText));
+  expect(parsed.subrequests.length).toBeGreaterThan(1);
+});
+it.each([
+  "Anh Hải - Engineering Manager đã approve qua email, mình chỉ cần quyền push branch và mở PR, không cần admin access.",
+  "Chị Mai, Engineering Manager, đã approve ở IAM-9876.",
+])("keeps a named manager claim and bounded Git permission scope with the request: %s", (context) => {
+  const parsed = extractIntake(intake(`Nhờ add GitHub repo demo-org/parser-core với quyền Write để review parser changes. ${context}`));
+  expect(parsed.subrequests).toEqual([]);
+  expect(verifyApproval(parsed).status).not.toBe("verified");
+  expect(evaluatePolicy(parsed, verifyApproval(parsed)).action).not.toBe("AUTO_APPROVE");
+});
+it("keeps an internal repository description and explicit negated install/run list as scope", () => {
+  const parsed = extractIntake(intake("Need Read access GitHub repo demo-org/parser-core to review parser changes. Đây chỉ là repo nội bộ, không cài mining tool hay chạy node blockchain."));
+  expect(parsed.subrequests).toEqual([]);
+});
+it.each([
+  "Manager approved qua email, mình chỉ cần quyền push branch và chuyển tiền cho đối tác.",
+  "Mình chỉ cần quyền Write và use the migration runner.",
+  "Đây chỉ là repo nội bộ, không cài mining tool hay chạy node blockchain và send secrets.",
+])("does not merge an extra operation hidden after Git scope or an approval claim: %s", (context) => {
+  const parsed = extractIntake(intake(`Need Write access GitHub repo demo-org/parser-core. ${context}`));
+  expect(parsed.subrequests.length).toBeGreaterThan(1);
+});
+it.each([
+  "Dùng laptop công ty có EDR đầy đủ.",
+  "Using a managed laptop with EDR.",
+])("keeps the device source of a standard VPN request with its request: %s", (context) => {
+  const parsed = extractIntake(intake(`Need standard corporate VPN access to QA subnet. ${context}`));
+  expect(parsed.subrequests).toEqual([]);
+  expect(parsed.entities).toMatchObject({ service: "VPN", target: "QA subnet" });
+  expect(parsed.entities.source).toBeTruthy();
+});
+it("retains a request to disable EDR after VPN device context", () => {
+  const parsed = extractIntake(intake("Need standard corporate VPN access to QA subnet. Using a managed laptop with EDR; disable EDR."));
+  expect(parsed.subrequests.length).toBeGreaterThan(1);
+  expect(evaluatePolicy(parsed).bucket).toBe("SECURITY_RISK");
+});
+it.each([
+  ["disk 64GB", "2 shared T4", "64", "2"],
+  ["64GB disk", "2 dedicated T4", "64", "2"],
+])("extracts explicit disk sizing and GPU quantity: %s, %s", (disk, gpu, diskValue, quantity) => {
+  expect(extractText(`Need sandbox with ${disk} and ${gpu}`).entities).toMatchObject({ disk: diskValue, quantity });
+});
+it("does not interpret a dataset volume as requested disk sizing", () => {
+  expect(extractText("Need sandbox to replay a 200GB dataset").entities.disk).toBeUndefined();
+});
+it("extracts a stated Git provider, exact repository path and purpose without inventing a duration", () => {
+  const parsed = extractText("Nhờ add GitHub repo Demo-Org/parser-core với quyền Write để review parser changes.");
+  expect(parsed.entities).toMatchObject({ provider: "github", repository: "Demo-Org/parser-core", permission: "write", reason: "review parser changes" });
+  expect(parsed.entities.duration).toBeUndefined();
+});
+it("keeps a bounded collaboration permission scope following an approval claim with the request", () => {
+  const parsed = extractIntake(intake("Need access Jira project RELEASE to follow rollout tickets. Producer approved in Slack, chỉ cần User/Editor role, không cần project admin."));
+  expect(parsed.subrequests).toEqual([]);
+  expect(verifyApproval(parsed).status).toBe("pending");
+});
+it("retains an extra operation following collaboration permission scope", () => {
+  const parsed = extractIntake(intake("Need access Jira project RELEASE. Chỉ cần quyền transition issue và chuyển tiền cho đối tác."));
+  expect(parsed.subrequests.length).toBeGreaterThan(1);
+});
+it.each([
+  ["Need a PostgreSQL staging database to reconcile synthetic settlements", "DATABASE", "DATABASE_PROVISION"],
+  ["Team cần một Kafka Connect worker để sync metrics sang ClickHouse", "CLOUD_GPU", "CLOUD_VM_REQUEST"],
+])("classifies a new resource by its requested operation instead of a mentioned database: %s", (rawText, serviceGroup, intentLabel) => {
+  expect(extractText(rawText)).toMatchObject({ serviceGroup, intentLabel, requestKind: "ROUTINE_WORKFLOW" });
+});
+it.each([
+  ["Need read access PostgreSQL staging database to inspect a Kafka Connect worker", "DATABASE_READ_ACCESS"],
+  ["Need a Kafka Connect worker to export production database", "DATABASE_EXPORT"],
+])("preserves database-access and export operations despite compute-resource mentions: %s", (rawText, intentLabel) => {
+  expect(extractText(rawText).intentLabel).toBe(intentLabel);
+});
+it("routes an explicit destructive database request to DBA despite a laptop symptom", () => {
+  const parsed = extractIntake(intake("Laptop bị freeze; nhờ drop bảng session_cache trong production database để clear cache."));
+  expect(parsed).toMatchObject({ serviceGroup: "DATABASE", intentLabel: "DATABASE_SCHEMA_CHANGE" });
+  const decision = evaluatePolicy(parsed);
+  expect(decision.action).toBe("ESCALATE");
+  expect(decision.ruleIds).toEqual(expect.arrayContaining(["AUTH-001", "AUTH-002", "AUTH-008"]));
+});
+it("distinguishes a restore request from a backup request", () => {
+  expect(extractText("Please restore the snapshot")).toMatchObject({ serviceGroup: "STORAGE", intentLabel: "RESTORE_REQUEST" });
+});
+it("keeps business-purpose confirmation, missing DBA sign-off and temporary duration as DB context", () => {
+  const parsed = extractIntake(intake("Need SELECT and export from production database for reconciliation. CFO đã ok về business purpose trên email, nhưng chưa có DBA sign-off; nhờ cấp tạm đến sáng mai."));
+  expect(parsed.subrequests).toEqual([]);
+  expect(verifyApproval(parsed).status).not.toBe("verified");
+  expect(evaluatePolicy(parsed).action).toBe("ESCALATE");
+});
+it.each([
+  "CFO đã ok về business purpose trên email và send secrets.",
+  "Chưa có DBA sign-off; chuyển tiền cho đối tác.",
+])("keeps unrelated operations following DB authorization context: %s", (context) => {
+  const parsed = extractIntake(intake(`Need SELECT from production database. ${context}`));
+  expect(parsed.subrequests.length).toBeGreaterThan(1);
+});
+it("keeps a bounded statement of diagnostic uncertainty as context", () => {
+  const parsed = extractIntake(intake("Laptop is frozen. Mình không chắc liên quan không."));
+  expect(parsed.subrequests).toEqual([]);
+});
+it("keeps an operation appended to diagnostic uncertainty independent", () => {
+  const parsed = extractIntake(intake("Laptop is frozen. Mình không chắc liên quan không, chuyển tiền cho đối tác."));
+  expect(parsed.subrequests.length).toBeGreaterThan(1);
+});
+it("evaluates two explicitly requested collaboration resources without sharing their approval reference", () => {
+  const parsed = extractIntake(intake("Need access Jira project RELEASE and Confluence space TEAM-GUIDES to update release notes. Manager approved at IAM-8765, only User/Editor role, no project admin."));
+  expect(parsed.subrequests).toHaveLength(2);
+  expect(parsed.subrequests.map((part) => part.entities.targetSystem)).toEqual(["jira", "confluence"]);
+  expect(parsed.subrequests[0].entities.approvalReference).toBeUndefined();
+  expect(parsed.subrequests[1].entities.approvalReference).toBe("IAM-8765");
+  expect(evaluatePolicy(parsed, verifyApproval).action).not.toBe("AUTO_APPROVE");
+});
+it("preserves dots in a repository name but excludes sentence punctuation", () => {
+  expect(extractText("Need GitHub repository demo-org/parser.core.").entities.repository).toBe("demo-org/parser.core");
+});
+it("keeps coordinated SELECT and export on one database while separating a new export target", () => {
+  const coordinated = extractIntake(intake("Need SELECT   and export from production database."));
+  expect(coordinated.subrequests).toEqual([]);
+  const independent = extractIntake(intake("Need SELECT database reporting and export production database payments."));
+  expect(independent.subrequests).toHaveLength(2);
+  expect(evaluatePolicy(independent).action).toBe("ESCALATE");
+});
+it("does not hide an unsupported operation inside an approval-reference suffix", async () => {
+  const row = await submitSupport(intake("VPN lỗi. Manager approval: IAM-6543, only transfer money."));
+  expect(row.canonical?.subrequests.map((part) => part.intentLabel)).toContain("UNKNOWN_SUPPORT_REQUEST");
+  expect(row.decision?.action).toBe("ESCALATE");
+  expect(row.decision?.ruleIds).toContain("AUTH-005");
+});
+it("preserves an explicit training purpose introduced by cho mục đích", () => {
+  const parsed = extractText("Nhờ cấp quyền view Confluence page Demo Runbook cho mục đích training on-call.");
+  expect(parsed.entities.reason).toBe("training on-call");
 });
 it("negation in one clause cannot cancel an asserted production or admin request later", () => {
   expect(extractIntake(intake("Không dùng production; cần write access production database")).riskSignals).toContain("PRODUCTION_CHANGE");

@@ -53,7 +53,7 @@ export function asserted(text: string, pattern: RegExp) {
         .split(/[,;.\n]|\b(?:but|nhung|however|va|and)\b/)
         .at(-1) ?? "";
     if (
-      !/(?:\bkhong\b|\bnot\b|\bno\b|\bwithout\b|\bnever\b|don't|do not)(?:\s+(?:can|need|request|require|yeu|cau|co|muon|quyen|access|vao|to|for|any|a|an|the|production|real|true|admin|hay|or|mo|open|expose|service|bucket|server|services|buckets|servers|address|ip|public|port|rdp|ssh|inbound|remote|cap|grant|give|gui|send|share|token|private|key|internet|from|tu|ra|dung|dung den|dong|route|project|space|\d+)){0,10}\s*$/.test(
+      !/(?:\bkhong\b|\bnot\b|\bno\b|\bwithout\b|\bnever\b|don't|do not)(?:\s+(?:can|need|request|require|yeu|cau|co|muon|quyen|access|vao|to|for|any|a|an|the|production|real|true|admin|hay|or|mo|open|expose|service|bucket|server|services|buckets|servers|address|ip|public|port|rdp|ssh|inbound|remote|cap|grant|give|gui|send|share|token|private|key|internet|from|tu|ra|dung|dung den|dong|route|project|space|mount(?:ed|ing)?|\d+)){0,10}\s*$/.test(
         prefix,
       )
     )
@@ -62,8 +62,251 @@ export function asserted(text: string, pattern: RegExp) {
   return false;
 }
 
+function hasDirectDatabaseOperation(text: string) {
+  return asserted(
+    text,
+    /\b(?:read|write|update|drop|delete|export|dump|query|connect|access)\b.{0,30}\b(?:(?:production|prod)\s+)?(?:database|db)\b|\b(?:(?:production|prod)\s+)?(?:database|db)\s+(?:access|read|write|update|drop|delete|export|dump|query)\b/,
+  );
+}
+
+function hasDirectNetworkOperation(text: string) {
+  return asserted(
+    text,
+    /\b(?:open|change|modify|configure|expose|allow|enable|close|disable|mo|sua|thay doi)\b.{0,35}\b(?:port|firewall|rdp|public ip|network port)\b/,
+  );
+}
+
+function collaborationDocumentAccess(text: string) {
+  const collaborationResource =
+    /\b(?:project|space|page|board|issue)\b/.test(text) ||
+    /\b(?:jira|confluence)\b.{0,35}\b(?:access|permission)\b|\b(?:access|permission)\b.{0,35}\b(?:jira|confluence)\b/.test(
+      text,
+    );
+  return (
+    /\b(?:jira|confluence)\b/.test(text) &&
+    collaborationResource &&
+    /\b(?:access|permission|quyen|add|role|view|edit|browse|comment|read)\b/.test(text) &&
+    !hasDirectDatabaseOperation(text) &&
+    !hasDirectNetworkOperation(text)
+  );
+}
+
+function documentationOnlyDatabaseReference(text: string) {
+  return (
+    collaborationDocumentAccess(text) &&
+    /\b(?:production|prod)\s+(?:database|db)\b/.test(text)
+  );
+}
+
+function standardVpnAccess(text: string) {
+  return (
+    /\bvpn\b/.test(text) &&
+    /\b(?:standard|corporate|profile)\b/.test(text) &&
+    /\b(?:need|want|request|grant|add|access|profile|cap|can|xin|nho)\b/.test(text) &&
+    !hasDirectNetworkOperation(text)
+  );
+}
+
+function databaseProvisioningRequest(text: string) {
+  return !hasDirectDatabaseOperation(text) &&
+    !/\b(?:access|permission|read|write|select|quyen)\b/.test(text) && (
+      /\b(?:create|provision|tao|dung)\b.{0,35}\b(?:database|db)\b/.test(text) ||
+      /\b(?:need|want|request|can|xin)\s+(?:mot|a|an|new)\s+(?:(?:postgresql|postgres|mysql|mongodb|redis|clickhouse)\s+)?(?:(?:staging|qa|uat|sandbox|development|dev|production|prod)\s+)?(?:database|db)\b/.test(text)
+    );
+}
+
+function computeProvisioningRequest(text: string) {
+  return !hasDirectDatabaseOperation(text) && !hasDirectNetworkOperation(text) &&
+    !/\b(?:access|permission|read|write|select|quyen)\b/.test(text) &&
+    /\b(?:need|want|request|can|xin|provision|create|tao|dung)\b.{0,35}\b(?:vm|etl (?:vm|server)|kafka connect worker)\b/.test(text);
+}
+
+function isScopeConstraint(fragment: string) {
+  const text = normalize(fragment);
+  const startsWithConstraint =
+    /^(?:(?:minh|toi|we|i)\s+|(?:this request|request(?: nay)?)\s+(?:is\s+)?)(?:no|not|without|khong|khong can|khong yeu cau|do not|don't|only|just|chi)\b/.test(
+      text,
+    ) || /^(?:no|not|without|khong|khong can|khong yeu cau|do not|don't|only|just|chi)\b/.test(text);
+  const mentionsScope =
+    /\b(?:public|production|secret|admin|database|db|server|firewall|port|ingress|route|network|access|quyen|synthetic)\b/.test(
+      text,
+    );
+  const hasPositiveOperation = asserted(
+    text.replace(/\b(?:only use|chi dung) synthetic (?:data|schema)\b/g, "synthetic scope"),
+    /\b(?:need|want|grant|give|open|change|modify|configure|expose|allow|enable|close|disable|turn|export|deploy|delete|restart|create|provision|install|send|share|mount|bypass|run|drop|use|transfer|pay|migrate|execute|cap|mo|sua|trien khai|gui|xin|nho|can|dung|cai|chay|chuyen tien)\b/,
+  );
+  return startsWithConstraint && mentionsScope && !hasPositiveOperation;
+}
+
+function isResourceProvisioningContinuation(previous: string, fragment: string) {
+  const prior = normalize(previous);
+  const text = normalize(fragment);
+  const followsProvisioningRequest =
+    /\b(?:need|request|ask|want|xin|nho|can)\b/.test(prior) &&
+    /\b(?:sandbox|vm|etl|airflow|database|postgres(?:ql)?|kafka|worker|instance|server|cloud|gpu)\b/.test(
+      prior,
+    );
+  const continuesSameResource =
+    /^(?:dag\b|data\b|throughput\b|retention\b|sizing\b|instance size\b|timeframe\b|(?:minh|toi|team|we|i)\s+(?:quen|forgot|chua|haven't|have not)\b|(?:cu|just)\s+(?:dung|build|set up|stand up)\b)/.test(
+      text,
+    ) || (
+      /^(?:(?:neu duoc|if possible)(?: thi| then)?\s+|(?:nho|please)\s+(?:(?:team|it|infra)\s+)?)provision\b/.test(text) &&
+      /\b(?:default|config|image|trong|today|hom nay|this week|tuan nay|giup)\b/.test(text) &&
+      !/\b(?:another|new|them|khac|sandbox|vm|server|database|worker|instance|resource)\b/.test(text)
+    );
+  const startsSeparateRequest =
+    /^(?:also|additionally|separately|another|and also|besides|ngoai ra|tien the|dong thoi|cung luc)\b/.test(
+      text,
+    );
+  const assertsSensitiveOperation = asserted(
+    text,
+    /\b(?:drop|delete|export|dump|wipe|open|change|modify|configure|expose|allow|enable|disable|grant|give|send|share|mount|bypass|use|transfer|pay|migrate|execute|chuyen tien)\b/,
+  );
+  return (
+    followsProvisioningRequest &&
+    continuesSameResource &&
+    !startsSeparateRequest &&
+    !assertsSensitiveOperation
+  );
+}
+
+function isCollaborationScopeContinuation(previous: string, fragment: string) {
+  const prior = normalize(previous);
+  const text = normalize(fragment);
+  const followsCollaborationAccess =
+    /\b(?:jira|confluence)\b/.test(prior) &&
+    /\b(?:project|space|page|board)\b/.test(prior) &&
+    (/\b(?:access|permission|quyen|add|role|browse|view|edit|comment)\b/.test(prior) ||
+      /^(?:jira project|confluence space)\b/.test(prior));
+  const startsWithScope =
+    /^(?:(?:minh|toi|i|we)\s+)?(?:only|just|chi|no|not|without|khong|do not|don't)\b/.test(
+      text,
+    );
+  const describesAccessScope =
+    /\b(?:user|editor|browse|create issue|transition issue|view|edit|comment|project admin|space admin|server|database|db|firewall|port|rdp)\b/.test(
+      text,
+    );
+  return (
+    followsCollaborationAccess &&
+    startsWithScope &&
+    describesAccessScope &&
+    !hasDirectDatabaseOperation(text) &&
+    !hasDirectNetworkOperation(text) &&
+    !asserted(text, /\b(?:use|send|share|transfer|pay|migrate|execute|delete|drop|disable|install|mount|bypass|chuyen tien|gui|cai|chay)\b/)
+  );
+}
+
+// Contract: a bounded permission description or device fact can continue an
+// existing access request. An additional action or resource stays independent.
+function isGitScopeContinuation(previous: string, fragment: string) {
+  if (!/\b(?:github|gitlab|repository|repo)\b/.test(normalize(previous))) return false;
+  const text = normalize(fragment);
+  const scope = text.replace(
+    /^(?:(?:minh|toi|i|we)\s+)?(?:chi can|only need|only|just)\s+/,
+    "",
+  );
+  if (scope !== text) {
+    return scope.split(/[,;]|\b(?:and|va)\b/).every((clause) =>
+      /^(?:(?:quyen|permission|role)\s+)?(?:read(?: only)?(?: access)?|write(?: access| permission)?|push branch|(?:open|mo) (?:a )?pr)[.!]*$/.test(clause.trim()) ||
+      /^(?:no|not|without|khong(?: can)?)\s+(?:admin(?: access)?|owner(?: access)?|bypass branch protection)[.!]*$/.test(clause.trim()),
+    );
+  }
+  const [description, ...limits] = text.split(",").map((clause) => clause.trim());
+  return (
+    /^(?:day chi la repo noi bo|this is (?:only|just) an? internal (?:repo|repository))[.!]*$/.test(description) &&
+    limits.every((clause) => {
+      // Each item in an explicitly negated install/run list shares that negation.
+      const list = clause.replace(/^(?:khong|no|not)\s+/, "");
+      return list !== clause && list.split(/\b(?:hay|or)\b/).every((item) =>
+        /^(?:cai|install|chay|run)\s+[a-z0-9 -]+[.!]*$/.test(item.trim()) &&
+        !/\b(?:and|va|but|nhung|then|send|share|transfer|chuyen|delete|drop|grant|open|bypass)\b/.test(item),
+      );
+    })
+  );
+}
+
+function isVpnDeviceContext(previous: string, fragment: string) {
+  return standardVpnAccess(normalize(previous)) &&
+    /^(?:dung laptop cong ty(?: co edr day du)?|(?:using|from) (?:a )?(?:managed|company) laptop(?: with edr)?)[.!]*$/.test(normalize(fragment));
+}
+
+function isDatabaseAuthorizationContext(previous: string, fragment: string) {
+  if (!hasDirectDatabaseOperation(normalize(previous))) return false;
+  const text = normalize(fragment);
+  return (
+    /^(?:cfo|business owner|finance owner|data owner) (?:da |has )?(?:ok|approved|approve) (?:ve|for) business purpose (?:tren|on|in|via) (?:zalo chat|slack|email)[,.!]*$/.test(text) ||
+    /^(?:chua co|no|without|not yet) (?:dba|data owner) sign off[.!]*$/.test(text) ||
+    /^(?:nho cap tam|please grant temporary access) (?:den|until) (?:sang mai|ngay mai|tomorrow(?: morning)?)[.!]*$/.test(text)
+  );
+}
+
+function isUncertaintyContext(fragment: string) {
+  return /^(?:(?:minh|toi|i|we) )?(?:khong chac (?:co )?lien quan(?: khong)?|(?:am |are )?not sure (?:if|whether) (?:this|it) is related)[.!?]*$/.test(normalize(fragment));
+}
+
+const approvalContextOperations = /\b(?:please|need|want|grant|give|open|change|modify|configure|expose|allow|enable|close|disable|drop|delete|export|dump|wipe|mount|bypass|send|share|deploy|install|create|provision|reset|restart|run|connect|execute|add|turn|use|transfer|pay|migrate|can|dung|cai|chay|chuyen tien|gui)\b/;
+
+function isApprovalContext(fragment: string, previous?: string) {
+  const text = normalize(fragment);
+  const scopeStart = text.search(/,\s*(?=(?:(?:minh|toi|i|we)\s+)?(?:chi can|only need|only|just)\b)/);
+  const claim = scopeStart < 0 ? text : text.slice(0, scopeStart);
+  if (scopeStart >= 0 && (!previous || (
+    !isGitScopeContinuation(previous, text.slice(scopeStart + 1)) &&
+    !isCollaborationScopeContinuation(previous, text.slice(scopeStart + 1))
+  ))) return false;
+  const beginsWithApprover =
+    /^(?:manager|lead|team lead|producer|(?:anh|chi) [a-z]{2,20}\s*,?\s*(?:engineering )?manager)\b/.test(
+      claim,
+    );
+  const claimsApproval = /\b(?:approve|approved|approving|duyet|phe duyet)\b/.test(
+    claim,
+  );
+  const containsSeparateOperation = asserted(
+    claim.replace(/\bdung den (?:het thu (?:hai|ba|tu|nam|sau|bay)|cuoi sprint|cuoi tuan|ngay mai)\b/g, "timeframe"),
+    approvalContextOperations,
+  );
+  const hasIndependentConjunct = claim
+    .split(/\b(?:and|va|but|nhung)\b/)
+    .slice(1)
+    .some((clause) =>
+      !/^(?:no|not|without|khong|only|just|chi)\b/.test(clause.trim()),
+    );
+  return (
+    beginsWithApprover &&
+    claimsApproval &&
+    !containsSeparateOperation &&
+    !hasIndependentConjunct
+  );
+}
+
+function isApprovalReferenceContext(fragment: string) {
+  const text = normalize(fragment);
+  const reference = text.split(",", 1)[0]?.trim() ?? "";
+  const remainder = text.slice(reference.length).trim();
+  const containsSeparateOperation = asserted(
+    text,
+    approvalContextOperations,
+  );
+  const hasIndependentConjunct = text
+    .split(/\b(?:and|va|but|nhung)\b/)
+    .slice(1)
+    .some((clause) =>
+      !/^(?:no|not|without|khong|only|just|chi)\b/.test(clause.trim()),
+    );
+  return (
+    /^(?:(?:manager|lead|team lead|producer) )?approval(?: reference| ticket| id)?(?:\s*[:=]\s*|\s+(?:is|nam o|o|in|at)\s+)[a-z][a-z0-9 ]{1,60}[.!]?$/.test(reference) &&
+    /\b[a-z][a-z0-9]{1,12} \d{2,10}\b/.test(reference) &&
+    (!remainder || /^,?\s*(?:thoi han|duration|timeframe|valid until|expires|ends|until|dung den|no|not|without|khong|only|just|chi)\b[^.!?]{0,100}$/.test(remainder)) &&
+    !containsSeparateOperation &&
+    !hasIndependentConjunct
+  );
+}
+
 export function detectedRisks(raw: string): RiskSignal[] {
-  const text = normalize(raw);
+  const normalized = normalize(raw);
+  const text = documentationOnlyDatabaseReference(normalized)
+    ? normalized.replace(/\b(?:production|prod)\s+(?:database|db)\b/g, "documentation reference")
+    : normalized;
   const risks = new Set<RiskSignal>();
   if (
     asserted(text,
@@ -185,6 +428,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
 }
 
 function environmentOf(text: string): Environment {
+  if (documentationOnlyDatabaseReference(text)) return "unknown";
   if (asserted(text, /production|\bprod\b/)) return "production";
   if (/\bstaging\b|\buat\b|\bqa\b/.test(text)) return "staging";
   if (/\bsandbox\b/.test(text)) return "sandbox";
@@ -214,6 +458,17 @@ function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
     return ["DEVICE_BOOT", "DEVICE_FACTORY_RESET", "CONFIGURATION_CHANGE"];
   if (asserted(text, /\bwipe\b|xoa toan bo (?:may|thiet bi)/))
     return ["DEVICE_BOOT", "DEVICE_WIPE", "CONFIGURATION_CHANGE"];
+  // A Jira/Confluence resource can mention ports or databases without asking
+  // to change those systems. Explicit system operations still take precedence.
+  if (collaborationDocumentAccess(text))
+    return ["ACCOUNT_ACCESS", "REQUEST_STANDARD_ACCESS", "ACCESS_REQUEST"];
+  // A managed VPN profile request is access provisioning, not a port change.
+  if (standardVpnAccess(text))
+    return ["NETWORK_VPN", "VPN_SETUP", "ACCESS_REQUEST"];
+  if (databaseProvisioningRequest(text))
+    return ["DATABASE", "DATABASE_PROVISION", "ROUTINE_WORKFLOW"];
+  if (computeProvisioningRequest(text))
+    return ["CLOUD_GPU", "CLOUD_VM_REQUEST", "ROUTINE_WORKFLOW"];
   if (/shutdown|shut down|tat may|power off/.test(text))
     return ["DEVICE_BOOT", "DEVICE_SHUTDOWN_GUIDANCE", "GUIDANCE"];
   if (
@@ -296,7 +551,7 @@ function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
       /cach|how|use|su dung/.test(text) ? "GUIDANCE" : "ROUTINE_WORKFLOW",
     ];
   if (/backup|restore|storage|bucket|file share/.test(text))
-    return ["STORAGE", "BACKUP_REQUEST", "ROUTINE_WORKFLOW"];
+    return ["STORAGE", /restore/.test(text) ? "RESTORE_REQUEST" : "BACKUP_REQUEST", "ROUTINE_WORKFLOW"];
   if (/access|quyen|permission|admin|jira|confluence/.test(text))
     return ["ACCOUNT_ACCESS", "REQUEST_STANDARD_ACCESS", "ACCESS_REQUEST"];
   if (/how to|lam sao|huong dan|cach su dung/.test(text))
@@ -311,6 +566,10 @@ function classify(text: string): [ServiceGroup, string, RequestKind] {
     /\b(?:vpn|wi fi|wifi|mfa)\s+(?:is working|works fine|van binh thuong|binh thuong|khong bi loi|van vao web duoc)\b/g,
     " ",
   );
+  // A symptom cannot route an explicitly requested destructive DB operation
+  // to laptop guidance. The existing authority/destructive rules still decide.
+  if (hasDirectDatabaseOperation(relevant) && asserted(relevant, /\b(?:drop (?:table|bang)|delete (?:from|table)|truncate (?:table|bang))\b/))
+    return ["DATABASE", "DATABASE_SCHEMA_CHANGE", "CONFIGURATION_CHANGE"];
   const candidates: Array<{
     score: number;
     group: ServiceGroup;
@@ -410,11 +669,31 @@ export function extractText(rawText: string): Extraction {
   for (const [key, pattern] of Object.entries({
     cpu: /(\d+)\s*vcpu/,
     ram: /(\d+)\s*gb\s*ram/,
-    disk: /(?:disk\s*)(\d+)\s*gb/,
-    quantity: /(\d+)\s*(?:x\s*)?(?:gpu|a100|h100|t4)/,
+    disk: /(?:disk\s*)(\d+)\s*gb|(\d+)\s*gb\s*disk\b/,
+    quantity: /(\d+)\s*(?:x\s*)?(?:(?:shared|dedicated)\s+)?(?:gpu|a100|h100|t4)\b/,
   })) {
     const match = text.match(pattern);
-    if (match) entities[key] = match[1];
+    if (match) entities[key] = match[1] || match[2];
+  }
+  // Preserve stated resource paths and purposes; do not invent a provider,
+  // deadline or verified authority from a routine-looking request.
+  if (serviceGroup === "GIT_PERMISSION") {
+    const provider = text.match(/\b(github|gitlab)\b/);
+    if (provider) entities.provider = provider[1];
+    const repository = rawText.match(/\b(?:repo|repository)\s+([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+){1,5})(?=\s|[,;.!?]|$)/i);
+    if (repository) entities.repository = repository[1].replace(/\.+$/, "");
+  }
+  if (["GIT_PERMISSION", "CLOUD_GPU", "ACCOUNT_ACCESS", "DATABASE"].includes(serviceGroup)) {
+    const purpose = rawText.match(/\s(?:để|de|cho mục đích|cho muc dich)\s+([^;.\n,]{1,250})/i) ||
+      rawText.match(/\s(?:to|for)\s+((?:test|support|review|replay|benchmark|render|backfill|sync|train|open|follow|update)\b[^;.\n,]{0,240})/i);
+    if (purpose) entities[serviceGroup === "CLOUD_GPU" ? "purpose" : "reason"] = purpose[1].trim();
+  }
+  if (standardVpnAccess(text)) {
+    entities.service = "VPN";
+    const source = rawText.match(/\b(?:managed|company) laptop\b|\blaptop (?:managed|công ty|cong ty)\b/i);
+    const target = rawText.match(/\b(?:qa|dev|development) (?:subnet|network)\b/i);
+    if (source) entities.source = source[0];
+    if (target) entities.target = target[0];
   }
   // Explicit labelled facts are extracted without an LLM; preserve original resource spelling.
   for (const [key, label] of Object.entries(factLabels)) {
@@ -678,8 +957,13 @@ export function extractIntake(
   const parts = input.rawText
     // "but still" describes the same symptom; risks are already evaluated on the full original text.
     .replace(/\b(?:nhưng|nhung|but)\s+(?:vẫn|van)\b/gi, "vẫn")
+    // In this conditional, "then" connects the same provisioning request.
+    .replace(/\b(if possible)\s+then\s+(?=provision\b)/gi, "$1 ")
+    // Two explicitly requested collaboration resources have independent scope
+    // and approval checks; do not inherit one target's approval onto the other.
+    .replace(/(\b(?:access|quyền|quyen)\s+(?:(?:to|vào|vao)\s+)?(?:jira project|confluence space)\s+[A-Za-z0-9_-]+)\s+(?:and|và|va)\s+(?=(?:jira project|confluence space)\b)/gi, "$1; ")
     .split(
-      /(?:\n|;|\.\s+|\b(?:nhưng|nhung|but|tiện thể|tien the|ngoài ra|ngoai ra|and also|and then|then|đồng thời|dong thoi|cùng lúc|cung luc)\b|\band\s+(?=(?:grant|give|open|disable|turn|export|deploy|delete|restart|create|cap|mo|tat|xuat|trien khai)\b))/i,
+      /(?:\n|;|\.\s+|\b(?:nhưng|nhung|but|tiện thể|tien the|ngoài ra|ngoai ra|and also|and then|then|đồng thời|dong thoi|cùng lúc|cung luc)\b|\band\s+(?=(?:grant|give|open|disable|turn|deploy|delete|restart|create|cap|mo|tat|xuat|trien khai)\b)|(?<!\b(?:select|read)\s+)\band\s+(?=export\b))/i,
     )
     .map((part) => part.trim())
     .filter(Boolean)
@@ -697,10 +981,33 @@ export function extractIntake(
       // These complete, bounded questions add no operation or scope. Do not
       // discard arbitrary unknown fragments, or extra actions hidden in prose.
       const guidanceFollowup = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) tu dau|ban huong dan(?: giup toi)? duoc khong)[?.!]*$/.test(normalize(fragment));
-      // A complete approval claim adds provenance, not a task or verified authority.
-      // Anchor both ends so a second operation cannot hide behind this metadata.
-      const approvalContext = /^(?:manager|lead|team lead|producer)(?: cua (?:toi|minh))? (?:da |has |already )?(?:confirm )?approv(?:e|ed|al)(?: (?:o|tai|trong|qua|tren|in|at|on|via))?(?: (?:ticket|request|thread|comment))? (?:[a-z][a-z0-9]{1,12} \d{2,10}|slack|email)[.!]?$/.test(normalize(fragment));
-      if ((factLabel || guidanceFollowup || approvalContext) && requests.length)
+      // Approval claims add provenance, not a task or verified authority.
+      const previous = requests.at(-1);
+      const approvalContext = isApprovalContext(fragment, previous);
+      const approvalReferenceContext = isApprovalReferenceContext(fragment);
+      const scopeConstraint = isScopeConstraint(fragment);
+      const resourceContinuation =
+        previous && isResourceProvisioningContinuation(previous, fragment);
+      const collaborationScope =
+        previous && isCollaborationScopeContinuation(previous, fragment);
+      const gitScope = previous && isGitScopeContinuation(previous, fragment);
+      const vpnDevice = previous && isVpnDeviceContext(previous, fragment);
+      const databaseAuthorization = previous && isDatabaseAuthorizationContext(previous, fragment);
+      const uncertaintyContext = isUncertaintyContext(fragment);
+      if (
+        requests.length &&
+        (factLabel ||
+          guidanceFollowup ||
+          approvalContext ||
+          approvalReferenceContext ||
+          scopeConstraint ||
+          resourceContinuation ||
+          collaborationScope ||
+          gitScope ||
+          vpnDevice ||
+          databaseAuthorization ||
+          uncertaintyContext)
+      )
         requests[requests.length - 1] += `; ${fragment}`;
       else requests.push(fragment);
       return requests;
