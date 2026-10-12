@@ -272,6 +272,24 @@ export const permissionMappings: Array<{
     pattern: /\b(?:quyen comment|comment (?:access|permission|in|trong))\b/ },
 ];
 
+export const manualReviewRules = [
+  {
+    factRuleId: "FACT-VPN-001", id: "AUTH-VPN-001", team: "Network / Reviewer",
+    reason: "Cấp quyền VPN cần Network xác nhận phạm vi và cấu hình trước khi thực hiện.",
+    question: "Network đã xác nhận thiết bị, mạng đích, profile VPN và thời điểm thu hồi quyền chưa?",
+  },
+  {
+    factRuleId: "FACT-DB-PROVISION-001", id: "AUTH-DB-PROVISION-001", team: "DBA/Data / Reviewer",
+    reason: "Cấp database mới cần DBA xác nhận cấu hình và phương án vận hành.",
+    question: "DBA đã xác nhận cấu hình, workload, backup và ngày thu hồi database chưa?",
+  },
+  {
+    factRuleId: "FACT-COLLAB-001", id: "AUTH-COLLAB-001", team: "IAM/IT / Resource owner",
+    reason: "Phạm vi quyền nội dung này cần IAM và owner tài nguyên xử lý trước khi cấp.",
+    question: "Owner đã xác nhận project/space/page, mức quyền tối thiểu và thời điểm thu hồi chưa?",
+  },
+];
+
 export const securityServiceRule = {
   id: "AUTH-010",
   bucket: "BEYOND_AUTHORITY" as const,

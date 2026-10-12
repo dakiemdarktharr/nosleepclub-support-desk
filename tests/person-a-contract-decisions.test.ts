@@ -171,3 +171,46 @@ it("exposes the required access and sizing facts to structured intake", () => {
   expect(catalog.DATABASE.fields).toEqual(expect.arrayContaining(["cpu", "ram", "disk"]));
   expect(catalog.ACCOUNT_ACCESS.fields).toContain("resourceScope");
 });
+function completeStructured(serviceGroup: SupportInput["serviceGroup"], requestKind: SupportInput["requestKind"], fields: Record<string, string>) {
+  return extractIntake({ ...input("", { duration: "2 hours", reason: "Review synthetic test workload", ...fields }),
+    mode: "structured", serviceGroup, requestKind });
+}
+it("routes complete authorized VPN provisioning to Network rather than asking for a missing policy", () => {
+  const request = completeStructured("NETWORK_VPN", "ACCESS_REQUEST", {
+    intentLabel: "VPN_SETUP", service: "VPN", source: "company laptop",
+    target: "QA subnet", environment: "staging", requestedAction: "access",
+  });
+  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({
+    action: "ESCALATE", bucket: "BEYOND_AUTHORITY", ruleIds: ["AUTH-VPN-001"], assignedTeam: "Network / Reviewer",
+  });
+});
+it("preserves structured VPN setup diagnostics when access provisioning is not requested", () => {
+  const request = completeStructured("NETWORK_VPN", undefined, { intentLabel: "VPN_SETUP" });
+  expect(request.requestKind).toBe("SAFE_DIAGNOSTIC");
+  expect(evaluatePolicy(request)).toMatchObject({ action: "AUTO_APPROVE", handlingMode: "LLM_ASSIST" });
+});
+it("routes complete database provisioning to DBA", () => {
+  const request = completeStructured("DATABASE", "ROUTINE_WORKFLOW", {
+    intentLabel: "DATABASE_PROVISION", system: "postgresql", environment: "staging",
+    cpu: "2", ram: "4", disk: "20",
+  });
+  expect(evaluatePolicy(request)).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-DB-PROVISION-001"] });
+});
+it("routes complete Confluence editing to the known IAM/resource owner", () => {
+  const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
+    intentLabel: "REQUEST_WRITE_ACCESS", targetSystem: "confluence", resourceScope: "TEAM", accessType: "write",
+  });
+  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-COLLAB-001"] });
+});
+it("routes complete standard collaboration access without a permitted AUTO environment to its known owner", () => {
+  const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
+    intentLabel: "REQUEST_STANDARD_ACCESS", targetSystem: "jira", resourceScope: "TEAM", accessType: "standard",
+  });
+  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-COLLAB-001"] });
+});
+it("preserves the existing complete verified standard-access AUTO whitelist", () => {
+  const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
+    intentLabel: "REQUEST_STANDARD_ACCESS", targetSystem: "jira", resourceScope: "TEAM", accessType: "standard", environment: "staging",
+  });
+  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({ action: "AUTO_APPROVE", ruleIds: ["ROUTINE-001"] });
+});

@@ -34,6 +34,13 @@ branch `codex/person-a-benchmark`. Giữ nguyên input, Ground Truth và expecte
 8. Các nhãn AUTO gốc có thể tiếp tục mismatch với contract này. Ghi rõ xung đột
    nhãn/evidence; không đổi expected. Chưa coi development là held-out.
 
+Rà soát sau commit e991b64: yêu cầu đủ facts nhưng nằm ngoài whitelist AUTO
+phải chuyển team đã biết với AUTH-VPN-001, AUTH-DB-PROVISION-001 hoặc
+AUTH-COLLAB-001, thay vì hỏi lại policy owner bằng AUTH-005. Rule này chạy sau
+whitelist AUTO hiện có; không làm case đang được phép AUTO chuyển sang ESC.
+Structured VPN_SETUP với requestKind ACCESS_REQUEST đi qua contract cấp quyền;
+VPN_SETUP không yêu cầu cấp quyền vẫn giữ chẩn đoán/hướng dẫn.
+
 ## Tiêu chí kiểm tra
 
 - Câu hỏi đúng mục đích cấp quyền/cấp tài nguyên; mapping dựa trên evidence.
