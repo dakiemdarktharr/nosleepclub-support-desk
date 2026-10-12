@@ -11,6 +11,7 @@ import {
   bucketPriority,
   demoResourceLimits,
   guidanceRules,
+  manualReviewRules,
   POLICY_VERSION,
   productionDatabaseRule,
   productionExportAuthorityRule,
@@ -729,6 +730,19 @@ function evaluateSinglePolicy(
         "Đã mô phỏng tiếp nhận; chưa có thao tác hạ tầng hay cấp quyền thật.",
     };
   }
+
+  const reviewRule = manualReviewRules.find((rule) =>
+    rule.factRuleId === requiredFactRuleFor(request)?.id,
+  );
+  if (reviewRule) return {
+    ...base, action: "ESCALATE", handlingMode: "HUMAN_REVIEW",
+    bucket: "BEYOND_AUTHORITY", uncertaintyClass: "AUTHORITY_REQUIRED",
+    ruleIds: [reviewRule.id], assignedTeam: reviewRule.team,
+    questions: [], reviewerQuestions: [reviewRule.question],
+    userReason: reviewRule.reason,
+    adminReason: `${reviewRule.id}: ${reviewRule.reason}`,
+    nextStep: "Team phụ trách kiểm tra phạm vi và tiếp nhận xử lý; chưa có thao tác cấp quyền hoặc hạ tầng thật.",
+  };
 
   return {
     ...base,
