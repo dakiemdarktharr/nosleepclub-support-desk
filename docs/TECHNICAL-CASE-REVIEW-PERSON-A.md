@@ -199,10 +199,11 @@ quyết mâu thuẫn contract. Cross-review và đánh giá độc lập chưa �
    đối chiếu cả positive controls/extra operations trong regression.
 2. Chủ policy/adjudicator ghi quyết định cho ba nhóm và required-fields contract
    nêu trên. Chỉ cập nhật policy/nhãn sau adjudication được ghi lại.
-3. Code candidate đã commit local ở SHA `c682c7d2a29be913f223b3e4e7881941c26c731f`;
-   chưa push/mở PR và chưa có B/C cross-review. Candidate vẫn dùng policy/cache
-   version v5.9. Khi chuẩn bị phát hành, cần tăng epoch/version của preview/cache
-   cho thay đổi extraction; metadata này không thay authority/risk gate.
+3. Code candidate mới theo quyết định người dùng ở commit
+   `183ef1edf97229e4cd5085d923fdc302bb939266`; chưa push/mở PR và chưa có B/C
+   cross-review. Runtime policy/cache đã tăng v5.10, preview/cache v5.9 phải tạo
+   lại. Evidence trên commit sạch được ghi trong decision log mới. Candidate v11
+   và benchmark lịch sử tại c682c7d được giữ ở phần xác nhận bên trên.
 
 Artifact raw và comparison giữ local, không đưa trace vào repo:
 
