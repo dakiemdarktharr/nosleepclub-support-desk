@@ -13,6 +13,8 @@ import {
   guidanceRules,
   POLICY_VERSION,
   productionDatabaseRule,
+  productionExportAuthorityRule,
+  provisioningInformationRule,
   riskRules,
   securityServiceRule,
 } from "./policy-source";
@@ -270,6 +272,23 @@ function approvalFields(approval: Approval, request: CanonicalRequest) {
   };
 }
 
+function isProductionExportAuthorityRequest(request: CanonicalRequest) {
+  if (
+    request.serviceGroup !== "DATABASE" ||
+    request.environment !== "production" ||
+    request.intentLabel !== "DATABASE_EXPORT" ||
+    isMissing("reason", request.entities.reason || request.entities.businessPurpose)
+  ) return false;
+  const evidence = normalize(
+    [
+      ...request.evidence.map((item) => item.quote),
+      request.entities.destination || "",
+      request.entities.dataSensitivity || "",
+    ].join(" "),
+  );
+  return !productionExportAuthorityRule.securityIndicators.test(evidence);
+}
+
 function evaluateSinglePolicy(
   request: CanonicalRequest,
   approval: Approval,
@@ -277,9 +296,13 @@ function evaluateSinglePolicy(
   const missing = missingFacts(request);
   if (requiresApproval(request) && approval.status !== "verified")
     missing.push("verifiedApproval");
+  const productionExportAuthority = isProductionExportAuthorityRequest(request);
   const matched = riskRules.filter((rule) =>
-    request.riskSignals.includes(rule.signal),
+    request.riskSignals.includes(rule.signal) &&
+    !(rule.signal === "DATA_EXPORT" && productionExportAuthority),
   );
+  if (productionExportAuthority && request.riskSignals.includes("DATA_EXPORT"))
+    matched.push(productionExportAuthorityRule);
   const databaseAuthority =
     request.serviceGroup === "DATABASE" &&
     (request.environment === "production" ||
@@ -361,7 +384,10 @@ function evaluateSinglePolicy(
       nextStep:
         "Reviewer kiểm tra evidence và phạm vi; hệ thống không thực hiện thay đổi thật.",
       questions: [],
-      reviewerQuestions: request.riskSignals.includes("PUBLIC_EXPOSURE")
+      reviewerQuestions:
+        productionExportAuthority && bucket === "BEYOND_AUTHORITY"
+          ? [productionExportAuthorityRule.question, productionExportAuthorityRule.destinationQuestion]
+          : request.riskSignals.includes("PUBLIC_EXPOSURE")
         ? [
             "Nguồn, đích và cổng nào cần kết nối? Có thể dùng VPN hoặc giới hạn địa chỉ nguồn không?",
             "Ai chịu trách nhiệm phê duyệt và đóng kết nối sau thời hạn?",
@@ -495,8 +521,17 @@ function evaluateSinglePolicy(
     const uniqueMissing = [...new Set(missing)];
     const plan = clarificationPlan(request, uniqueMissing);
     const questions = plan.questions;
+    const provisioningReview =
+      provisioningInformationRule.intentLabels.includes(request.intentLabel) &&
+      uniqueMissing.some((field) =>
+        provisioningInformationRule.sizingFields.includes(field),
+      );
     return {
       ...base,
+      action: provisioningReview ? "ESCALATE" : base.action,
+      handlingMode: provisioningReview ? "HUMAN_REVIEW" : base.handlingMode,
+      reviewerQuestions: provisioningReview ? [provisioningInformationRule.question] : undefined,
+      nextStep: provisioningReview ? provisioningInformationRule.nextStep : base.nextStep,
       missingFields: uniqueMissing,
       clarificationFields: plan.fields,
       questions,
@@ -505,12 +540,15 @@ function evaluateSinglePolicy(
           ? "INFO-RESET"
           : "INFO-001",
         ...(missing.includes("verifiedApproval") ? ["INFO-005"] : []),
+        ...(provisioningReview ? [provisioningInformationRule.id] : []),
       ],
       userReason:
-        request.intentLabel === "DEVICE_RESET_GUIDANCE"
+        provisioningReview
+          ? provisioningInformationRule.reason
+          : request.intentLabel === "DEVICE_RESET_GUIDANCE"
           ? questions[0]
           : "Cần thêm dữ kiện cụ thể để đánh giá đúng phạm vi.",
-      adminReason: `Thiếu hoặc mơ hồ: ${uniqueMissing.join(", ")}. Không suy diễn scope/approval.`,
+      adminReason: `${provisioningReview ? provisioningInformationRule.id + ": " : ""}Thiếu hoặc mơ hồ: ${uniqueMissing.join(", ")}. Không suy diễn scope/approval.`,
     };
   }
 

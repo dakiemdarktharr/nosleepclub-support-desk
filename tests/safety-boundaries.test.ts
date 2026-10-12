@@ -25,13 +25,13 @@ const intake = (
   idempotencyKey: crypto.randomUUID(),
 });
 it("load/download and monitoring are not peripheral keywords", () => {
-  for (const text of [
-    "Provision ETL server to load data into warehouse",
-    "Tải download software theo nhu cầu dự án",
-  ]) {
+  for (const [text, action] of [
+    ["Provision ETL server to load data into warehouse", "ESCALATE"],
+    ["Tải download software theo nhu cầu dự án", "NEEDS_INFORMATION"],
+  ] as const) {
     const request = extractIntake(intake(text));
     expect(request.serviceGroup).not.toBe("DEVICE_BOOT");
-    expect(evaluatePolicy(request).action).toBe("NEEDS_INFORMATION");
+    expect(evaluatePolicy(request).action).toBe(action);
   }
   expect(
     extractIntake(intake("Monitoring metrics trong staging")).serviceGroup,

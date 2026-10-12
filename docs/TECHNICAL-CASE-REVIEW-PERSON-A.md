@@ -3,7 +3,15 @@
 Ngày 11/10/2026 (ICT). Báo cáo này bổ sung trace mới cho 24 case đầu trong
 [TECHNICAL-CASE-REVIEW.md](TECHNICAL-CASE-REVIEW.md). Đây là phân tích có AI
 hỗ trợ, chưa phải phân xử độc lập. Không đổi fixture, input, Ground Truth,
-expected action/bucket/rule, approval registry hay policy.
+expected action/bucket/rule hay approval registry. Policy runtime cập nhật theo
+decision log của người dùng bên dưới.
+
+Cập nhật 12/10/2026: sau chỉ dẫn của người dùng, runtime policy v5.10 chuyển bốn
+case thiếu thông tin thành ESC/MISSING và TC010 thành ESC/BEYOND. Candidate mới
+đạt 62/128 exact so với baseline v5.9 56/128; 5/24 case A đạt, còn 19 mismatch.
+Decision log, phạm vi rule và evidence mới ở
+[PERSON-A-POLICY-DECISIONS.md](PERSON-A-POLICY-DECISIONS.md). Các đoạn benchmark
+v11 bên dưới là lịch sử trước thay đổi policy; bảng 24 case dùng actual mới v5.10.
 
 ## Phạm vi và cách chạy
 
@@ -62,7 +70,7 @@ Candidate provenance: source revision `163a7940bd98ee6492b21fc1c3f3411338e648aa`
 runtime dirty `true`, runtime digest
 `e955570552ce06068654bdda8030f04f053a13dff91779dcdfa81708c2fda3bd`.
 
-## Phân tích 24 case
+## Phân tích 24 case — actual v5.10
 
 `INFO` = `NEEDS_INFORMATION`; `ESC` = `ESCALATE`; `AUTO` = `AUTO_APPROVE`.
 Độ tin cậy dưới đây nói về chẩn đoán nguyên nhân theo trace và policy đang có,
@@ -73,16 +81,16 @@ trích xuất cũ đã được sửa; mismatch còn lại vẫn cần xử lý 
 | --- | --- | --- | --- | --- |
 | 1 `verify-001-github-access` | AUTO/ROUTINE | INFO/MISSING · INFO-001, INFO-005; thiếu `permission`, `duration`, `verifiedApproval`. Input nêu GitHub collaborator, push branch/PR và manager claim. | Code đã sửa task phụ giả; còn mapping quyền Git và gate approval/TTL. **Cao** về actual/missing fields; chưa kết luận nhãn. | “collaborator/push branch + PR” có chuẩn hóa thành Write không? Approval có phải tra registry và TTL bắt buộc không? |
 | 2 `verify-002-small-sandbox` | AUTO/ROUTINE | ESC/BEYOND · AUTH-007; thiếu `provider`, `budgetOrQuota`, `verifiedApproval`. Input có 2 vCPU/4GB/disk 20GB/3 ngày, không public IP, lead claim. | Code đã bỏ UNKNOWN/AUTH-005 giả; approval reference không xác minh được và provider/quota chưa có. **Cao** về gate hiện tại. | Có approval record tương ứng trong registry không? Sandbox thiếu provider/quota có được routine không? |
-| 3 `verify-003-etl-missing-specs` | ESC/MISSING | INFO/MISSING · INFO-001, INFO-005; thiếu provider/environment/duration/quota/sizing/approval. Input chỉ nêu ETL và cấu hình chung, không có sizing. | Action expected xung đột với policy missing-info hiện tại; lỗi tách câu đã có regression. **Cao**; tài liệu policy review cũng ghi conflict này. | Khi thiếu thông tin, contract là hỏi thêm `NEEDS_INFORMATION` hay chuyển hàng đợi `ESCALATE`? |
+| 3 `verify-003-etl-missing-specs` | ESC/MISSING | ESC/MISSING · INFO-001, INFO-005, INFO-PROVISION-001; thiếu provider/environment/duration/quota/sizing/approval. Input chỉ nêu ETL và cấu hình chung, không có sizing. | Quyết định người dùng đã được triển khai thành rule human review trước cấp tài nguyên. **Cao**; regression và benchmark đạt. | Đã chốt ESC/MISSING; reviewer xác nhận sizing/TTL trước cấp. |
 | 4 `TC001` | AUTO/ROUTINE | INFO/MISSING · INFO-001, INFO-005; thiếu `symptom`, `requestedAction`, `urgency`, `verifiedApproval`. Input là yêu cầu corporate VPN vào QA subnet từ managed laptop, có thời hạn và approval claim. | Code đã sửa nhầm sang port request; remaining mismatch là required-fields contract của VPN provisioning và approval. **Cao** về runtime; nhãn cần owner. | VPN cấp profile/subnet có cần symptom/urgency không? Điều kiện approval/TTL là gì? |
 | 5 `TC002` | AUTO/ROUTINE | INFO/MISSING · INFO-001, INFO-005; thiếu provider/quota/approval. Input nêu 2 vCPU/8GB/40GB, shared T4, 48h, synthetic data, không production/public IP. | Code đã sửa parse disk/GPU và phủ định scope; provider/quota/approval vẫn thiếu theo contract. **Cao** về actual. | Provider/quota nào là bắt buộc? Manager claim có đủ hay phải verified registry? |
 | 6 `TC003` | AUTO/ROUTINE | INFO/MISSING · INFO-001, INFO-005; thiếu duration/approval. Input nêu GitHub Write cho PR trong sprint và manager claim. | Code đã giữ Git request/approval context; “sprint” chưa được coi là TTL xác định và approval chưa verified. **Cao** về actual. | “trong sprint” có đáp ứng TTL không? Approval reference cần registry check nào? |
 | 7 `TC004` | AUTO/ROUTINE | INFO/MISSING · INFO-001, INFO-005; thiếu environment/accessType/duration/approval/reason. Input yêu cầu Jira project và Confluence space riêng, User/Editor role, producer claim. | Code đã tách hai resource và không chia sẻ approval; mapping role User/Editor và required fields chưa có contract. **Cao** về hai subrequest và missing fields. | User/Editor tương ứng permission nào? Cần environment/reason/TTL và approval riêng cho từng resource không? |
 | 8 `TC005` | AUTO/ROUTINE | ESC/BEYOND · AUTH-007; thiếu provider/quota/verifiedApproval. Input có sandbox 4 vCPU/12GB/80GB/5 ngày, synthetic data, không inbound, lead claim tại ticket. | Approval claim/reference chưa xác minh; provider/quota chưa nêu. Không thấy mismatch extraction còn lại. **Cao** về actual gate. | Xác nhận registry có approval hợp lệ không; routine sandbox cần provider/quota đến mức nào? |
-| 9 `TC006` | ESC/MISSING | INFO/MISSING · INFO-001, INFO-005; thiếu provider/environment/TTL/quota/sizing/approval. Input nêu ETL VM/Airflow, DAG sẵn, sizing và thời gian giữ máy chưa chốt. | Action mismatch theo policy missing-info; parser giữ sizing/context cùng request. **Cao**; cần owner quyết định action contract. | Ca thiếu sizing nên hỏi thêm hay chuyển nhân viên? |
-| 10 `TC007` | ESC/MISSING | INFO/MISSING · INFO-001; thiếu `resourceScope`, `permission`, `duration`. Input xin PostgreSQL staging DB để reconcile; CPU/RAM và ngày release chưa chốt. | Code đã nhận diện `DATABASE_PROVISION`; bộ required fields hiện giống yêu cầu DB access. Có thêm action-label conflict. **Khá cao** về contract mismatch. | Database provisioning cần fields nào khác DB access? Action khi thiếu sizing/TTL là gì? |
-| 11 `TC008` | ESC/MISSING | INFO/MISSING · INFO-001, INFO-005; thiếu provider/environment/TTL/quota/sizing/approval. Input nêu Kafka Connect worker; throughput/retention/instance size/timeframe chưa chốt. | Code đã giữ readiness facts cùng provisioning request; còn action-label conflict theo missing-info policy. **Cao**. | Thiếu sizing thì hỏi thêm hay chuyển nhân viên? |
-| 12 `TC010` | ESC/BEYOND | ESC/SECURITY · SEC-005, AUTH-002, AUTH-001; input yêu cầu SELECT/export từ production DB; CFO xác nhận mục đích nhưng DBA sign-off còn thiếu. | Expected bucket xung đột với SEC-005/precedence hiện tại. Code giữ approval context; không nên hạ gate để khớp expected. **Cao** về rule trace, bucket do owner quyết. | Production data export thuộc SECURITY hay BEYOND_AUTHORITY khi có business purpose nhưng thiếu DBA approval? |
+| 9 `TC006` | ESC/MISSING | ESC/MISSING · INFO-001, INFO-005, INFO-PROVISION-001; thiếu provider/environment/TTL/quota/sizing/approval. Input nêu ETL VM/Airflow, DAG sẵn, sizing và thời gian giữ máy chưa chốt. | Quyết định chuyển người vì thiếu sizing/TTL đã áp dụng; parser giữ đúng context. **Cao**; regression và benchmark đạt. | Đã chốt ESC/MISSING; Infra xác nhận cấu hình và ngày thu hồi. |
+| 10 `TC007` | ESC/MISSING | ESC/MISSING · INFO-001, INFO-PROVISION-001; thiếu `resourceScope`, `permission`, `duration`. Input xin PostgreSQL staging DB để reconcile; CPU/RAM và ngày release chưa chốt. | Action đã khớp quyết định người dùng; required fields DATABASE_PROVISION vẫn dùng contract DB access. **Cao** về action; contract fields còn mở. | ESC/MISSING đã chốt. Database provisioning cần bộ fields nào khác DB access? |
+| 11 `TC008` | ESC/MISSING | ESC/MISSING · INFO-001, INFO-005, INFO-PROVISION-001; thiếu provider/environment/TTL/quota/sizing/approval. Input nêu Kafka Connect worker; throughput/retention/instance size/timeframe chưa chốt. | Quyết định human review trước cấp worker đã áp dụng. **Cao**; regression và benchmark đạt. | Đã chốt ESC/MISSING; Infra xác nhận sizing/TTL. |
+| 12 `TC010` | ESC/BEYOND | ESC/BEYOND · AUTH-002, AUTH-EXPORT-001, AUTH-001; input yêu cầu SELECT/export từ production DB để reconcile; có business purpose nhưng chưa có DBA sign-off, không nêu đích ngoài kiểm soát. | Quyết định người dùng đã áp dụng theo scope nghiệp vụ; action vẫn ESCALATE, security indicators vẫn giữ Security. **Cao**; regression và benchmark đạt. | Đã chốt BEYOND_AUTHORITY. DBA xác minh tables/quyền/TTL/destination trước xử lý. |
 | 13 `TC015` | ESC/SECURITY | ESC/BEYOND · AUTH-002, AUTH-008, AUTH-001, INFO-001; input yêu cầu drop bảng users trong production DB; câu laptop freeze/restore là context. | Code đã đưa destructive DB request lên đúng nhánh DB; policy hiện kích AUTHORITY, không SECURITY. **Cao** về observed rules; nhãn bucket chưa adjudicate. | Destructive production DB change thuộc SECURITY hay BEYOND_AUTHORITY? |
 | 14 `gt-routine-001-github-monorepo` | AUTO/ROUTINE | ESC/BEYOND · AUTH-007; thiếu duration/verifiedApproval. Input nêu GitHub Write, branch/PR, sprint 42 và approval reference. | Code đã bỏ task phụ giả; approval chưa xác minh và TTL không rõ. **Cao** về actual gate. | TTL của sprint có đủ không; registry chứa approval reference này không? |
 | 15 `gt-routine-002-confluence-rdp-runbook` | AUTO/ROUTINE | INFO/MISSING · INFO-001, INFO-005; thiếu environment/accessType/duration/approval. Input nêu quyền edit Confluence cho tài liệu RDP/port, đồng thời nói không mở network port. | Code đã sửa false port request; còn access contract và approval. **Cao** về code fix/missing fields. | Required fields/approval cho quyền Confluence là gì; manager email có thể verify thế nào? |
@@ -162,7 +170,11 @@ Không chạy E2E, Mongo thật, held-out hay test với dịch vụ/credentials
   đạt. Build có cập nhật artifact retrieval tracked; file được phục hồi nguyên
   trạng thái sau khi kiểm tra.
 
-## Các quyết định owner còn cần
+## Các quyết định owner tại v11
+
+Bảng dưới là trạng thái v11. Người dùng đã chốt nhóm 4 ESC/MISSING và TC010 ở
+decision log mới. Hiện còn 18 AUTO, TC015 và các required-fields/mapping contract
+cần xác nhận; quyền tự soạn câu hỏi không tự xác minh approval hay đổi contract.
 
 | Nhóm trong 24 case A | Số case | Căn cứ và đề xuất phân xử |
 | --- | ---: | --- |
@@ -222,4 +234,4 @@ Comparison v12 (dùng để rà hồi quy, không phát hành):
 Artifact tracked `artifacts/original-fixture-evaluation.json` đã được khôi phục
 nguyên trạng, SHA-256 `c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
 
-Thay đổi policy/expected vẫn chờ owner; không cập nhật Ground Truth trong commit này.
+Các quyết định chưa được người dùng chốt vẫn còn mở; Ground Truth không cập nhật.

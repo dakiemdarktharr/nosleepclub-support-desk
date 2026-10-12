@@ -1,7 +1,7 @@
 import type { Decision, RiskSignal } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.9";
+export const POLICY_VERSION = "support-guidance-v5.10";
 export const demoResourceLimits = {
   gpuCount: 2,
   gpuTypes: ["t4", "a10"],
@@ -190,6 +190,29 @@ export const productionDatabaseRule = {
     "Direct database/data access hoặc export production luôn cần Data owner và reviewer.",
   question:
     "Data scope, destination, retention và approval đúng vai trò cho production là gì?",
+};
+
+// A stated business purpose still requires technical authorization. Explicit
+// sensitive data or an uncontrolled destination keeps the Security route.
+export const productionExportAuthorityRule = {
+  id: "AUTH-EXPORT-001",
+  signal: "DATA_EXPORT" as RiskSignal,
+  bucket: "BEYOND_AUTHORITY" as const,
+  uncertaintyClass: "AUTHORITY_REQUIRED" as const,
+  securityIndicators:
+    /\b(?:customer|khach hang|user data|user records|du lieu nguoi dung|confidential|pii|privacy|dsar|personal data|dump|laptop|personal|external|public|unmanaged|drive|repo(?:sitory)?|bucket|storage|may phan tich|may ca nhan|ca nhan|ben ngoai)\b/,
+  reason: "Đọc hoặc xuất dữ liệu production cần DBA/Data owner xác nhận quyền và phạm vi.",
+  question: "DBA/Data owner đã duyệt những bảng nào, mức quyền nào và thời hạn đến khi nào?",
+  destinationQuestion: "Dữ liệu sẽ được lưu ở đâu và giữ trong bao lâu?",
+};
+
+export const provisioningInformationRule = {
+  id: "INFO-PROVISION-001",
+  intentLabels: ["CLOUD_VM_REQUEST", "DATABASE_PROVISION"] as readonly string[],
+  sizingFields: ["cpu", "ram", "disk", "duration"] as readonly string[],
+  reason: "Yêu cầu cấp tài nguyên còn thiếu cấu hình hoặc thời hạn; cần team phụ trách kiểm tra trước khi cấp.",
+  question: "Infra/DBA đề xuất cấu hình CPU, RAM, dung lượng đĩa và thời hạn sử dụng nào phù hợp với công việc này?",
+  nextStep: "Team Infra/DBA xác nhận cấu hình, thời hạn sử dụng và phê duyệt trước khi cấp tài nguyên.",
 };
 
 export const securityServiceRule = {

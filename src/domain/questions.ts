@@ -43,6 +43,18 @@ const hints: Record<string, [string, string]> = {
   ],
 };
 export function questionFor(field: string, request?: CanonicalRequest) {
+  if (field === "cpu")
+    return "Bạn cần bao nhiêu vCPU? Nếu chưa rõ, cho mình biết loại job và tải dự kiến để team Infra chọn cấu hình.";
+  if (field === "ram")
+    return "Job này dự kiến cần bao nhiêu GB RAM? Nếu chưa đo được, bạn có thể gửi thông tin workload để team kiểm tra.";
+  if (field === "disk")
+    return "Bạn cần bao nhiêu GB đĩa cho dữ liệu và file tạm?";
+  if (field === "duration" && /CLOUD_VM_REQUEST|DATABASE_PROVISION/.test(request?.intentLabel || ""))
+    return "Bạn dự kiến dùng tài nguyên đến khi nào? Có thể ghi số giờ/ngày hoặc ngày thu hồi cụ thể.";
+  if (field === "permission" && request?.serviceGroup === "GIT_PERMISSION")
+    return "Bạn cần chỉ đọc code hay có quyền đẩy branch lên repo?";
+  if (field === "accessType")
+    return "Bạn cần xem, tạo ticket hay sửa nội dung trong ứng dụng này?";
   if (field === "resourceScope" && request?.entities.system)
     return `Trong ${request.entities.system}, bạn cần dùng cơ sở dữ liệu hoặc bảng nào? Chỉ nêu tên, không gửi nội dung dữ liệu.`;
   if (field === "symptom" && request?.serviceGroup === "DATABASE")
@@ -89,6 +101,8 @@ export function clarificationPlan(
   missing: string[],
 ) {
   const priority = [
+    ...(/CLOUD_VM_REQUEST|DATABASE_PROVISION/.test(request.intentLabel)
+      ? ["cpu", "ram", "disk", "duration"] : []),
     "resetType",
     "desiredOutcome",
     "summary",
