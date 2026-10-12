@@ -96,6 +96,12 @@ soát, chuyển DBA/Data reviewer với BEYOND_AUTHORITY; các trường hợp S
 giữ ưu tiên. Preview/cache v5.9 phải tạo lại. Ground Truth, quota và registry
 approval giữ nguyên.
 
+Version v5.11 áp dụng quyết định tiếp theo của Member A: `DESTRUCTIVE` trên
+service DATABASE, environment production khớp `SEC-007/SECURITY_RISK` và chuyển
+Security/DBA. Approval đã xác minh hoặc lời hứa restore không bỏ qua rule này.
+AUTH-008 và các authority rule vẫn có trong audit. Scope khác tiếp tục theo
+rule hiện có; preview/cache v5.10 phải tạo lại. Ground Truth giữ nguyên.
+
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
 - [Hợp đồng đánh giá](docs/EVALUATION.md) mô tả đầu vào và cách tính kết quả.

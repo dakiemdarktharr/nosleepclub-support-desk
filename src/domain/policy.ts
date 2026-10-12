@@ -299,6 +299,8 @@ function evaluateSinglePolicy(
   const productionExportAuthority = isProductionExportAuthorityRequest(request);
   const matched = riskRules.filter((rule) =>
     request.riskSignals.includes(rule.signal) &&
+    (!rule.serviceGroup || rule.serviceGroup === request.serviceGroup) &&
+    (!rule.environment || rule.environment === request.environment) &&
     !(rule.signal === "DATA_EXPORT" && productionExportAuthority),
   );
   if (productionExportAuthority && request.riskSignals.includes("DATA_EXPORT"))
@@ -349,6 +351,9 @@ function evaluateSinglePolicy(
       "BEYOND_AUTHORITY" as "SECURITY_RISK" | "BEYOND_AUTHORITY",
     );
     const winning = matched.filter((rule) => rule.bucket === bucket);
+    const databaseDestruction = winning.find((rule) =>
+      rule.signal === "DESTRUCTIVE" && rule.bucket === "SECURITY_RISK",
+    );
     return {
       ...base,
       action: "ESCALATE",
@@ -375,7 +380,7 @@ function evaluateSinglePolicy(
         bucket === "SECURITY_RISK"
           ? request.riskSignals.includes("PUBLIC_EXPOSURE")
             ? "Security / Network"
-            : request.riskSignals.includes("DATA_EXPORT")
+            : request.riskSignals.includes("DATA_EXPORT") || databaseDestruction
               ? "Security / DBA/Data"
               : "Security"
           : databaseAuthority
@@ -396,6 +401,8 @@ function evaluateSinglePolicy(
           ? [
               "Thông tin bí mật đã lộ cần được thu hồi ở hệ thống nào? Không yêu cầu người dùng gửi lại giá trị.",
             ]
+          : databaseDestruction
+            ? [databaseDestruction.question]
           : request.riskSignals.includes("PRIVILEGED") ||
               request.riskSignals.includes("PRODUCTION_CHANGE")
             ? [

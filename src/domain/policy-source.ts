@@ -1,7 +1,7 @@
-import type { Decision, RiskSignal } from "./contracts";
+import type { Decision, Environment, RiskSignal, ServiceGroup } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.10";
+export const POLICY_VERSION = "support-guidance-v5.11";
 export const demoResourceLimits = {
   gpuCount: 2,
   gpuTypes: ["t4", "a10"],
@@ -24,6 +24,8 @@ export const riskRules: Array<{
   uncertaintyClass: Decision["uncertaintyClass"];
   reason: string;
   question: string;
+  serviceGroup?: ServiceGroup;
+  environment?: Environment;
 }> = [
   {
     signal: "SECRET",
@@ -88,6 +90,16 @@ export const riskRules: Array<{
     reason: "Phần mềm chưa được duyệt cần kiểm tra an toàn.",
     question:
       "Tên, nguồn phát hành, chữ ký và lựa chọn đã được catalog phê duyệt là gì?",
+  },
+  {
+    signal: "DESTRUCTIVE",
+    id: "SEC-007",
+    serviceGroup: "DATABASE",
+    environment: "production",
+    bucket: "SECURITY_RISK",
+    uncertaintyClass: "OUT_OF_POLICY",
+    reason: "Xóa bảng hoặc dữ liệu trên database production có nguy cơ mất dữ liệu; cần Security/DBA xem xét.",
+    question: "Những bảng và dữ liệu nào sẽ bị xóa? Security/DBA đã duyệt phương án xử lý và kiểm tra khả năng khôi phục từ backup chưa?",
   },
   {
     signal: "PRIVILEGED",
