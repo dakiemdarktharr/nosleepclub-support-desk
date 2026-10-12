@@ -10,17 +10,18 @@ expected action/bucket/rule, approval registry hay policy.
 - Đồng bộ `main` từ `1a802f4` lên GitHub `163a7940bd98ee6492b21fc1c3f3411338e648aa`
   bằng fast-forward. Công việc ở worktree riêng, nhánh `codex/person-a-benchmark`,
   xuất phát chính xác từ SHA này.
-- Fetch lại trước khi chốt: `main` và `origin/main` vẫn ở SHA trên, checkout gốc
-  sạch. `git apply --check` cho diff code/test lên checkout gốc đạt; file báo cáo
-  là file mới. Chưa commit/push hoặc triển khai candidate.
+- Ở lượt benchmark v11 ban đầu, `main` và `origin/main` ở SHA trên, checkout gốc
+  sạch; `git apply --check` cho diff code/test đạt. Candidate sau đó được commit
+  local; provenance của lượt benchmark trên commit được ghi ở phần xác nhận cuối.
 - Chạy benchmark trên base sạch trước khi sửa và trên candidate sau sửa, cùng bộ
   `legacy-original-128` (128 case, development, chưa adjudicate độc lập; SHA-256
   `e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da`). Không
   ghi artifact trace vào repo.
 - Môi trường lần chạy: Node `v26.0.0`, provider mock, không gọi model/API, lưu
-  trữ `memory-demo`, policy `support-guidance-v5.9`. Candidate là code diff chưa
-  commit trên base SHA nêu trên; runtime dirty. Đây không phải kiểm tra Mongo
-  durability hay held-out.
+  trữ `memory-demo`, policy `support-guidance-v5.9`. Artifact v11 ban đầu đo code
+  diff chưa commit trên base SHA nêu trên (`runtimeDirty=true`); lượt cuối trên
+  commit được ghi riêng bên dưới. Đây không phải kiểm tra Mongo durability hay
+  held-out.
 - SHA-256 artifact base: `4e91bda1f68b767099dd2db48ef5118f082933fdb8af03d48dc6ee7a4d643353`.
   Candidate vòng cuối v11: `af95e2d39ced6cd4c4003f95bb66fd4f709356414f225cac116e3dde95405152`.
   Comparison SHA-256: `3a55a356fc9bf5232f8415cd464d97c47e702e05f3c74c29ff0a26017951cf12`.
@@ -130,6 +131,37 @@ Hai script `development-report.test.mjs` và `mongo-smoke-guard.test.mjs`: 15 pa
 đây là kiểm tra evaluator/guard, không kết nối Mongo thật.
 Không chạy E2E, Mongo thật, held-out hay test với dịch vụ/credentials ngoài.
 
+## Xác nhận trên commit candidate (2026-10-12 ICT)
+
+- Code và regression test được commit tại `c682c7d2a29be913f223b3e4e7881941c26c731f`
+  trên nhánh `codex/person-a-benchmark`, parent đúng base
+  `163a7940bd98ee6492b21fc1c3f3411338e648aa`. Lượt benchmark cuối chạy trên SHA
+  này, `runtimeDirty=false`; runtime digest là
+  `e955570552ce06068654bdda8030f04f053a13dff91779dcdfa81708c2fda3bd`.
+- Lệnh benchmark: `npx vitest run tests/support-verify.test.ts` (22/22 pass);
+  sau đó so sánh bằng
+  `node scripts/development-report.mjs /tmp/vng-support-evaluation-c682c7d-person-a.json --baseline /tmp/vng-support-evaluation-163a794.json --out /tmp/vng-support-comparison-c682c7d-person-a.json`.
+- Môi trường: Node `v26.0.0`, provider mock, không gọi model/API, storage
+  `memory-demo`, policy `support-guidance-v5.9`; cùng dataset
+  `legacy-original-128`, 128 case, SHA-256
+  `e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da`.
+- Kết quả: 56/128 exact (43,75%), 128/128 readback, không có exact-pass
+  regression. So với base, exact không tăng; FNR `7/94` (7,45%), unnecessary
+  escalation `28/34` (82,35%). Các action mismatch còn lại tập trung ở nhóm
+  expected ESC/MISSING và cần owner xác nhận contract.
+- Artifact candidate SHA-256
+  `8cb74531226aeee018bab4cd11b1938dc064467857d5efb13a2f0a4b5acd55e0`;
+  comparison SHA-256
+  `194ea888b2440db71259afb824f2617f96fb3e77c5b3967ab3ef6ee8d0a6dd24`.
+  Cả hai được giữ local trong `/tmp`; `artifacts/original-fixture-evaluation.json`
+  được khôi phục về SHA-256 `c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
+- Trên cùng code trước commit: `npm test` (744 pass, 1 skip), `npm run lint`,
+  `npm run typecheck`, `npm run build`,
+  `node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs`
+  (15 pass), và `npx vitest run tests/sprint1-regression.test.ts` (69 pass) đều
+  đạt. Build có cập nhật artifact retrieval tracked; file được phục hồi nguyên
+  trạng thái sau khi kiểm tra.
+
 ## Các quyết định owner còn cần
 
 | Nhóm trong 24 case A | Số case | Căn cứ và đề xuất phân xử |
@@ -155,14 +187,17 @@ quyết mâu thuẫn contract. Cross-review và đánh giá độc lập chưa �
    đối chiếu cả positive controls/extra operations trong regression.
 2. Chủ policy/adjudicator ghi quyết định cho ba nhóm và required-fields contract
    nêu trên. Chỉ cập nhật policy/nhãn sau adjudication được ghi lại.
-3. Candidate chưa phát hành và vẫn dùng policy/cache version v5.9 để so sánh.
-   Khi chuẩn bị phát hành, cần tăng epoch/version của preview/cache cho thay đổi
-   extraction; metadata này không thay authority/risk gate.
+3. Code candidate đã commit local ở SHA `c682c7d2a29be913f223b3e4e7881941c26c731f`;
+   chưa push/mở PR và chưa có B/C cross-review. Candidate vẫn dùng policy/cache
+   version v5.9. Khi chuẩn bị phát hành, cần tăng epoch/version của preview/cache
+   cho thay đổi extraction; metadata này không thay authority/risk gate.
 
 Artifact raw và comparison giữ local, không đưa trace vào repo:
 
 - `/tmp/vng-support-evaluation-163a794-person-a-reviewed-v11.json`
 - `/tmp/vng-support-person-a-comparison-v11.json`
+- `/tmp/vng-support-evaluation-c682c7d-person-a.json`
+- `/tmp/vng-support-comparison-c682c7d-person-a.json`
 
 ## Vòng tối ưu tiếp theo — thử và loại
 
@@ -187,4 +222,4 @@ Comparison v12 (dùng để rà hồi quy, không phát hành):
 Artifact tracked `artifacts/original-fixture-evaluation.json` đã được khôi phục
 nguyên trạng, SHA-256 `c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
 
-Candidate cùng báo cáo này vẫn chưa commit, chờ người dùng xem xét.
+Thay đổi policy/expected vẫn chờ owner; không cập nhật Ground Truth trong commit này.
