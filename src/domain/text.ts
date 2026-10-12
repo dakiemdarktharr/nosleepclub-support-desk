@@ -861,6 +861,8 @@ export function extractIntake(
       requestKind = "GUIDANCE";
     else if (selectedIntent === "VPN_SETUP" && input.requestKind === "ACCESS_REQUEST")
       requestKind = "ACCESS_REQUEST";
+    else if (selectedIntent === "DATABASE_PROVISION" && fields.operation === "provision")
+      requestKind = "CONFIGURATION_CHANGE";
     else if (
       /FREEZE|WONT_BOOT|SLOW|CRASH|VPN_|WIFI_|LOGIN|LOCKED|MFA_|SSO_|DISPLAY|AUDIO|PRINTER|CAMERA|FAILED/.test(
         selectedIntent,

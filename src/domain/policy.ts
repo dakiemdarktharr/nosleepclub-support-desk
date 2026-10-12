@@ -74,7 +74,7 @@ function isMissing(field: string, value?: string) {
 
 function requiredFactRuleFor(request: CanonicalRequest) {
   return requiredFactRules.find((rule) =>
-    rule.serviceGroup === request.serviceGroup && rule.requestKind === request.requestKind &&
+    rule.serviceGroup === request.serviceGroup && rule.requestKinds.includes(request.requestKind) &&
     rule.intentLabels.includes(request.intentLabel) &&
     (!rule.systems || rule.systems.includes(normalize(request.entities.targetSystem || request.entities.system || ""))),
   );

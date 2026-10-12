@@ -231,24 +231,24 @@ export const requiredFactRules: Array<{
   id: string;
   serviceGroup: ServiceGroup;
   intentLabels: readonly string[];
-  requestKind: RequestKind;
+  requestKinds: readonly RequestKind[];
   systems?: readonly string[];
   fields: readonly string[];
 }> = [
   {
     id: "FACT-VPN-001", serviceGroup: "NETWORK_VPN",
-    intentLabels: ["VPN_SETUP"], requestKind: "ACCESS_REQUEST",
+    intentLabels: ["VPN_SETUP"], requestKinds: ["ACCESS_REQUEST"],
     fields: ["service", "source", "target", "environment", "duration", "reason"],
   },
   {
     id: "FACT-DB-PROVISION-001", serviceGroup: "DATABASE",
-    intentLabels: ["DATABASE_PROVISION"], requestKind: "ROUTINE_WORKFLOW",
+    intentLabels: ["DATABASE_PROVISION"], requestKinds: ["ROUTINE_WORKFLOW", "CONFIGURATION_CHANGE"],
     fields: ["system", "environment", "cpu", "ram", "disk", "duration", "reason"],
   },
   {
     id: "FACT-COLLAB-001", serviceGroup: "ACCOUNT_ACCESS",
     intentLabels: ["REQUEST_STANDARD_ACCESS", "REQUEST_READ_ACCESS", "REQUEST_WRITE_ACCESS"],
-    requestKind: "ACCESS_REQUEST", systems: ["jira", "confluence"],
+    requestKinds: ["ACCESS_REQUEST"], systems: ["jira", "confluence"],
     fields: ["targetSystem", "resourceScope", "accessType", "duration", "reason"],
   },
 ];
