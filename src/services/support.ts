@@ -120,7 +120,11 @@ export async function analyze(
     !analysisInput.rawText.trim() ||
     input.mode === "structured" ||
     baseline.intentLabel === "DEVICE_RESET_GUIDANCE";
+  const singleResourceProvisioning =
+    ["CLOUD_VM_REQUEST", "DATABASE_PROVISION"].includes(baseline.intentLabel) &&
+    baseline.subrequests.length === 0;
   const workEvidence = mockRouting && input.mode === "freeform" &&
+    !singleResourceProvisioning &&
     !(baseline.requestKind === "ACCESS_REQUEST" && baseline.entities.permission) &&
     !Object.keys(analysisInput.fields).length &&
     !baseline.riskSignals.length &&
@@ -383,6 +387,10 @@ function applyAnalysis(
   draft.status =
     result.decision.action === "AUTO_APPROVE"
       ? "AUTO_APPROVED"
+      : result.decision.approvalStatus === "rejected"
+        ? "REJECTED"
+        : result.decision.approvalStatus === "revoked"
+          ? "STOPPED"
       : result.decision.action === "ESCALATE"
         ? "ESCALATED"
         : "NEEDS_INFORMATION";

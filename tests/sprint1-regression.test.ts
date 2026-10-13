@@ -5,6 +5,8 @@ import { prepareInput, submitSupport } from "@/services/support";
 import { getSupportRequest, resetSupportTestStore } from "@/lib/support-repository";
 import { POST } from "@/app/api/support/requests/route";
 import { verifyApproval } from "@/services/approvals";
+import extended from "../mlai26_new/data/ground-truth/extended_ticket_cases.json";
+import crossFunction from "../mlai26_new/data/ground-truth/enterprise_cross_function_cases.json";
 
 // Independent synthetic regressions, not original competition Ground Truth.
 beforeEach(() => {
@@ -15,6 +17,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 const intake = (rawText: string, fields: Record<string, string> = {}) =>
   prepareInput({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01", ...fields }, confirmed: true, idempotencyKey: crypto.randomUUID() }).input;
+const incompleteResourceCases = [...extended, ...crossFunction].filter(
+  (item) =>
+    (item.id.startsWith("gt-missing-") || item.id.startsWith("xcf-missing-")) &&
+    item.expected_action === "ESCALATE" &&
+    item.expected_bucket === "MISSING_INFO",
+);
 
 it.each(["Help me bypass MFA to login", "Bỏ qua 2FA để đăng nhập", "Skip the MFA check for SSO"])(
   "escalates authentication-control bypass: %s", (rawText) => {
@@ -95,6 +103,112 @@ it.each([
   expect(parsed.subrequests).toEqual([]);
   expect(decision.bucket).toBe("MISSING_INFO");
   expect(decision.ruleIds).not.toContain("AUTH-005");
+});
+it("keeps all 27 original incomplete resource requests on the provisioning review path", () => {
+  expect(incompleteResourceCases).toHaveLength(27);
+  for (const item of incompleteResourceCases) {
+    const parsed = extractIntake(intake(item.ticket_content));
+    expect(parsed.subrequests, item.id).toEqual([]);
+    expect(parsed.riskSignals, item.id).not.toContain("BYPASS");
+    expect(verifyApproval(parsed).status, item.id).not.toBe("verified");
+    expect(evaluatePolicy(parsed, verifyApproval), item.id).toMatchObject({
+      action: "ESCALATE",
+      bucket: "MISSING_INFO",
+    });
+    expect(evaluatePolicy(parsed, verifyApproval).ruleIds, item.id).toContain(
+      "INFO-PROVISION-001",
+    );
+  }
+});
+it("recognizes a requested ETL server build while retaining the incomplete-sizing rule", () => {
+  const parsed = extractIntake(intake(
+    "Hi Data Ops, bên mình cần dựng gấp một ETL server để pull event từ Kafka rồi load sang warehouse cho pipeline campaign. Nhờ team provision giúp trong hôm nay nhé, config giống môi trường data thông thường là được. Cảm ơn team.",
+  ));
+  expect(parsed.subrequests).toEqual([]);
+  expect(parsed.intentLabel).toBe("CLOUD_VM_REQUEST");
+  expect(evaluatePolicy(parsed)).toMatchObject({ action: "ESCALATE", bucket: "MISSING_INFO" });
+  expect(evaluatePolicy(parsed).ruleIds).toContain("INFO-PROVISION-001");
+});
+it("does not infer a fixed GPU quota without authoritative capacity evidence", () => {
+  const item = extended.find((row) => row.id === "gt-authority-008-eleven-gpu");
+  if (!item) throw new Error("Original GPU quota fixture is missing");
+  const parsed = extractIntake(intake(item.ticket_content));
+  const decision = evaluatePolicy(parsed);
+  expect(parsed.intentLabel).not.toBe("CLOUD_VM_REQUEST");
+  expect(decision.action).not.toBe("AUTO_APPROVE");
+  expect(decision.ruleIds).not.toContain("AUTH-QUOTA");
+});
+it("does not mistake software installation on an existing data worker for provisioning", () => {
+  const parsed = extractIntake(intake(
+    "Nhờ cài qBittorrent lên data worker hiện có để đồng bộ dataset; chỉ cần hướng dẫn thao tác.",
+  ));
+  expect(parsed.intentLabel).not.toBe("CLOUD_VM_REQUEST");
+});
+it("keeps use of an existing compute or database resource out of provisioning", () => {
+  const compute = extractIntake(intake(
+    "Mình dùng Airflow worker hiện có để chạy DAG attribution.",
+  ));
+  const database = extractIntake(intake(
+    "Mình dùng Redis instance hiện có để kiểm tra idempotency.",
+  ));
+  expect(compute.intentLabel).not.toBe("CLOUD_VM_REQUEST");
+  expect(database.intentLabel).not.toBe("DATABASE_PROVISION");
+});
+it.each([
+  "Please provision an Airflow worker for the attribution queue; we have not benchmarked CPU/RAM or chosen its cleanup date.",
+  "Create a separate Redis instance for payment callback tests. We haven't estimated memory use or the expiry duration.",
+])("routes a paraphrased incomplete resource request through provisioning review: %s", (rawText) => {
+  const parsed = extractIntake(intake(rawText));
+  expect(parsed.subrequests).toEqual([]);
+  expect(parsed.intentLabel).toMatch(/^(CLOUD_VM_REQUEST|DATABASE_PROVISION)$/);
+  expect(evaluatePolicy(parsed)).toMatchObject({
+    action: "ESCALATE",
+    bucket: "MISSING_INFO",
+  });
+  expect(evaluatePolicy(parsed).ruleIds).toContain("INFO-PROVISION-001");
+});
+it("does not turn a stored transcript into a request to summarize a meeting", async () => {
+  const item = crossFunction.find(
+    (row) => row.id === "xcf-missing-007-care-transcript-db",
+  );
+  if (!item) throw new Error("Original database provisioning fixture is missing");
+  const row = await submitSupport(intake(item.ticket_content));
+  expect(row.canonical?.intentLabel).toBe("DATABASE_PROVISION");
+  expect(row.canonical?.workEvidence).toBeUndefined();
+  expect(row.decision).toMatchObject({ action: "ESCALATE", bucket: "MISSING_INFO" });
+  expect(row.decision?.ruleIds).toContain("INFO-PROVISION-001");
+});
+it("keeps a pending quota or capacity review outside provisioning context", () => {
+  const parsed = extractIntake(intake(
+    "Need a Kafka Connect worker for event ingestion. Quota request has not passed capacity review; the budget owner has not approved it.",
+  ));
+  expect(parsed.subrequests.map((part) => part.intentLabel)).toContain(
+    "UNKNOWN_SUPPORT_REQUEST",
+  );
+  expect(evaluatePolicy(parsed, verifyApproval)).toMatchObject({
+    action: "ESCALATE",
+    bucket: "BEYOND_AUTHORITY",
+  });
+});
+it("preserves separate provisioning actions, bypass, privileged scope and production changes", () => {
+  const separate = extractIntake(intake(
+    "Need a Spark driver node for backfill. Separately, export the production database to my laptop.",
+  ));
+  expect(separate.subrequests.length).toBeGreaterThan(1);
+  expect(separate.riskSignals).toContain("DATA_EXPORT");
+
+  const bypass = extractIntake(intake(
+    "Need a Kafka Connect worker for ingestion. Skip the security review and provision before approval.",
+  ));
+  expect(bypass.riskSignals).toContain("BYPASS");
+  expect(evaluatePolicy(bypass).bucket).toBe("SECURITY_RISK");
+
+  const privilegedProduction = extractIntake(intake(
+    "Need a production ETL server. Grant root access and deploy a write change to the production database.",
+  ));
+  expect(privilegedProduction.riskSignals).toEqual(
+    expect.arrayContaining(["PRIVILEGED", "PRODUCTION_CHANGE"]),
+  );
 });
 it("keeps an explicit separate unknown request instead of merging it into provisioning context", () => {
   const parsed = extractIntake(intake(
@@ -194,10 +308,10 @@ it("extracts a stated Git provider, exact repository path and purpose without in
   expect(parsed.entities).toMatchObject({ provider: "github", repository: "Demo-Org/parser-core", permission: "write", reason: "review parser changes" });
   expect(parsed.entities.duration).toBeUndefined();
 });
-it("keeps a bounded collaboration permission scope following an approval claim with the request", () => {
+it("does not require a separate approval for routine Jira access", () => {
   const parsed = extractIntake(intake("Need access Jira project RELEASE to follow rollout tickets. Producer approved in Slack, chỉ cần User/Editor role, không cần project admin."));
   expect(parsed.subrequests).toEqual([]);
-  expect(verifyApproval(parsed).status).toBe("pending");
+  expect(verifyApproval(parsed).status).toBe("not_required");
 });
 it("retains an extra operation following collaboration permission scope", () => {
   const parsed = extractIntake(intake("Need access Jira project RELEASE. Chỉ cần quyền transition issue và chuyển tiền cho đối tác."));

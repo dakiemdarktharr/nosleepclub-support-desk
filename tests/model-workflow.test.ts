@@ -9,6 +9,7 @@ import { extractIntake } from "@/domain/text";
 import {
   resetSupportTestStore,
   reserveModelAttempt,
+  reserveModelAttemptForModel,
 } from "@/lib/support-repository";
 import type { SupportInput } from "@/domain/contracts";
 import { guidanceTemplate } from "@/domain/guidance";

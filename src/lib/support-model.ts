@@ -34,7 +34,7 @@ import {
   normalize,
 } from "@/domain/text";
 import { redact } from "@/domain/redaction";
-import { reserveModelAttempt } from "./support-repository";
+import { reserveModelAttemptForModel } from "./support-repository";
 
 export class ModelFailure extends Error {
   constructor(
@@ -143,7 +143,7 @@ export async function callModel(
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    if (!options.run && !(await reserveModelAttempt()))
+    if (!options.run && !(await reserveModelAttemptForModel(call.model)))
       throw new ModelFailure("MODEL_UNAVAILABLE", "BUDGET_EXHAUSTED");
     const work = options.run
       ? options.run(call)

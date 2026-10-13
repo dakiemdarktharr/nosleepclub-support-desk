@@ -79,8 +79,10 @@ export function questionFor(field: string, request?: CanonicalRequest) {
     return "Ứng dụng dùng giao thức nào (ví dụ HTTPS)? Nếu chưa rõ, bạn có thể nói chưa biết.";
   if (field === "purpose" || field === "businessPurpose")
     return "Bạn cần hoàn thành công việc nào bằng tài nguyên hoặc phần mềm này?";
-  if (field === "budgetOrQuota")
-    return "Bộ phận nào đã xác nhận hạn mức tài nguyên hoặc chi phí cho công việc này?";
+  if (field === "resourceLifecycle")
+    return "Sandbox này cần tự động xóa sau TTL (ephemeral) hay phải tồn tại lâu dài?";
+  if (field === "dataSensitivity")
+    return "Sandbox chỉ dùng dữ liệu synthetic/không nhạy cảm chứ? Không đưa dữ liệu khách hàng, secret hoặc dữ liệu regulated vào.";
   if (field === "affectedScope")
     return "Chỉ bạn gặp lỗi hay đồng nghiệp cũng bị? Công việc nào đang bị gián đoạn?";
   if (field === "startTime" || field === "timeWindow")
@@ -109,6 +111,9 @@ export function clarificationPlan(
   const priority = [
     ...(/CLOUD_VM_REQUEST|DATABASE_PROVISION/.test(request.intentLabel)
       ? ["cpu", "ram", "disk", "duration"] : []),
+    ...(request.serviceGroup === "CLOUD_GPU"
+      ? ["resourceLifecycle", "dataSensitivity", "purpose"]
+      : []),
     "resetType",
     "desiredOutcome",
     "summary",

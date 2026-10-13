@@ -8,8 +8,8 @@ import type {
 } from "./contracts";
 
 import {
+  approvalPolicy,
   bucketPriority,
-  demoResourceLimits,
   guidanceRules,
   manualReviewRules,
   POLICY_VERSION,
@@ -17,21 +17,104 @@ import {
   productionExportAuthorityRule,
   provisioningInformationRule,
   requiredFactRules,
+  resourceQuotaPolicy,
   riskRules,
   securityServiceRule,
+  singleRequestPolicy,
 } from "./policy-source";
 import { normalize, normalizeFact, teamFor } from "./text";
 
 // Verified approval is supplied by a server-only verifier, never by input fields or model output.
 export type Approval = {
   status: ApprovalStatus;
+  verificationContext?: "demo-ui-mock" | "benchmark" | "production";
   reason?: string;
   reference?: string;
   authorizedRole?: string;
   scope?: ApprovalScope;
-  expiresAt?: string;
+  scopeLevel?: "exact" | "parent";
+  parentScopeDeclared?: boolean;
+  registryStatus?: "verified" | "pending" | "missing" | "mismatched";
+  itsmStatus?: "approved" | "pending" | "rejected" | "revoked" | "missing" | "mismatched";
+  sameRecord?: boolean;
+  requesterMatched?: boolean;
+  approverIdentityVerified?: boolean;
+  approverAuthorized?: boolean;
+  approverIsRequester?: boolean;
+  delegatedApprover?: boolean;
+  environmentAndPurposeMatched?: boolean;
+  permissionEqualOrNarrower?: boolean;
+  quotaAndTtlMatched?: boolean;
+  standingApproval?: boolean;
+  standingScopeDeclared?: boolean;
+  standingRecordActive?: boolean;
 };
 type ApprovalResolver = (request: CanonicalRequest) => Approval;
+
+export type PolicyEvidence = {
+  entitlement?: {
+    status: "allowed" | "denied" | "unknown";
+    scope: "matched" | "mismatched" | "unknown";
+    requesterAuthenticated: boolean;
+    requesterIdentityMatched: boolean;
+    source?: string;
+  };
+  resourceQuota?: {
+    status: "within_limit" | "exceeded" | "unavailable";
+    source?: string;
+    projectId?: string;
+    teamId?: string;
+    activeUsageIncluded?: boolean;
+    evaluationComplete?: boolean;
+  };
+  accessTtlWithinPolicy?: boolean;
+  endpointManaged?: "verified" | "unmanaged" | "unknown";
+  vpnSubnet?: "approved" | "denied" | "unknown";
+  vpnDurationWithinPolicy?: boolean;
+  breakGlass?: {
+    status: "verified" | "invalid" | "unknown";
+    incidentId?: string;
+    scopeNarrowVerified?: boolean;
+    shortTtlVerified?: boolean;
+    auditAndAlertEnabled?: boolean;
+    postReviewRequired?: boolean;
+  };
+  dataClassification?:
+    | "synthetic"
+    | "non_sensitive"
+    | "ordinary"
+    | "customer"
+    | "confidential"
+    | "sensitive"
+    | "restricted"
+    | "regulated"
+    | "unknown";
+  secretExposureExcluded?: boolean;
+};
+type PolicyEvidenceResolver = (request: CanonicalRequest) => PolicyEvidence;
+
+const cloudProvisioningIntentLabels = new Set([
+  "CLOUD_SANDBOX",
+  "CLOUD_VM_REQUEST",
+  "GPU_REQUEST",
+]);
+
+const cloudSandboxIntentLabels = new Set(["CLOUD_SANDBOX", "GPU_REQUEST"]);
+
+function isEphemeralCloudSandbox(request: CanonicalRequest) {
+  return (
+    cloudSandboxIntentLabels.has(request.intentLabel) &&
+    ["sandbox", "development", "staging"].includes(request.environment) &&
+    ["ephemeral", "temporary"].includes(
+      normalizeFact(request.entities.resourceLifecycle ?? ""),
+    )
+  );
+}
+
+function isCloudProvisioningRequest(request: CanonicalRequest) {
+  return request.serviceGroup === "CLOUD_GPU" &&
+    cloudProvisioningIntentLabels.has(request.intentLabel);
+}
 
 function isGuidanceOnly(request: CanonicalRequest) {
   return (
@@ -113,16 +196,20 @@ export function missingFacts(request: CanonicalRequest): string[] {
       required = ["provider", "repository", "permission", "duration", "reason"];
       break;
     case "CLOUD_GPU":
-      required = [
-        "provider",
-        "environment",
-        "duration",
-        "purpose",
-        "budgetOrQuota",
-        ...(/GPU/.test(request.intentLabel)
-          ? ["gpuType", "quantity"]
-          : ["cpu", "ram", "disk"]),
-      ];
+      required = cloudProvisioningIntentLabels.has(request.intentLabel)
+        ? [
+            "provider",
+            "environment",
+            "duration",
+            "purpose",
+            ...(/GPU/.test(request.intentLabel)
+              ? ["gpuType", "quantity"]
+              : ["cpu", "ram", "disk"]),
+            ...(cloudSandboxIntentLabels.has(request.intentLabel)
+              ? ["resourceLifecycle", "dataSensitivity"]
+              : []),
+          ]
+        : [];
       break;
     case "DEVICE_BOOT":
       required = [
@@ -271,18 +358,407 @@ export function missingFacts(request: CanonicalRequest): string[] {
   ];
 }
 
-export function requiresApproval(request: CanonicalRequest) {
+function requestedPermission(request: CanonicalRequest) {
+  return normalizeFact(
+    request.entities.permission ?? request.entities.accessType ?? "",
+  );
+}
+
+function hasSensitiveData(request: CanonicalRequest, evidence?: PolicyEvidence) {
+  const classification = normalizeFact(request.entities.dataSensitivity ?? "")
+    .replace(/[-_]/g, " ");
+  const verifiedClassification = evidence?.dataClassification;
+  const userClassificationIsSensitive =
+    !/\b(?:non|not)\s+(?:sensitive|restricted|regulated)\b/.test(classification) &&
+    /\b(?:sensitive|restricted|regulated|pii|personal|customer|secret|confidential)\b/.test(classification);
   return (
-    request.requestKind === "ACCESS_REQUEST" ||
-    request.riskSignals.some((signal) =>
-      ["PRIVILEGED", "PRODUCTION_CHANGE"].includes(signal),
+    userClassificationIsSensitive ||
+    ["customer", "confidential", "sensitive", "restricted", "regulated"].includes(
+      verifiedClassification ?? "unknown",
+    )
+  );
+}
+
+function isGitHubActionsRequest(request: CanonicalRequest) {
+  const target = normalizeFact(
+    [
+      request.entities.provider,
+      request.entities.targetSystem,
+      request.entities.pipeline,
+      request.entities.requestedAction,
+      request.intentLabel,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+  return /github/.test(target) && /actions|workflow|pipeline/.test(target);
+}
+
+function isGitHubWorkflowChange(request: CanonicalRequest) {
+  return (
+    request.serviceGroup === "CI_CD" &&
+    isGitHubActionsRequest(request) &&
+    (/WORKFLOW|SECRET|PIPELINE_CONFIG_CHANGE|SECRET_UPDATE/.test(request.intentLabel) ||
+      /workflow|secret|pipeline/.test(normalizeFact(request.requestedAction)) &&
+      /change|edit|write|update|modify/.test(normalizeFact(request.requestedAction)))
+  );
+}
+
+function isDataExportRequest(request: CanonicalRequest) {
+  return (
+    request.riskSignals.includes("DATA_EXPORT") ||
+    /EXPORT/.test(request.intentLabel) ||
+    normalizeFact(request.requestedAction) === "export" ||
+    normalizeFact(request.entities.operation ?? "") === "export"
+  );
+}
+
+export function requiresApproval(request: CanonicalRequest) {
+  const vpnRoutineAccess =
+    request.serviceGroup === "NETWORK_VPN" &&
+    request.intentLabel === "VPN_SETUP" &&
+    request.requestKind === "ACCESS_REQUEST";
+  const productionScope =
+    request.environment === "production" && !vpnRoutineAccess;
+  const elevatedPermission = /^(admin|root|owner|cluster-admin)$/.test(
+    requestedPermission(request),
+  );
+  const routineSandbox = isEphemeralCloudSandbox(request);
+
+  return (
+    request.riskSignals.some(
+      (signal) =>
+        [
+          "PRIVILEGED",
+          "PRODUCTION_CHANGE",
+          "CONTROL_CHANGE",
+          "DESTRUCTIVE",
+          "DATA_EXPORT",
+        ].includes(signal) &&
+        !(vpnRoutineAccess && signal === "PRODUCTION_CHANGE"),
     ) ||
-    /ACCESS|PERMISSION|MEMBERSHIP|ROLE_CHANGE/.test(request.intentLabel) ||
-    ["CLOUD_GPU", "GIT_PERMISSION"].includes(request.serviceGroup) ||
+    elevatedPermission ||
+    productionScope ||
+    isDataExportRequest(request) ||
+    hasSensitiveData(request) ||
+    isGitHubWorkflowChange(request) ||
+    (isCloudProvisioningRequest(request) && !routineSandbox) ||
     (request.serviceGroup === "SOFTWARE_LICENSE" &&
       request.requestKind !== "GUIDANCE" &&
       request.requestKind !== "SAFE_DIAGNOSTIC")
   );
+}
+
+function requiresEntitlement(request: CanonicalRequest) {
+  return (
+    request.requestKind === "ACCESS_REQUEST" ||
+    /ACCESS|PERMISSION|MEMBERSHIP|ROLE_CHANGE/.test(request.intentLabel) ||
+    request.serviceGroup === "GIT_PERMISSION" ||
+    isGitHubWorkflowChange(request) ||
+    (request.serviceGroup === "CI_CD" &&
+      /VIEW_LOGS|LOGS/.test(request.intentLabel))
+  );
+}
+
+function hasVerifiedEntitlement(evidence: PolicyEvidence) {
+  return (
+    evidence.entitlement?.status === "allowed" &&
+    evidence.entitlement.scope === "matched" &&
+    evidence.entitlement.requesterAuthenticated &&
+    evidence.entitlement.requesterIdentityMatched &&
+    Boolean(evidence.entitlement.source?.trim())
+  );
+}
+
+function hasRoutineAccessTtl(request: CanonicalRequest, evidence: PolicyEvidence) {
+  if (
+    request.serviceGroup === "NETWORK_VPN" &&
+    request.intentLabel === "VPN_SETUP"
+  )
+    return evidence.vpnDurationWithinPolicy === true;
+  return evidence.accessTtlWithinPolicy === true;
+}
+
+function hasAuthoritativeQuota(evidence: PolicyEvidence) {
+  const quota = evidence.resourceQuota;
+  return Boolean(
+    quota?.source?.trim() &&
+      quota.projectId?.trim() &&
+      quota.teamId?.trim() &&
+      quota.activeUsageIncluded &&
+      quota.evaluationComplete,
+  );
+}
+
+function selfApprovalAllowed(approval: Approval) {
+  if (approval.verificationContext === "demo-ui-mock")
+    return approvalPolicy.selfApproval.demoUiMockAllowed;
+  if (approval.verificationContext === "benchmark")
+    return approvalPolicy.selfApproval.benchmarkAllowed;
+  if (approval.verificationContext === "production")
+    return approvalPolicy.selfApproval.productionAllowed;
+  return false;
+}
+
+function verifiedApproval(approval: Approval) {
+  return (
+    approval.status === "verified" &&
+    approval.scope === "matched" &&
+    (approval.scopeLevel !== "parent" || approval.parentScopeDeclared === true) &&
+    approval.registryStatus === "verified" &&
+    approval.itsmStatus === "approved" &&
+    approval.sameRecord === true &&
+    approval.requesterMatched === true &&
+    approval.approverIdentityVerified === true &&
+    approval.approverAuthorized === true &&
+    (approval.approverIsRequester === false ||
+      (approval.approverIsRequester === true &&
+        selfApprovalAllowed(approval))) &&
+    approval.delegatedApprover === false &&
+    approval.environmentAndPurposeMatched === true &&
+    approval.permissionEqualOrNarrower === true &&
+    approval.quotaAndTtlMatched === true &&
+    (approval.standingApproval !== true ||
+      (approval.standingScopeDeclared === true &&
+        approval.standingRecordActive === true))
+  );
+}
+
+function approvalRoleMatches(approval: Approval, rolePattern: RegExp) {
+  return (
+    verifiedApproval(approval) &&
+    rolePattern.test(normalizeFact(approval.authorizedRole ?? ""))
+  );
+}
+
+function approvalRoleForRule(ruleId: string) {
+  if (ruleId.startsWith("SEC-")) return /security/;
+  if (ruleId === "AUTH-001" || ruleId === "AUTH-DB-PROVISION-001")
+    return /dba|database.?owner|data.?owner/;
+  if (ruleId === "AUTH-EXPORT-001") return /data.?owner|dba/;
+  if (ruleId === "AUTH-002") return /resource.?owner|system.?owner|production.?owner/;
+  if (ruleId === "AUTH-003") return /iam|system.?owner|resource.?owner|security/;
+  if (ruleId === "AUTH-004") return /control.?owner|capacity.?owner|quota.?owner|budget.?owner|security/;
+  if (ruleId === "AUTH-QUOTA") return /capacity.?owner|quota.?owner|budget.?owner/;
+  if (ruleId === "AUTH-VPN-001") return /network.?owner|vpn.?owner|network/;
+  if (ruleId === "AUTH-COLLAB-001") return /resource.?owner|system.?owner|iam/;
+  if (ruleId === "AUTH-010") return /security/;
+  if (ruleId === "AUTH-008") return /admin|dba|resource.?owner|database.?owner/;
+  return undefined;
+}
+
+function requiredApprovalRole(request: CanonicalRequest, evidence: PolicyEvidence) {
+  if (request.riskSignals.some((signal) =>
+    ["SECRET", "PUBLIC_EXPOSURE", "SECURITY_CONTROL", "BYPASS", "INJECTION", "UNAPPROVED_SOFTWARE"].includes(signal),
+  ))
+    return /security/;
+  if (isDataExportRequest(request))
+    return hasSensitiveData(request, evidence)
+      ? /data.?owner|security/
+      : /data.?owner|dba/;
+  if (hasSensitiveData(request, evidence))
+    return /data.?owner|security/;
+  if (isGitHubWorkflowChange(request))
+    return /security/;
+  if (isCloudProvisioningRequest(request))
+    return /capacity.?owner|quota.?owner|budget.?owner|cloud.?owner|resource.?owner/;
+  if (request.serviceGroup === "DATABASE")
+    return /dba|database.?owner|data.?owner/;
+  if (request.serviceGroup === "NETWORK_VPN")
+    return /network.?owner|vpn.?owner|network|manager/;
+  if (request.serviceGroup === "GIT_PERMISSION")
+    return /repository.?owner|resource.?owner|iam|manager/;
+  if (request.serviceGroup === "ACCOUNT_ACCESS")
+    return /resource.?owner|system.?owner|iam|manager/;
+  if (request.serviceGroup === "SOFTWARE_LICENSE")
+    return /license.?owner|budget.?owner|software.?owner|manager/;
+  if (request.environment === "production")
+    return /production.?owner|service.?owner|resource.?owner|system.?owner/;
+  return /iam|service.?owner|resource.?owner|system.?owner|manager/;
+}
+
+function approvalClearsRule(
+  approval: Approval,
+  rule: { id: string },
+  request: CanonicalRequest,
+  evidence: PolicyEvidence,
+) {
+  if (
+    rule.id === "AUTH-009" &&
+    request.requestKind === "INCIDENT" &&
+    evidence.breakGlass?.status === "verified" &&
+    Boolean(evidence.breakGlass.incidentId?.trim()) &&
+    evidence.breakGlass.scopeNarrowVerified === true &&
+    evidence.breakGlass.shortTtlVerified === true &&
+    evidence.breakGlass.auditAndAlertEnabled === true &&
+    evidence.breakGlass.postReviewRequired === true &&
+    approvalRoleMatches(approval, /emergency.?approver|incident.?commander|on.?call/)
+  )
+    return true;
+  const rolePattern = approvalRoleForRule(rule.id);
+  // A single approver may hold several mapped roles; dual control is not required.
+  return Boolean(rolePattern && approvalRoleMatches(approval, rolePattern));
+}
+
+function isVerifiedVpnPath(request: CanonicalRequest, evidence: PolicyEvidence) {
+  return (
+    request.serviceGroup === "NETWORK_VPN" &&
+    request.intentLabel === "VPN_SETUP" &&
+    request.requestKind === "ACCESS_REQUEST" &&
+    hasVerifiedEntitlement(evidence) &&
+    evidence.endpointManaged === "verified" &&
+    evidence.vpnSubnet === "approved" &&
+    evidence.vpnDurationWithinPolicy === true
+  );
+}
+
+function entitlementDecision(base: Decision, status: "denied" | "unknown") {
+  return {
+    ...base,
+    action: "ESCALATE" as const,
+    handlingMode: "HUMAN_REVIEW" as const,
+    bucket: "BEYOND_AUTHORITY" as const,
+    uncertaintyClass: "AUTHORITY_REQUIRED" as const,
+    riskLevel: "MEDIUM" as const,
+    ruleIds: ["AUTH-ENTITLEMENT-001"],
+    userReason:
+      status === "denied"
+        ? "Entitlement hiện tại không cho phép đúng resource và quyền yêu cầu."
+        : "Chưa xác minh được entitlement của người gửi cho đúng resource và quyền yêu cầu.",
+    adminReason:
+      "AUTH-ENTITLEMENT-001: chỉ nguồn entitlement server-side khớp danh tính và scope mới cho phép AUTO.",
+    reviewerQuestions: [
+      "IAM xác nhận danh tính người gửi, resource, quyền và environment nào đang được entitlement cho phép?",
+    ],
+    questions: [],
+    nextStep: "Chờ IAM xác minh entitlement; lời khai trong ticket không thay thế nguồn này.",
+    assignedTeam: "IAM/IT / Resource owner",
+  };
+}
+
+function accessTtlDecision(base: Decision): Decision {
+  return {
+    ...base,
+    action: "ESCALATE",
+    handlingMode: "HUMAN_REVIEW",
+    bucket: "BEYOND_AUTHORITY",
+    uncertaintyClass: "AUTHORITY_REQUIRED",
+    riskLevel: "MEDIUM",
+    ruleIds: ["AUTH-TTL-001"],
+    questions: [],
+    reviewerQuestions: [
+      "Policy owner xác nhận TTL mặc định theo service và mức rủi ro nào cho quyền này?",
+    ],
+    userReason: "Chưa xác minh được thời hạn truy cập nằm trong policy của service và mức rủi ro.",
+    adminReason: "AUTH-TTL-001: quyền routine chỉ AUTO khi nguồn policy xác nhận TTL; không dùng thời hạn tự khai thay cho policy.",
+    nextStep: "IAM hoặc policy owner xác minh TTL trước khi cấp quyền.",
+    assignedTeam: "IAM / Policy owner",
+  };
+}
+
+function approverRoleDecision(base: Decision, approval: Approval): Decision {
+  return {
+    ...base,
+    action: "ESCALATE",
+    handlingMode: "HUMAN_REVIEW",
+    bucket: "BEYOND_AUTHORITY",
+    uncertaintyClass: "AUTHORITY_REQUIRED",
+    riskLevel: "HIGH",
+    ruleIds: ["AUTH-APPROVER-ROLE-001"],
+    questions: [],
+    reviewerQuestions: [
+      "Xác minh approver có role mapping cho đúng resource, action và environment không?",
+    ],
+    userReason: "Approver không có thẩm quyền đã xác minh cho action và resource này.",
+    adminReason:
+      `AUTH-APPROVER-ROLE-001: role=${approval.authorizedRole ?? "unknown"}; danh tính, role mapping và scope phải do backend xác minh.`,
+    nextStep: "Yêu cầu approver có thẩm quyền phù hợp; không nhận ủy quyền ngoài hệ thống.",
+    assignedTeam: "Resource owner / IAM",
+  };
+}
+
+function approvalStateDecision(base: Decision, approval: Approval): Decision {
+  if (approval.status === "pending")
+    return {
+      ...base,
+      action: "NEEDS_INFORMATION",
+      handlingMode: "HUMAN_REVIEW",
+      bucket: "BEYOND_AUTHORITY",
+      uncertaintyClass: "AUTHORITY_REQUIRED",
+      ruleIds: ["AUTH-APPROVAL-PENDING"],
+      missingFields: [],
+      questions: [],
+      reviewerQuestions: [],
+      userReason: "Approval đang chờ quyết định; yêu cầu được giữ lại và chưa thực hiện.",
+      adminReason:
+        "AUTH-APPROVAL-PENDING: chờ registry và ITSM cập nhật cùng approval record; đánh giá lại khi trạng thái đổi.",
+      nextStep: "Giữ request chờ; không thực thi trước khi approval được xác minh.",
+      assignedTeam: "Approver / IAM",
+    };
+
+  const revoked = approval.status === "revoked";
+  const rejected = approval.status === "rejected";
+  return {
+    ...base,
+    action: "ESCALATE",
+    handlingMode: "HUMAN_REVIEW",
+    bucket: "BEYOND_AUTHORITY",
+    uncertaintyClass: "AUTHORITY_REQUIRED",
+    ruleIds: [revoked ? "AUTH-APPROVAL-REVOKED" : rejected ? "AUTH-APPROVAL-REJECTED" : "AUTH-007"],
+    missingFields: [],
+    questions: [],
+    reviewerQuestions: [
+      revoked
+        ? "Dừng phần chưa thực hiện và thu hồi quyền đã cấp khi có thể; record mới nào cho phép tiếp tục?"
+        : rejected
+          ? "Nếu scope hoặc approval thay đổi, hãy tạo request mới để xác minh lại."
+          : "Xác minh record approval trên registry và ITSM, cùng danh tính, scope, environment và purpose.",
+    ],
+    userReason: revoked
+      ? "Approval đã bị thu hồi; dừng việc chưa thực hiện."
+      : rejected
+        ? "Approval đã bị từ chối; request này không được thực hiện."
+        : "Không xác minh được approval hợp lệ cho đúng request.",
+    adminReason: approval.reason ?? `Approval status=${approval.status}; chưa được phép thực hiện.`,
+    nextStep: revoked
+      ? "Thu hồi quyền/tài nguyên đã cấp nếu hệ thống cho phép; approval mới cần cho request tiếp theo."
+      : rejected
+        ? "Đóng request hiện tại; request mới cần scope hoặc approval mới."
+        : "Chuyển reviewer xác minh nguồn approval; không dùng lời khai hoặc file đính kèm làm thay thế.",
+    assignedTeam: "IAM / Resource owner",
+  };
+}
+
+function resourceQuotaDecision(
+  base: Decision,
+  status: NonNullable<PolicyEvidence["resourceQuota"]>["status"],
+): Decision {
+  const unavailable = status === "unavailable";
+  return {
+    ...base,
+    action: "ESCALATE",
+    handlingMode: "HUMAN_REVIEW",
+    bucket: "BEYOND_AUTHORITY",
+    uncertaintyClass: "AUTHORITY_REQUIRED",
+    riskLevel: "MEDIUM",
+    ruleIds: ["AUTH-QUOTA"],
+    reviewerQuestions: [
+      unavailable
+        ? "Cloud/Capacity owner xác nhận quota và ngân sách còn lại của project/team, gồm tài nguyên đang hoạt động, ở nguồn nào?"
+        : "Cloud/Capacity owner có thể duyệt ngoại lệ quota/ngân sách nào cho project/team và thời hạn sử dụng?",
+    ],
+    userReason:
+      unavailable
+        ? "Chưa xác minh được quota và ngân sách hiện có cho nhóm tài nguyên này."
+        : "Yêu cầu vượt quota hoặc ngân sách hiện có; cần người phụ trách xác nhận ngoại lệ.",
+    adminReason:
+      `AUTH-QUOTA: cần nguồn quota authoritative theo project/team, tính cả tài nguyên đang hoạt động${
+        resourceQuotaPolicy.mayApplyPerUserLimit ? " và giới hạn user nếu được cấu hình" : ""
+      }; không dùng quota do ticket tự khai.`,
+    nextStep: unavailable
+      ? "Chờ Cloud/Capacity owner hoặc quota service xác minh; không cấp tài nguyên khi chưa có kết quả."
+      : "Reviewer xử lý ngoại lệ với Cloud/Capacity owner; không cấp vượt quota trước khi được xác minh.",
+  };
 }
 
 function approvalFields(approval: Approval, request: CanonicalRequest) {
@@ -313,34 +789,46 @@ function isProductionExportAuthorityRequest(request: CanonicalRequest) {
 function evaluateSinglePolicy(
   request: CanonicalRequest,
   approval: Approval,
+  evidence: PolicyEvidence,
 ): Decision {
   const missing = missingFacts(request);
-  if (requiresApproval(request) && approval.status !== "verified")
-    missing.push("verifiedApproval");
+  const quotaIsOverLimit =
+    isCloudProvisioningRequest(request) &&
+    evidence.resourceQuota?.status === "exceeded" &&
+    hasAuthoritativeQuota(evidence);
+  const approvalRequired =
+    requiresApproval(request) || quotaIsOverLimit || hasSensitiveData(request, evidence);
   const productionExportAuthority = isProductionExportAuthorityRequest(request);
-  const matched = riskRules.filter((rule) =>
+  const rawMatched = riskRules.filter((rule) =>
     request.riskSignals.includes(rule.signal) &&
     (!rule.serviceGroup || rule.serviceGroup === request.serviceGroup) &&
     (!rule.environment || rule.environment === request.environment) &&
     !(rule.signal === "DATA_EXPORT" && productionExportAuthority),
   );
   if (productionExportAuthority && request.riskSignals.includes("DATA_EXPORT"))
-    matched.push(productionExportAuthorityRule);
+    rawMatched.push(productionExportAuthorityRule);
   const databaseAuthority =
     request.serviceGroup === "DATABASE" &&
     (request.environment === "production" ||
       request.intentLabel === "DATABASE_EXPORT" ||
       request.requestedAction === "export");
-  if (databaseAuthority && !matched.some((rule) => rule.id === "AUTH-001"))
-    matched.push({
+  if (databaseAuthority && !rawMatched.some((rule) => rule.id === "AUTH-001"))
+    rawMatched.push({
       ...productionDatabaseRule,
       signal: "PRODUCTION_CHANGE" as RiskSignal,
     });
   if (request.serviceGroup === "SECURITY")
-    matched.push({
+    rawMatched.push({
       ...securityServiceRule,
       signal: "INCIDENT" as RiskSignal,
     });
+
+  const vpnException = isVerifiedVpnPath(request, evidence);
+  const matched = rawMatched.filter((rule) => {
+    if (vpnException && rule.id === "AUTH-002") return false;
+    return !approvalClearsRule(approval, rule, request, evidence);
+  });
+  const approvedRiskRules = rawMatched.length > 0 && matched.length === 0;
 
   const base: Decision = {
     action: "NEEDS_INFORMATION",
@@ -375,6 +863,18 @@ function evaluateSinglePolicy(
     const databaseDestruction = winning.find((rule) =>
       rule.signal === "DESTRUCTIVE" && rule.bucket === "SECURITY_RISK",
     );
+    const approvalRevoked = approval.status === "revoked";
+    const approvalRejected = approval.status === "rejected";
+    const approvalStatusRule = approvalRevoked
+      ? "AUTH-APPROVAL-REVOKED"
+      : approvalRejected
+        ? "AUTH-APPROVAL-REJECTED"
+        : undefined;
+    const approvalStatusQuestion = approvalRevoked
+      ? "Dừng phần chưa thực hiện và thu hồi quyền/tài nguyên đã cấp khi có thể; approval mới nào cho phép tiếp tục?"
+      : approvalRejected
+        ? "Đóng request hiện tại; nếu scope hoặc approval đổi, hãy tạo request mới để xác minh lại."
+        : undefined;
     return {
       ...base,
       action: "ESCALATE",
@@ -383,7 +883,7 @@ function evaluateSinglePolicy(
         (rule) => !rule.id.startsWith("FAIL") && rule.id !== "HANDOFF-001",
       )
         ? "HIGH"
-        : request.riskSignals.includes("USER_HANDOFF")
+          : request.riskSignals.includes("USER_HANDOFF")
           ? "MEDIUM"
           : "UNKNOWN",
       bucket,
@@ -392,11 +892,16 @@ function evaluateSinglePolicy(
       )
         ? "OUT_OF_POLICY"
         : "AUTHORITY_REQUIRED",
-      ruleIds: [...new Set(matched.map((rule) => rule.id))],
-      userReason: winning[0].reason,
-      adminReason: matched
+      ruleIds: [...new Set([
+        ...matched.map((rule) => rule.id),
+        ...(approvalStatusRule ? [approvalStatusRule] : []),
+      ])],
+      userReason: approvalStatusQuestion
+        ? `${winning[0].reason} ${approvalRevoked ? "Approval đã bị thu hồi." : "Approval đã bị từ chối."}`
+        : winning[0].reason,
+      adminReason: `${matched
         .map((rule) => `${rule.id}: ${rule.reason}`)
-        .join(" "),
+        .join(" ")}${approvalStatusRule ? ` ${approvalStatusRule}: stop execution and require a new approval.` : ""}`,
       assignedTeam:
         bucket === "SECURITY_RISK"
           ? request.riskSignals.includes("PUBLIC_EXPOSURE")
@@ -407,11 +912,16 @@ function evaluateSinglePolicy(
           : databaseAuthority
             ? "DBA/Data / Reviewer"
             : base.assignedTeam,
-      nextStep:
-        "Reviewer kiểm tra evidence và phạm vi; hệ thống không thực hiện thay đổi thật.",
+      nextStep: approvalRevoked
+        ? "Dừng việc chưa thực hiện; thu hồi quyền/tài nguyên đã cấp khi có thể và yêu cầu approval mới."
+        : approvalRejected
+          ? "Đóng request này; request mới cần scope hoặc approval mới."
+          : "Reviewer kiểm tra evidence và phạm vi; hệ thống không thực hiện thay đổi thật.",
       questions: [],
       reviewerQuestions:
-        productionExportAuthority && bucket === "BEYOND_AUTHORITY"
+        approvalStatusQuestion
+          ? [approvalStatusQuestion]
+          : productionExportAuthority && bucket === "BEYOND_AUTHORITY"
           ? [productionExportAuthorityRule.question, productionExportAuthorityRule.destinationQuestion]
           : request.riskSignals.includes("PUBLIC_EXPOSURE")
         ? [
@@ -545,6 +1055,29 @@ function evaluateSinglePolicy(
     };
   }
 
+  if (
+    request.serviceGroup === "CLOUD_GPU" &&
+    !cloudProvisioningIntentLabels.has(request.intentLabel)
+  )
+    return {
+      ...base,
+      action: "ESCALATE",
+      handlingMode: "HUMAN_REVIEW",
+      bucket: "BEYOND_AUTHORITY",
+      uncertaintyClass: "OUT_OF_POLICY",
+      ruleIds: ["AUTH-005"],
+      missingFields: [],
+      questions: [],
+      reviewerQuestions: [
+        "Cloud policy owner xác nhận service, owner, facts bắt buộc và giới hạn áp dụng cho loại yêu cầu này?",
+      ],
+      assignedTeam: "Policy owner / Cloud/ML Infra",
+      userReason: "Loại yêu cầu cloud này chưa có contract xử lý an toàn trong policy.",
+      adminReason:
+        "AUTH-005: không áp dụng quota hoặc AUTO provisioning rule cho cloud intent chưa được cấu hình.",
+      nextStep: "Policy owner xác nhận phạm vi và quy trình tiếp nhận trước khi xử lý.",
+    };
+
   if (missing.length) {
     const uniqueMissing = [...new Set(missing)];
     const plan = clarificationPlan(request, uniqueMissing);
@@ -582,6 +1115,49 @@ function evaluateSinglePolicy(
     };
   }
 
+  if (quotaIsOverLimit) {
+    if (["pending", "rejected", "revoked"].includes(approval.status))
+      return approvalStateDecision(base, approval);
+    if (
+      !approvalRoleMatches(
+        approval,
+        /capacity.?owner|quota.?owner|budget.?owner/,
+      )
+    )
+      return resourceQuotaDecision(base, "exceeded");
+  }
+
+  if (approvalRequired && !verifiedApproval(approval))
+    return approvalStateDecision(base, approval);
+  if (
+    approvalRequired &&
+    !approvalRoleMatches(approval, requiredApprovalRole(request, evidence))
+  )
+    return approverRoleDecision(base, approval);
+
+  if (requiresEntitlement(request) && !hasVerifiedEntitlement(evidence))
+    return entitlementDecision(
+      base,
+      evidence.entitlement?.status === "denied" ? "denied" : "unknown",
+    );
+  if (
+    requiresEntitlement(request) &&
+    !approvalRequired &&
+    !hasRoutineAccessTtl(request, evidence)
+  )
+    return accessTtlDecision(base);
+
+  if (isCloudProvisioningRequest(request)) {
+    const quota = evidence.resourceQuota;
+    if (!hasAuthoritativeQuota(evidence) || quota?.status === "unavailable")
+      return resourceQuotaDecision(base, "unavailable");
+    if (
+      quota?.status === "exceeded" &&
+      !approvalRoleMatches(approval, /capacity.?owner|quota.?owner|budget.?owner/)
+    )
+      return resourceQuotaDecision(base, "exceeded");
+  }
+
   if (guide && isGuidanceOnly(request)) {
     const medium = ["vpn", "wifi", "software", "account"].includes(guide.topic);
     return {
@@ -600,50 +1176,6 @@ function evaluateSinglePolicy(
         "Làm theo hướng dẫn; có thể nhờ nhân viên hỗ trợ bất cứ lúc nào.",
     };
   }
-  if (
-    request.serviceGroup === "CLOUD_GPU" &&
-    (!Number.isFinite(Number(request.entities.duration?.match(/\d+(?:\.\d+)?/)?.[0])) ||
-      !/^(\d+)\s*(hours?|hrs?|h|gio|tieng)$/i.test(
-        normalize(request.entities.duration ?? ""),
-      ) ||
-      Number(request.entities.duration?.match(/\d+(?:\.\d+)?/)?.[0]) >
-        demoResourceLimits.hours ||
-      (/GPU/.test(request.intentLabel) &&
-        (!/^\d+$/.test(request.entities.quantity ?? "") ||
-          Number(request.entities.quantity) < 1 ||
-          Number(request.entities.quantity) > demoResourceLimits.gpuCount ||
-          !(demoResourceLimits.gpuTypes as readonly string[]).includes(
-            (request.entities.gpuType ?? "").toLowerCase(),
-          ))) ||
-      ["cpu", "ram", "disk"].some(
-        (field, index) =>
-          request.entities[field] &&
-          (!Number.isFinite(Number(request.entities[field])) ||
-            Number(request.entities[field]) <= 0 ||
-            Number(request.entities[field]) >
-              [
-                demoResourceLimits.cpu,
-                demoResourceLimits.ram,
-                demoResourceLimits.disk,
-              ][index]),
-      ))
-  )
-    return {
-      ...base,
-      action: "ESCALATE",
-      handlingMode: "HUMAN_REVIEW",
-      bucket: "BEYOND_AUTHORITY",
-      uncertaintyClass: "AUTHORITY_REQUIRED",
-      riskLevel: "MEDIUM",
-      ruleIds: ["AUTH-QUOTA"],
-      reviewerQuestions: ["Owner có thể duyệt số lượng, cấu hình, thời hạn và ngân sách nào? Có phương án giảm tài nguyên về giới hạn mô phỏng không?"],
-      userReason:
-        "Tài nguyên vượt giới hạn mô phỏng hoặc chưa xác định được quy mô an toàn.",
-      adminReason:
-        "Demo quota: tối đa 2 GPU T4/A10, 4 CPU, 16 GB RAM, 100 GB disk, 8 giờ; cần người phụ trách xác nhận phần vượt giới hạn.",
-      nextStep: "Nhân viên kiểm tra chi phí và khả năng cấp tài nguyên.",
-    };
-
   const nonProduction = !["production", "unknown"].includes(
     request.environment,
   );
@@ -658,30 +1190,92 @@ function evaluateSinglePolicy(
     "DEVICE_CAMERA",
     "DEVICE_PRINTER",
   ]);
+  const targetSystem = normalizeFact(
+    request.entities.targetSystem ?? request.entities.system ?? "",
+  );
+  const ordinaryContent = ["ordinary", "synthetic", "non_sensitive"].includes(
+    evidence.dataClassification ?? "unknown",
+  );
+  const actionText = normalizeFact(request.requestedAction);
+  const jiraReadOrTicketUpdate =
+    targetSystem.includes("jira") &&
+    (["read-only", "read", "standard"].includes(requestedPermission(request)) ||
+      request.intentLabel === "JIRA_TICKET_UPDATE" ||
+      /(?:update|edit|comment).*(?:ticket|issue)|(?:ticket|issue).*(?:update|edit|comment)/.test(actionText));
+  const confluenceReadOrPageEdit =
+    targetSystem.includes("confluence") &&
+    (["read-only", "read", "standard"].includes(requestedPermission(request)) ||
+      request.intentLabel === "CONFLUENCE_PAGE_EDIT" ||
+      /(?:read|view|edit|update).*(?:page)|(?:page).*(?:read|view|edit|update)/.test(actionText));
+  const restrictedSettingsRequest =
+    /ADMIN|PROJECT_SETTINGS|SPACE_SETTINGS|GLOBAL_SETTINGS/.test(request.intentLabel) ||
+    /admin|project settings|space settings|global settings/.test(actionText);
+  const routineCollaborationAccess =
+    request.serviceGroup === "ACCOUNT_ACCESS" &&
+    (jiraReadOrTicketUpdate || confluenceReadOrPageEdit) &&
+    !restrictedSettingsRequest &&
+    ordinaryContent;
+  const githubActionsRead =
+    request.serviceGroup === "CI_CD" &&
+    isGitHubActionsRequest(request) &&
+    (request.intentLabel === "PIPELINE_VIEW_LOGS" ||
+      request.requestedAction === "view_logs") &&
+    evidence.secretExposureExcluded === true;
+  const approvedGithubWorkflowChange =
+    isGitHubWorkflowChange(request) &&
+    approvalRoleMatches(approval, /security/) &&
+    hasVerifiedEntitlement(evidence);
+  const safeCloudSandbox =
+    isEphemeralCloudSandbox(request) &&
+    ["synthetic", "non_sensitive"].includes(
+      evidence.dataClassification ?? "unknown",
+    );
+  const approvedCloudProvisioning =
+    isCloudProvisioningRequest(request) &&
+    hasAuthoritativeQuota(evidence) &&
+    evidence.resourceQuota?.status === "within_limit" &&
+    approvalRoleMatches(
+      approval,
+      /capacity.?owner|quota.?owner|budget.?owner|cloud.?owner|resource.?owner/,
+    );
+  const approvedQuotaException =
+    isCloudProvisioningRequest(request) &&
+    hasAuthoritativeQuota(evidence) &&
+    evidence.resourceQuota?.status === "exceeded" &&
+    approvalRoleMatches(approval, /capacity.?owner|quota.?owner|budget.?owner/);
 
   const allowed =
     (nonProduction &&
       request.serviceGroup === "DATABASE" &&
       request.intentLabel === "DATABASE_READ_ACCESS" &&
       ["read", "read-only"].includes(request.entities.permission)) ||
-    (nonProduction &&
-      request.serviceGroup === "ACCOUNT_ACCESS" &&
+    (request.serviceGroup === "ACCOUNT_ACCESS" &&
+      !["jira", "confluence"].some((system) => targetSystem.includes(system)) &&
       ["REQUEST_STANDARD_ACCESS", "REQUEST_READ_ACCESS"].includes(
         request.intentLabel,
       ) &&
       ["read-only", "standard", "read"].includes(
-        request.entities.accessType,
+        requestedPermission(request),
       )) ||
     (request.serviceGroup === "GIT_PERMISSION" &&
       ["GIT_READ_ACCESS", "GIT_WRITE_ACCESS"].includes(request.intentLabel) &&
       ["read", "read-only", "triage", "write"].includes(
         request.entities.permission,
       )) ||
-    (request.serviceGroup === "CLOUD_GPU" &&
-      ["sandbox", "development"].includes(request.environment)) ||
+    (isCloudProvisioningRequest(request) &&
+      safeCloudSandbox &&
+      evidence.resourceQuota?.status === "within_limit" &&
+      hasAuthoritativeQuota(evidence)) ||
+    approvedCloudProvisioning ||
+    approvedQuotaException ||
     (nonProduction &&
       request.serviceGroup === "CI_CD" &&
-      ["view_logs", "diagnose", "rerun"].includes(request.requestedAction)) ||
+      ["diagnose", "rerun"].includes(request.requestedAction)) ||
+    (githubActionsRead &&
+      request.serviceGroup === "CI_CD" &&
+      hasVerifiedEntitlement(evidence)) ||
+    approvedGithubWorkflowChange ||
+    (routineCollaborationAccess && hasVerifiedEntitlement(evidence)) ||
     (nonProduction &&
       request.serviceGroup === "KUBERNETES" &&
       ["view_logs", "diagnose", "restart", "scale"].includes(
@@ -694,6 +1288,7 @@ function evaluateSinglePolicy(
     (nonProduction &&
       request.serviceGroup === "NETWORK_VPN" &&
       request.requestedAction === "diagnose") ||
+    isVerifiedVpnPath(request, evidence) ||
     (request.serviceGroup === "SOFTWARE_LICENSE" &&
       request.entities.approvedCatalogStatus === "approved") ||
     (request.serviceGroup === "DEVICE_BOOT" &&
@@ -728,6 +1323,35 @@ function evaluateSinglePolicy(
       adminReason: `${routineRule}: safe path đúng service/action; đủ dữ kiện và approval bắt buộc đã xác minh.`,
       nextStep:
         "Đã mô phỏng tiếp nhận; chưa có thao tác hạ tầng hay cấp quyền thật.",
+    };
+  }
+
+  if (approvedRiskRules) {
+    const approvedBucket = rawMatched.reduce(
+      (current, rule) =>
+        bucketPriority[rule.bucket] > bucketPriority[current]
+          ? rule.bucket
+          : current,
+      "BEYOND_AUTHORITY" as Decision["bucket"],
+    );
+    return {
+      ...base,
+      action: "AUTO_APPROVE",
+      handlingMode: "SIMULATED_WORKFLOW",
+      riskLevel: "HIGH",
+      bucket: approvedBucket,
+      uncertaintyClass: "NONE",
+      ruleIds: [
+        ...new Set(rawMatched.map((rule) => rule.id)),
+        "APPROVAL-SCOPE-VERIFIED",
+      ],
+      missingFields: [],
+      questions: [],
+      reviewerQuestions: [],
+      userReason: "Approval đã xác minh đúng scope và vai trò cho action này.",
+      adminReason:
+        "Một approver có thẩm quyền đã duyệt scope khớp; không yêu cầu dual control. Chỉ mô phỏng workflow, không thực thi production.",
+      nextStep: "Ghi audit approval và scope; thao tác thật vẫn do hệ thống được cấp quyền thực hiện.",
     };
   }
 
@@ -771,18 +1395,67 @@ function approvalFor(
   return typeof approval === "function" ? approval(request) : approval;
 }
 
+function evidenceFor(
+  request: CanonicalRequest,
+  evidence: PolicyEvidence | PolicyEvidenceResolver,
+) {
+  return typeof evidence === "function" ? evidence(request) : evidence;
+}
+
 export function evaluatePolicy(
   request: CanonicalRequest,
   approval: Approval | ApprovalResolver = { status: "pending" },
+  evidence: PolicyEvidence | PolicyEvidenceResolver = {},
 ): Decision {
   const synchronizeQuestions = (decision: Decision): Decision => ({
     ...decision,
     targetedQuestions: decision.reviewerQuestions ?? decision.questions,
   });
   const parent = synchronizeQuestions(
-    evaluateSinglePolicy(request, approvalFor(request, approval)),
+    evaluateSinglePolicy(
+      request,
+      approvalFor(request, approval),
+      evidenceFor(request, evidence),
+    ),
   );
   if (!request.subrequests.length) return parent;
+
+  if (request.subrequests.length > singleRequestPolicy.maxSubrequests) {
+    if (parent.bucket === "SECURITY_RISK") return parent;
+    const childDecisions = request.subrequests
+      .map((part) => {
+        const child: CanonicalRequest = {
+          ...part,
+          subrequests: [],
+          redactions: [],
+          model: request.model,
+        };
+        return evaluateSinglePolicy(child, approvalFor(child, approval), evidenceFor(child, evidence));
+      });
+    const highestPriorityDecision = [parent, ...childDecisions]
+      .filter((decision) =>
+        ["SECURITY_RISK", "BEYOND_AUTHORITY"].includes(decision.bucket),
+      )
+      .sort((left, right) => bucketPriority[right.bucket] - bucketPriority[left.bucket])[0];
+    if (highestPriorityDecision)
+      return synchronizeQuestions(highestPriorityDecision);
+    return synchronizeQuestions({
+      ...parent,
+      action: "NEEDS_INFORMATION",
+      handlingMode: "GUIDE",
+      bucket: "MISSING_INFO",
+      uncertaintyClass: "MISSING_FACTS",
+      ruleIds: ["INFO-SINGLE-REQUEST-001"],
+      missingFields: ["singleRequest"],
+      questions: [singleRequestPolicy.userMessage],
+      reviewerQuestions: [],
+      userReason: singleRequestPolicy.userMessage,
+      adminReason: `INFO-SINGLE-REQUEST-001: ${request.subrequests.length} subrequests were extracted; process one request at a time.`,
+      nextStep: singleRequestPolicy.userMessage,
+      assignedTeam: "Người gửi yêu cầu",
+      subrequestOutcomes: [],
+    });
+  }
 
   const childDecisions = request.subrequests.map((part) => {
     const child: CanonicalRequest = {
@@ -794,7 +1467,11 @@ export function evaluatePolicy(
     return {
       request: child,
       decision: synchronizeQuestions(
-        evaluateSinglePolicy(child, approvalFor(child, approval)),
+        evaluateSinglePolicy(
+          child,
+          approvalFor(child, approval),
+          evidenceFor(child, evidence),
+        ),
       ),
     };
   });
