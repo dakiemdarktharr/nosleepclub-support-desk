@@ -5,8 +5,8 @@
   "reviewCommit": "2eeae8b",
   "integratedMain": "aa9ad2c8f9d83ced626212e0e99bbf2fd1c657d2",
   "provenance": {
-    "sourceRevision": "2eeae8b2cafdc72d5047e57db25b7066757ec580",
-    "runtimeDirty": true,
+    "sourceRevision": "02658ca1c3b559f79da25e99b4e1cd81d1ddf94c",
+    "runtimeDirty": false,
     "runtimeDigest": "fe9da459eb877ff9ba678336d500eebd80e0f1d4e090328f386267917326e84c",
     "node": "v24.18.0",
     "storage": "memory-demo",
@@ -26,7 +26,7 @@
     },
     "evaluator": {
       "sha256": "8c749d3f9668ebc412f398cf517d81042ed03deb2bf6c688b95506dd2eb404a3",
-      "dirty": true
+      "dirty": false
     }
   },
   "metrics": {
@@ -96,8 +96,8 @@
   "changedCaseCount": 127,
   "sentiment": {
     "metadata": {
-      "commit": "2eeae8b2cafdc72d5047e57db25b7066757ec580",
-      "runtimeDirty": true,
+      "commit": "02658ca1c3b559f79da25e99b4e1cd81d1ddf94c",
+      "runtimeDirty": false,
       "runtimeSha256": "e25875e55dda8d3020a0f40ba1c6888961d7651999beb9c3ab08304b01a0590c",
       "evaluatorSha256": "8b4706e954d181d330f5c3077f70817bbd6a39127288afa07aaefecba30c7f3a",
       "datasetSha256": "eee7d7eabd15d0a0fa833f309e3348aa238f81209d5722ae86ad08cc68cfd131",
@@ -6283,5 +6283,6 @@
       ],
       "reviewStatus": "development-label-match-only"
     }
-  ]
+  ],
+  "testedCommit": "02658ca1c3b559f79da25e99b4e1cd81d1ddf94c"
 }
