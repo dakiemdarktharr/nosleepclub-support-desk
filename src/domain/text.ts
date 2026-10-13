@@ -70,6 +70,13 @@ function hasDirectDatabaseOperation(text: string) {
   );
 }
 
+function refersToExistingResource(text: string, resources: string) {
+  const existing = String.raw`(?:existing|current|shared|hien co|dang co)`;
+  return new RegExp(
+    String.raw`\b(?:use|using|dung|su dung)\b.{0,35}\b(?:${resources})\b.{0,20}\b${existing}\b|\b(?:use|using|dung|su dung)\b.{0,25}\b${existing}\b.{0,20}\b(?:${resources})\b`,
+  ).test(text);
+}
+
 function hasDirectNetworkOperation(text: string) {
   return asserted(
     text,
@@ -109,17 +116,44 @@ function standardVpnAccess(text: string) {
 }
 
 function databaseProvisioningRequest(text: string) {
-  return !hasDirectDatabaseOperation(text) &&
-    !/\b(?:access|permission|read|write|select|quyen)\b/.test(text) && (
-      /\b(?:create|provision|tao|dung)\b.{0,35}\b(?:database|db)\b/.test(text) ||
-      /\b(?:need|want|request|can|xin)\s+(?:mot|a|an|new)\s+(?:(?:postgresql|postgres|mysql|mongodb|redis|clickhouse)\s+)?(?:(?:staging|qa|uat|sandbox|development|dev|production|prod)\s+)?(?:database|db)\b/.test(text)
-    );
+  const databaseResource =
+    String.raw`database|db|postgresql|postgres|mysql|mongodb|redis|clickhouse`;
+  const createsResource =
+    /\b(?:create|provision|tao|dung)\b.{0,45}\b(?:database|db|postgresql|postgres|mysql|mongodb|redis|clickhouse)\b/;
+  const requestsResource =
+    /\b(?:need|want|request|can|xin|nho|cap|cho|muon)\b.{0,45}\b(?:a|an|one|new|another|separate|dedicated|mot|moi|rieng|them)?\s*(?:staging|qa|uat|sandbox|development|dev|production|prod)?\s*(?:postgresql|postgres|mysql|mongodb|redis|clickhouse)\s+(?:database|db|instance|node)\b|\b(?:need|want|request|can|xin|nho|cap|cho|muon)\b.{0,45}\b(?:mongodb|redis|clickhouse)\s+(?:rieng|separate|dedicated)\b|\b(?:need|want|request|can|xin|nho|cap|cho|muon)\b.{0,45}\b(?:database|db)\b/;
+  return !refersToExistingResource(text, databaseResource) &&
+    !hasDirectDatabaseOperation(text) &&
+    !/\b(?:access|permission|read|write|select|quyen)\b/.test(text) &&
+    (createsResource.test(text) || requestsResource.test(text));
 }
 
 function computeProvisioningRequest(text: string) {
-  return !hasDirectDatabaseOperation(text) && !hasDirectNetworkOperation(text) &&
+  const computeResourcePattern =
+    String.raw`vm|server|host|node|worker|instance|etl (?:vm|server|box)|data node|spark driver(?: node)?|airflow worker|kafka connect(?: (?:host|worker|server|node))?|flink etl(?: server)?|trino coordinator|temporal worker|dbt runner`;
+  const computeResource = new RegExp(String.raw`\b(?:${computeResourcePattern})\b`);
+  const createsResource =
+    new RegExp(String.raw`\b(?:provision|create|build|set up|setup|stand up|tao|dung|cap)\s+(?:(?:a|an|one|new|another|separate|dedicated|mot|moi|rieng|them|\d+)\s+){0,3}(?:${computeResourcePattern})\b`);
+  const requestsResource =
+    new RegExp(String.raw`\b(?:need|want|request|ask|can|xin|nho|cap|giup|muon)\s+(?:(?:minh|toi|team|infra|it)\s+)?(?:(?:a|an|one|new|another|separate|dedicated|mot|moi|rieng|them|additional|\d+)\s+){0,3}(?:${computeResourcePattern})(?:\s+(?:rieng|separate|dedicated))?\b`);
+  const requestedCreation =
+    new RegExp(String.raw`\b(?:need|want|request|ask|can|xin|nho|cap|giup|muon)\b.{0,24}\b(?:provision|create|build|set up|setup|stand up|tao|dung|cap)\b.{0,24}\b(?:${computeResourcePattern})\b`);
+  // GPU-sized instances must stay on the GPU quota path; a generic instance alias
+  // cannot convert a GPU request into a cloud VM request.
+  if (/\b(?:gpu|a100|h100|t4|a10)\b/.test(text)) return false;
+  return !refersToExistingResource(text, computeResourcePattern) &&
+    !hasDirectDatabaseOperation(text) && !hasDirectNetworkOperation(text) &&
     !/\b(?:access|permission|read|write|select|quyen)\b/.test(text) &&
-    /\b(?:need|want|request|can|xin|provision|create|tao|dung)\b.{0,35}\b(?:vm|etl (?:vm|server)|kafka connect worker)\b/.test(text);
+    (createsResource.test(text) || requestsResource.test(text) || requestedCreation.test(text)) &&
+    computeResource.test(text);
+}
+
+function isNegatedControlRefusal(fragment: string) {
+  const text = normalize(fragment);
+  return (
+    /^(?:(?:i|we|toi|minh)\s+)?(?:do not|dont|never|khong|khong duoc|khong can|khong yeu cau)\s+(?:bypass|skip|disable|turn off|bo qua|tat|vuot qua)\b/.test(text) &&
+    /\b(?:mfa|2fa|change ticket|change control|approval|audit|logging|edr|security control|quy trinh thay doi|phieu thay doi)\b/.test(text)
+  );
 }
 
 function isScopeConstraint(fragment: string) {
@@ -143,31 +177,54 @@ function isResourceProvisioningContinuation(previous: string, fragment: string) 
   const prior = normalize(previous);
   const text = normalize(fragment);
   const followsProvisioningRequest =
-    /\b(?:need|request|ask|want|xin|nho|can)\b/.test(prior) &&
-    /\b(?:sandbox|vm|etl|airflow|database|postgres(?:ql)?|kafka|worker|instance|server|cloud|gpu)\b/.test(
+    /\b(?:need|request|ask|want|xin|nho|can|cho|muon|tao|dung|cap|giup|provision|create|build|set up|setup)\b/.test(prior) &&
+    /\b(?:sandbox|vm|etl|airflow|database|db|postgres(?:ql)?|mysql|mongodb|redis|clickhouse|kafka|worker|instance|server|host|node|cloud|gpu|spark|flink|trino|temporal|dbt)\b/.test(
       prior,
     );
   const continuesSameResource =
-    /^(?:dag\b|data\b|throughput\b|retention\b|sizing\b|instance size\b|timeframe\b|(?:minh|toi|team|we|i)\s+(?:quen|forgot|chua|haven't|have not)\b|(?:cu|just)\s+(?:dung|build|set up|stand up)\b)/.test(
+    /^(?:dag\b|data\b|volume\b|throughput\b|retention\b|sizing\b|instance size\b|timeframe\b|worker count\b|expected volume\b|(?:minh|toi|team|we|i)\s+(?:quen|forgot|chua|haven't|have not)\b|(?:request|this request)\s+(?:chua|not yet|still)\b|(?:chua|not yet|still)\b|(?:config|configuration|cau hinh)\b|(?:co|there are|around|about)\b|(?:dataset|vendor|manager|lead|deadline|go live|audit plan)\b|(?:muon (?:co )?(?:may|server|host|node|worker|instance))\b|(?:cu|just)\s+(?:dung|use|choose|recommend|build|set up|stand up)\b|(?:nho|please)\s+(?:helpdesk|team|infra|it)\s+(?:xu ly|handle|process|support)\b)/.test(
       text,
     ) || (
       /^(?:(?:neu duoc|if possible)(?: thi| then)?\s+|(?:nho|please)\s+(?:(?:team|it|infra)\s+)?)provision\b/.test(text) &&
-      /\b(?:default|config|image|trong|today|hom nay|this week|tuan nay|giup)\b/.test(text) &&
+      /\b(?:default|config|image|tier|standard|trong|today|hom nay|this week|tuan nay|giup)\b/.test(text) &&
       !/\b(?:another|new|them|khac|sandbox|vm|server|database|worker|instance|resource)\b/.test(text)
     );
+  const sameResourceProvisioningInstruction =
+    /^(?:(?:nho|please)\s+)?(?:(?:team|it|infra)\s+)*(?:set up|setup|provision|tao|dung|cap)\b/.test(text) &&
+    (/\b(?:default|config|configuration|best practice|image|resource|server|host|node|worker|instance|database|db|giup|help)\b/.test(text) ||
+      /^(?:nho|please)\s+(?:(?:team|it|infra)\s+)*(?:tao|dung|cap)\s+(?:giup|help)[.!]*$/.test(text));
+  const negatedProcessContext =
+    /^(?:khong|not|no|don't|do not)\b.*\b(?:bo(?: qua)?|skip|bypass)\b.*\b(?:quy trinh|process|approval|review|policy|form)\b/.test(text) &&
+    !detectedRisks(fragment).includes("BYPASS");
   const startsSeparateRequest =
     /^(?:also|additionally|separately|another|and also|besides|ngoai ra|tien the|dong thoi|cung luc)\b/.test(
       text,
     );
+  const introducesAnotherResource =
+    /\b(?:another|new|separate|additional|different|extra|them|khac|moi)\s+(?:database|db|vm|server|host|node|worker|instance|sandbox|resource)\b/.test(text) ||
+    /\b(?:database|db|vm|server|host|node|worker|instance|sandbox|resource)\s+(?:rieng|separate|dedicated)\b/.test(text);
+  const pendingCapacityOrBudget =
+    /\b(?:budget|quota|capacity|cost|spend)\b.{0,60}\b(?:pending|not approved|not passed|not reviewed|awaiting|chua|chua qua|chua duoc|chua co)\b|\b(?:pending|not approved|not passed|not reviewed|awaiting|chua|chua qua|chua duoc|chua co)\b.{0,60}\b(?:budget|quota|capacity|cost|spend)\b/.test(text);
   const assertsSensitiveOperation = asserted(
     text,
-    /\b(?:drop|delete|export|dump|wipe|open|change|modify|configure|expose|allow|enable|disable|grant|give|send|share|mount|bypass|use|transfer|pay|migrate|execute|chuyen tien)\b/,
+    /\b(?:drop|delete|export|dump|wipe|open|change|modify|configure|expose|allow|enable|disable|grant|give|send|share|mount|bypass|run|chay|transfer|pay|migrate|execute|chuyen tien)\b/,
+  );
+  const usesIndependentResource = asserted(
+    text,
+    /\buse\b.{0,35}\b(?:runner|script|tool|database|db|server|host|node|worker|instance|secret|token|credential|migration)\b/,
+  );
+  const unsafeContext = detectedRisks(fragment).some((risk) =>
+    ["SECRET", "PUBLIC_EXPOSURE", "SECURITY_CONTROL", "BYPASS", "PRIVILEGED", "PRODUCTION_CHANGE", "DESTRUCTIVE", "DATA_EXPORT", "UNAPPROVED_SOFTWARE", "INJECTION"].includes(risk),
   );
   return (
     followsProvisioningRequest &&
-    continuesSameResource &&
+    (continuesSameResource || sameResourceProvisioningInstruction || negatedProcessContext) &&
     !startsSeparateRequest &&
-    !assertsSensitiveOperation
+    !introducesAnotherResource &&
+    !pendingCapacityOrBudget &&
+    !assertsSensitiveOperation &&
+    !usesIndependentResource &&
+    !unsafeContext
   );
 }
 
@@ -319,12 +376,23 @@ export function detectedRisks(raw: string): RiskSignal[] {
     /(?:reset|quen|forgot|doi|change)\s+(?:my |own |mat khau|password)|password reset/.test(
       text,
     );
+  // A Vault storage statement alone is not evidence that a credential was exposed.
+  const credentialExposure = asserted(
+    text,
+    /\b(?:paste|send|share|give|upload|post|publish|expose|reveal|disclose|print|log|show|include|forward|attach|email|gui|cung cap)\b.{0,35}\bcredentials?\b|\bcredentials?\b.{0,35}\b(?:paste|send|share|give|upload|post|publish|expose|reveal|disclose|print|log|show|include|forward|attach|email|gui|cung cap)\b|\bcho\b.{0,12}\bcredentials?\b|\bcredentials?\b.{0,12}\bcho\b/,
+  );
+  const statedCredentialValue = asserted(
+    text,
+    /\bcredentials?\s*(?:(?:[:=]\s*)|(?:\b(?:is|are|was|were)\s+))(?!stored\b|kept\b|saved\b|managed\b|redacted\b|masked\b)[a-z0-9][a-z0-9+/=_-]{7,}\b/,
+  );
   if (
     /\[redacted/.test(text) ||
     asserted(
       text,
-      /private key|kubeconfig|vault token|api key|credential|secret|bearer/,
+      /private key|kubeconfig|vault token|api key|secret|bearer/,
     ) ||
+    credentialExposure ||
+    statedCredentialValue ||
     (!selfService && asserted(text, /password|mat khau|\btoken\b/)) ||
     asserted(
       text,
@@ -362,7 +430,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   if (
     asserted(
       text,
-      /(?:bypass|skip|ignore|bo qua|khoi can|khong can qua)\s+(?:the |security |software |network )?(?:mfa\b|2fa\b|edr\b|audit(?: logging)?\b|authentication\b|xac thuc\b|policy|review|approval|gate|control|quy trinh|chinh sach|form|cab|change ticket)/,
+      /(?:bypass|skip|ignore|bo(?: qua)?|khoi can|khong can qua)\s+(?:(?:the |security |software |network )){0,2}(?:mfa\b|2fa\b|edr\b|audit(?: logging)?\b|authentication\b|xac thuc\b|policy|review|approval|gate|control|quy trinh|chinh sach|form|cab|change ticket)/,
     ) ||
     /(?:cu|lam|cap|mo).{0,20}truoc.{0,30}(?:approval|phe duyet).{0,15}sau/.test(
       text,
@@ -989,6 +1057,9 @@ export function extractIntake(
     // A complete courtesy is not an extra task. Keep the original input and
     // its risk/evidence checks; never discard a clause with appended content.
     .filter((part) => !/^(?:thanks(?: team)?|thank you(?: team)?|cam on(?: team| ban)?)[.!]*$/.test(normalize(part)))
+    // A standalone refusal to bypass a control is context for the actual task,
+    // not a second requested operation.
+    .filter((part) => !isNegatedControlRefusal(part))
     .reduce<string[]>((requests, fragment) => {
       const label = fragment.match(/^([^:=]+)[:=]/)?.[1];
       // Labelled facts describe the preceding request, not an independent task.
@@ -1047,6 +1118,24 @@ export function extractIntake(
     subrequests.every((part) =>
       ["DEVICE_RESET_GUIDANCE", "DEVICE_RESTART_GUIDANCE"].includes(part.intentLabel) &&
       part.riskSignals.length === 0)
+  ) subrequests = [];
+  // Clarification history can produce one parsed fragment that repeats the
+  // resolved primary intent. Treat it as the same request, not a second ask.
+  if (
+    subrequests.length === 1 &&
+    subrequests[0].intentLabel === extracted.intentLabel &&
+    subrequests[0].serviceGroup === extracted.serviceGroup &&
+    subrequests[0].requestKind === extracted.requestKind &&
+    subrequests[0].requestedAction === extracted.requestedAction &&
+    [
+      "targetSystem", "system", "provider", "repository", "resourceScope",
+      "cluster", "namespace", "workload", "service", "source", "target",
+      "port", "protocol", "permission", "accessType", "operation",
+    ].every((field) =>
+      normalizeFact(subrequests[0].entities[field] ?? "") ===
+      normalizeFact(extracted.entities[field] ?? ""),
+    ) &&
+    subrequests[0].riskSignals.length === 0
   ) subrequests = [];
   if (
     subrequests.length > 1 &&

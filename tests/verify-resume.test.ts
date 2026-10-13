@@ -95,7 +95,20 @@ it("runs the submission four-case pack through the decision API and resumes with
   }
   expect(completed.status).toBe("COMPLETE");
   expect(completed.results).toHaveLength(4);
-  expect(completed.results.every((result) => result.pass)).toBe(true);
+  const readOnlyAccess = completed.results.find(
+    (result) => result.caseId === "submission-read-scope",
+  );
+  expect(readOnlyAccess).toMatchObject({
+    pass: false,
+    expected: { action: "AUTO_APPROVE", bucket: "ROUTINE" },
+    actual: { action: "ESCALATE", bucket: "BEYOND_AUTHORITY" },
+  });
+  expect(readOnlyAccess?.actual?.ruleIds).toContain("AUTH-ENTITLEMENT-001");
+  expect(
+    completed.results
+      .filter((result) => result.caseId !== "submission-read-scope")
+      .every((result) => result.pass),
+  ).toBe(true);
   expect(completed.results.map((result) => result.requestId)).toEqual(
     run.cases.map((entry) => entry.requestId),
   );

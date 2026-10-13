@@ -10,7 +10,7 @@ import { explainStep } from "@/domain/guidance";
 import { z } from "zod";
 import { canReview } from "@/domain/transitions";
 import { redact } from "@/domain/redaction";
-import { extractIntake } from "@/domain/text";
+import { extractIntake, normalizeFact } from "@/domain/text";
 import { evaluatePolicy, requiresApproval } from "@/domain/policy";
 import {
   getSupportRequest,
@@ -91,11 +91,17 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
         canonical && approval
           ? evaluatePolicy(canonical, verifyApproval)
           : null;
+      const handoffOnly =
+        current?.ruleIds.length === 1 &&
+        current.ruleIds[0] === "HANDOFF-001";
       if (
         request.status === "NEEDS_INFORMATION" ||
         !current ||
         current.missingFields.length ||
         current.action === "NEEDS_INFORMATION" ||
+        (current.action === "ESCALATE" &&
+          current.bucket === "BEYOND_AUTHORITY" &&
+          !handoffOnly) ||
         (requiresApproval(canonical!) && approval?.status !== "verified")
       )
         throw new SupportError(
@@ -399,10 +405,19 @@ export async function clarifySupport(id: string, value: unknown) {
       "Chỉ bổ sung cho yêu cầu đang chờ thông tin và đúng phiên bản.",
       409,
     );
+  const clarificationText = normalizeFact(input.rawText);
+  const resolvedRestart =
+    current.decision?.missingFields.includes("resetType") &&
+    /\b(?:restart|reboot|khoi dong lai)\b/.test(clarificationText) &&
+    /\b(?:khong|not)\s+factory reset\b/.test(clarificationText);
   const safe = prepareInput({
     ...current.input,
     rawText: [current.input.rawText, input.rawText].filter(Boolean).join("\n"),
-    fields: { ...current.input.fields, ...input.fields },
+    fields: {
+      ...current.input.fields,
+      ...input.fields,
+      ...(resolvedRestart ? { resetType: "restart" } : {}),
+    },
   });
   const result = await analyze(safe.input, safe.markers);
   let assistance = null;

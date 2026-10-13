@@ -21,7 +21,7 @@ import {
   internalPolicyBoundary,
 } from "@/domain/answer-safety";
 import type { KnowledgeArticle } from "@/domain/knowledge";
-import { reserveModelAttempt, supportDatabase } from "./support-repository";
+import { reserveModelAttemptForModel, supportDatabase } from "./support-repository";
 
 const conversationAnswerStyleInstructions =
   "Adjust wording only to tone clearly expressed in the user's words. A technical problem or deadline alone does not imply frustration or urgency. For clear frustration, acknowledge the specific inconvenience once, then give the next step. For confusion, explain one step at a time. For thanks, reply warmly and briefly. If tone is mixed or unclear, stay neutral and focus on the unresolved request. Do not mention tone labels, add generic empathy, or repeat apologies. Tone must not change facts, evidence, uncertainty, recommended actions, safety, routing, urgency, priority, authority, or policy.";
@@ -137,10 +137,11 @@ export async function retrievePublicWeb(
       )
     )
       return { ...cached.data, state: "used" as const };
+    const webModel = process.env.AI_WEB_MODEL || process.env.AI_MODEL;
     if (
       !process.env.OPENAI_API_KEY ||
-      !(process.env.AI_WEB_MODEL || process.env.AI_MODEL) ||
-      !(await reserveModelAttempt())
+      !webModel ||
+      !(await reserveModelAttemptForModel(webModel))
     )
       throw new Error("unavailable");
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -151,7 +152,7 @@ export async function retrievePublicWeb(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.AI_WEB_MODEL || process.env.AI_MODEL,
+        model: webModel,
         store: false,
         max_output_tokens: 1000,
         max_tool_calls: 1,

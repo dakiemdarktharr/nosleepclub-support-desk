@@ -186,6 +186,13 @@ export async function reserveModelAttempt(now = new Date()): Promise<boolean> {
   budgets.set(bucket, attempts + 1);
   return true;
 }
+export async function reserveModelAttemptForModel(
+  _model: string,
+  now = new Date(),
+): Promise<boolean> {
+  // Production has no app-level daily call cap; tests retain a traffic guard.
+  return reserveModelAttempt(now);
+}
 export function resetSupportTestStore() {
   if (process.env.NODE_ENV !== "test") throw new Error("TEST_ONLY");
   runtime.supportV3Requests = new Map();

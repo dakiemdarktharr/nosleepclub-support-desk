@@ -56,7 +56,8 @@ describe("phase 2 deterministic policy", () => {
     const decision = decide("Cấp read-only staging DB, lead đã approve");
     expect(decision.action).toBe("NEEDS_INFORMATION");
     expect(decision.missingFields).toContain("duration");
-    expect(decision.missingFields).toContain("verifiedApproval");
+    expect(decision.bucket).toBe("MISSING_INFO");
+    expect(decision.missingFields).not.toContain("verifiedApproval");
   });
   it("does not trust a safer structured environment when the text says production", () => {
     const decision = decide("Need write access to production MySQL", {
@@ -75,15 +76,15 @@ describe("phase 2 deterministic policy", () => {
       bucket: "SECURITY_RISK",
     });
   });
-  it("evaluates every subrequest instead of inheriting a safe first intent", () => {
+  it("returns one-request clarification when a ticket contains multiple tasks", () => {
     const decision = decide(
       "How do I restart my laptop and grant write access to staging Redis",
     );
-    expect(decision.action).not.toBe("AUTO_APPROVE");
-    expect(decision.subrequestOutcomes).toHaveLength(2);
-    expect(decision.subrequestOutcomes[1]).toMatchObject({
-      intentLabel: "DATABASE_WRITE_ACCESS",
+    expect(decision).toMatchObject({
       action: "NEEDS_INFORMATION",
+      bucket: "MISSING_INFO",
+      ruleIds: ["INFO-SINGLE-REQUEST-001"],
+      questions: ["Vui lòng gửi từng yêu cầu một."],
     });
   });
   it.each([

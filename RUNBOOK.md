@@ -110,6 +110,28 @@ timestamp ISO rõ múi giờ; thời hạn cloud dạng số thập phân không
 để vượt giới hạn. Giữ whitelist AUTO, provider/quota, registry và Ground Truth.
 Preview/cache v5.11 phải tạo lại.
 
+Policy `support-guidance-v5.13` kiểm tra CPU/RAM/disk/thời lượng cloud đã nêu rõ
+vượt quota trước nhánh hỏi các facts còn thiếu; giới hạn vẫn là 4 vCPU, 16 GB
+RAM, 100 GB disk và 8 giờ. Quota thời lượng quy đổi phút/giờ/ngày và số thập
+phân sang giờ, nên thời lượng như 30 phút hoặc 0.5 giờ không bị từ chối chỉ vì
+định dạng. Quota và sandbox AUTO chỉ áp dụng cho `CLOUD_SANDBOX`,
+`CLOUD_VM_REQUEST`, `GPU_REQUEST`; cloud intent chưa có contract riêng chuyển
+policy owner, trừ khi security/authority rule cụ thể đã khớp. Một câu chỉ nói
+credential sẽ lưu trong Vault không tự kích hoạt SEC-001; value credential hoặc
+hành động tiết lộ vẫn bị chặn. Preview/cache v5.12 phải tạo lại. Xem
+[bảng mismatch và evidence](docs/TECHNICAL-CASE-REVIEW-PERSON-A.md).
+
+Policy hiện hành support-guidance-v5.14, hiệu lực 14/10/2026, bỏ các ngưỡng
+demo cố định. AUTO provisioning cần quota/cost/TTL được đánh giá đầy đủ từ nguồn
+capacity authoritative theo project/team, gồm tài nguyên đang chạy; nếu nguồn
+này chưa có hoặc quota vượt, chuyển Cloud/Capacity owner. Production không áp
+hạn mức số lần gọi model theo ngày ở cấp ứng dụng; quota/rate limit từ provider,
+timeout và token caps vẫn áp dụng. Bộ test giữ AI_TEST_MAX_ATTEMPTS làm guard riêng.
+Access routine cần entitlement và TTL theo service/risk; approval cần cùng record
+registry/ITSM, identity, role, scope và các trạng thái/điều kiện đã duyệt. Ticket
+nhiều yêu cầu được trả lại với hướng dẫn “Vui lòng gửi từng yêu cầu một.” Chi
+tiết quyết định và giới hạn tích hợp ở policy decisions.
+
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
 - [Hợp đồng đánh giá](docs/EVALUATION.md) mô tả đầu vào và cách tính kết quả.
@@ -202,6 +224,7 @@ Model chính được chủ repo chọn là `gpt-6-luna`: đặt `AI_PROVIDER=op
 `AI_MODEL=gpt-6-luna`; `AI_CONVERSATION_MODEL` để trống sẽ kế thừa cho sentiment
 sau câu trả lời. `AI_WEB_MODEL` là cấu hình riêng, không đổi theo model chính.
 Production không còn hạn mức model-call theo ngày ở cấp ứng dụng; không cần reset counter. Provider vẫn có thể trả 429 theo quota/rate limit tài khoản. API intake demo còn giới hạn 30 request/phút/client.
+Khi demo offline, giữ `AI_PROVIDER=mock` và model keys rỗng.
 
 Nếu preview ghi “Dự phòng theo luật”, đọc **Vì sao dùng dự phòng**:
 

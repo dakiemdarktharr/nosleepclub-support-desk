@@ -269,20 +269,22 @@ it("only an approved simulation can complete; stopped work cannot resume", async
   ).rejects.toMatchObject({ code: "INVALID_TRANSITION" });
 });
 
-it("complete controlled export can be reviewed without losing the DBA policy decision", async () => {
+it("does not accept a reviewer click as a substitute for verified DBA/Data approval", async () => {
   const request = await createCompleteEscalation();
   expect(request.decision?.ruleIds).toContain("AUTH-001");
   expect(request.decision?.missingFields).toEqual([]);
-  const approved = await reviewSupport(
-    request.id,
-    {
-      version: request.version,
-      action: "APPROVE",
-      reason: "Reviewed controlled demo destination",
-    },
-    "reviewer-demo",
-  );
-  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  await expect(
+    reviewSupport(
+      request.id,
+      {
+        version: request.version,
+        action: "APPROVE",
+        reason: "Reviewed controlled demo destination",
+      },
+      "reviewer-demo",
+    ),
+  ).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
+  expect((await getSupportRequest(request.id))?.status).toBe("ESCALATED");
 });
 it("recovers an abandoned receipt without duplicating the decision audit", async () => {
   const request = await create("Restart my laptop");
