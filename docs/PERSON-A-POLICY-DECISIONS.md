@@ -7,7 +7,7 @@ AI hỗ trợ triển khai và kiểm tra; chưa có human cross-review của B/
 
 Base trước thay đổi policy: `ab633ea0db88752a51d532cd1bc53257e2044edd`, nhánh
 `codex/person-a-benchmark`. Ground Truth, input và expected gốc được giữ nguyên.
-Runtime policy tại thời điểm ghi quyết định: `support-guidance-v5.12`; các nguồn policy lịch sử trong
+Runtime policy hiện tại: `support-guidance-v5.12`; các nguồn policy lịch sử trong
 `mlai26_new/data/policy/` được giữ nguyên theo manifest.
 
 Người dùng đã giao quyền chọn các contract còn lại. Quyết định v5.12, lệnh và
