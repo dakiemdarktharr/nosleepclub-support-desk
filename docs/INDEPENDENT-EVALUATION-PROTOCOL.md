@@ -1,8 +1,13 @@
 # Protocol thu thập bằng chứng độc lập
 
-Trạng thái: **NOT COLLECTED**. Chủ repo xác nhận chưa có held-out độc lập và
-phản hồi bằng văn bản từ ba người dùng thực tế. Tài liệu này là kế hoạch và
-biểu mẫu trống, không phải kết quả nghiên cứu. AI assistance: Codex.
+Trạng thái: **PARTIAL**. Ngày 2026-10-14, chủ repo cung cấp một báo cáo ngày
+2026-10-13 về ba người kiểm thử (UT-01/02/03) và xác nhận họ đồng ý công bố
+họ tên cùng phản hồi nguyên văn. Tệp nguồn không đính kèm hồ sơ consent. Báo cáo
+chi tiết, cách tái hiện, sửa lỗi và kiểm tra hồi quy được ghi tại
+[USER-TEST-FINDINGS-2026-10-13.md](USER-TEST-FINDINGS-2026-10-13.md). SHA và cấu hình
+triển khai, thời lượng, cùng bằng chứng quy trình/chức danh thực tế chưa có
+trong hồ sơ nguồn nên chưa được xác minh độc lập. Chưa có held-out độc lập.
+AI assistance: Codex.
 
 ## 1. Người phụ trách và quyền sử dụng
 
@@ -17,9 +22,11 @@ người được truy cập, có quay màn hình hay không và quyền trích 
 tên, chức danh hoặc chữ ký thay họ. Mỗi người tự viết phản hồi.
 
 Danh tính, chức danh thật, consent và văn bản gốc giữ trong kho riêng có kiểm
-soát truy cập. Bản công khai chỉ dùng mã P01/P02/P03, không phải bằng chứng
-những người đó đã tồn tại. Brief yêu cầu xác minh danh tính/chức danh: đội thi
-phải thỏa thuận kênh nộp riêng với BTC; không đăng PII vào Git. Chỉ dùng ticket
+soát truy cập. Bản công khai mặc định dùng mã người tham gia. Chỉ công bố tên
+hoặc trích dẫn nguyên văn khi consent nêu rõ phạm vi đó; không suy ra quyền
+công bố chức danh hay thông tin cá nhân khác từ consent trích dẫn. Với báo cáo
+này, chủ repo xác nhận ngày 2026-10-14 rằng ba người đồng ý công bố tên và
+feedback nguyên văn; tệp consent không được đính kèm vào repo. Chỉ dùng ticket
 synthetic hoặc dữ liệu tổ chức được phép và đã ẩn danh trước khi nhập app.
 
 ## 2. Đóng băng tập held-out trước khi chạy
@@ -75,12 +82,24 @@ Với tối thiểu ba người, trình bày từng người và median/range; k
 đến nhân viên VNG hoặc toàn bộ ngành. Báo cả thất bại, không hoàn tất và bất cập.
 Giữ verbatim feedback; AI có thể hỗ trợ phân loại nhưng không viết thay lời họ.
 
-## 5. Biểu mẫu trống (điền sau thu thập)
+## 5. Những gì báo cáo hiện có chưa xác nhận
+
+Tài liệu được chủ repo cung cấp mô tả ba người và ba lỗi cụ thể; mỗi người được
+ghi vai trò chung là “Tester”. Chủ repo xác nhận ba người đồng ý công bố tên và
+phản hồi nguyên văn; hồ sơ consent không nằm trong repo. Nguồn không ghi
+SHA/policy/provider của bản chạy, thời lượng hay dữ liệu quan sát thô. Ba
+regression test mới kiểm tra sửa đổi trên mã nguồn, không phải lượt thử lại do
+người tham gia thực hiện. Vì vậy không dùng báo cáo này để tuyên bố đã đủ điều
+kiện đánh giá độc lập, xác minh vai trò nhân viên nghiệp vụ, hoặc chứng minh
+hiệu quả sau sửa.
+
+## 6. Biểu mẫu cho phần còn thiếu
 
 | Mục | Giá trị |
 | --- | --- |
 | Participant code / task code / thứ tự thử | NOT COLLECTED |
-| Consent và danh tính/chức danh: mã hồ sơ riêng | NOT COLLECTED |
+| Consent công bố tên và feedback nguyên văn | Chủ repo xác nhận; hồ sơ consent không đính kèm |
+| Chức danh/quy trình nghiệp vụ đã xác minh | NOT COLLECTED; nguồn ghi vai trò chung “Tester” |
 | SHA / policy / provider / model / storage | NOT COLLECTED |
 | Onboarding / thao tác / chờ / tổng thời gian | NOT COLLECTED |
 | Kết quả đúng, lỗi, trợ giúp, bỏ cuộc | NOT COLLECTED |

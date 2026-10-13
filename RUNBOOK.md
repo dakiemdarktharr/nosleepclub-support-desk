@@ -81,7 +81,7 @@ exact-match, FNR, unnecessary escalation và các nhóm lỗi. Ground Truth gi�
 Artifact có timestamp/UUID chỉ lưu local, không stage. Phân biệt feedback do chủ repo khai báo
 với held-out/nghiên cứu độc lập: xem [báo cáo hiện hành](docs/REPO-AUDIT-2026-10-14.md).
 
-Policy hiện tại `support-guidance-v5.13` tách SECURITY_CONTROL thành `SEC-008`,
+Ghi chú lịch sử: policy `support-guidance-v5.13` tách SECURITY_CONTROL thành `SEC-008`,
 giữ PUBLIC_EXPOSURE là `SEC-002`; không đổi risk/authority precedence. Preview
 v5.12 cần tạo lại. Các ghi chú phiên bản bên dưới là lịch sử thay đổi.
 
@@ -114,6 +114,28 @@ project/space/page và mức quyền. Mapping push/User/Editor cần evidence kh
 timestamp ISO rõ múi giờ; thời hạn cloud dạng số thập phân không được làm tròn
 để vượt giới hạn. Giữ whitelist AUTO, provider/quota, registry và Ground Truth.
 Preview/cache v5.11 phải tạo lại.
+
+Policy `support-guidance-v5.13` kiểm tra CPU/RAM/disk/thời lượng cloud đã nêu rõ
+vượt quota trước nhánh hỏi các facts còn thiếu; giới hạn vẫn là 4 vCPU, 16 GB
+RAM, 100 GB disk và 8 giờ. Quota thời lượng quy đổi phút/giờ/ngày và số thập
+phân sang giờ, nên thời lượng như 30 phút hoặc 0.5 giờ không bị từ chối chỉ vì
+định dạng. Quota và sandbox AUTO chỉ áp dụng cho `CLOUD_SANDBOX`,
+`CLOUD_VM_REQUEST`, `GPU_REQUEST`; cloud intent chưa có contract riêng chuyển
+policy owner, trừ khi security/authority rule cụ thể đã khớp. Một câu chỉ nói
+credential sẽ lưu trong Vault không tự kích hoạt SEC-001; value credential hoặc
+hành động tiết lộ vẫn bị chặn. Preview/cache v5.12 phải tạo lại. Xem
+[bảng mismatch và evidence](docs/archive/TECHNICAL-CASE-REVIEW-PERSON-A.md).
+
+Policy hiện hành support-guidance-v5.14, hiệu lực 14/10/2026, bỏ các ngưỡng
+demo cố định. AUTO provisioning cần quota/cost/TTL được đánh giá đầy đủ từ nguồn
+capacity authoritative theo project/team, gồm tài nguyên đang chạy; nếu nguồn
+này chưa có hoặc quota vượt, chuyển Cloud/Capacity owner. Production không áp
+hạn mức số lần gọi model theo ngày ở cấp ứng dụng; quota/rate limit từ provider,
+timeout và token caps vẫn áp dụng. Bộ test giữ AI_TEST_MAX_ATTEMPTS làm guard riêng.
+Access routine cần entitlement và TTL theo service/risk; approval cần cùng record
+registry/ITSM, identity, role, scope và các trạng thái/điều kiện đã duyệt. Ticket
+nhiều yêu cầu được trả lại với hướng dẫn “Vui lòng gửi từng yêu cầu một.” Chi
+tiết quyết định và giới hạn tích hợp ở policy decisions.
 
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
@@ -149,7 +171,7 @@ kiểm tra này không có Mongo test: xem [bằng chứng hiện tại](docs/RE
 
 Quy trình thủ công dưới đây dành cho operator đã xác nhận database thử nghiệm riêng; không chạy trên production:
 
-Chỉ dùng Mongo local hoặc credential thử nghiệm giới hạn trên database mới, tên `sprint1_test_<suffix>`. Không copy URI/credential production. Giữ `AI_PROVIDER=mock`, `AI_MAX_ATTEMPTS=0` và model keys rỗng. Đặt `MONGODB_URI`, `MONGODB_DB` riêng cùng `SUPPORT_ACCESS_MODE=public-demo`, chạy server tại3227. Health ping thành công chưa chứng minh persistence sau restart.
+Chỉ dùng Mongo local hoặc credential thử nghiệm giới hạn trên database mới, tên `sprint1_test_<suffix>`. Không copy URI/credential production. Giữ `AI_PROVIDER=mock` và model keys rỗng. Đặt `MONGODB_URI`, `MONGODB_DB` riêng cùng `SUPPORT_ACCESS_MODE=public-demo`, chạy server tại3227. Health ping thành công chưa chứng minh persistence sau restart.
 
 Trong terminal khác, tạo duy nhất dữ liệu synthetic rồi giữ lại các biến:
 
@@ -206,7 +228,8 @@ yêu cầu chuyển người và policy được xét độc lập với nhãn c
 Model chính được chủ repo chọn là `gpt-6-luna`: đặt `AI_PROVIDER=openai`,
 `AI_MODEL=gpt-6-luna`; `AI_CONVERSATION_MODEL` để trống sẽ kế thừa cho sentiment
 sau câu trả lời. `AI_WEB_MODEL` là cấu hình riêng, không đổi theo model chính.
-Giữ `AI_MAX_ATTEMPTS` trong mức hiện có; không reset counter để làm demo đạt.
+Production không còn hạn mức model-call theo ngày ở cấp ứng dụng; không cần reset counter. Provider vẫn có thể trả 429 theo quota/rate limit tài khoản. API intake demo còn giới hạn 30 request/phút/client.
+Khi demo offline, giữ `AI_PROVIDER=mock` và model keys rỗng.
 
 Nếu preview ghi “Dự phòng theo luật”, đọc **Vì sao dùng dự phòng**:
 
@@ -214,7 +237,7 @@ Nếu preview ghi “Dự phòng theo luật”, đọc **Vì sao dùng dự ph�
   Vercel → vng-support → Settings → Environment Variables → Production,
   rồi triển khai lại để nhận biến mới. Không gửi key qua chat/Git/log.
 - `NOT_CONFIGURED`: thiếu provider/model/API key.
-- `BUDGET_EXHAUSTED`: chờ ngày UTC mới (07:00 giờ Việt Nam); không nâng cap tự động.
+- `BUDGET_EXHAUSTED`: chỉ còn ở dữ liệu lịch sử hoặc test-only; production hiện không chặn theo ngân sách ngày của ứng dụng.
 - `RATE_LIMIT`/`TIMEOUT`: thử lại sau; không retry vô hạn.
 - Output/evidence không hợp lệ: giữ fallback có nhãn và kiểm tra log đã lọc;
   không bỏ validation để ép nhãn `model`.

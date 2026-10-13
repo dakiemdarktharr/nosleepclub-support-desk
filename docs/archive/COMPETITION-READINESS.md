@@ -209,7 +209,6 @@ Trong **checkout sạch riêng không có dotenv**, PowerShell riêng:
 
 ```powershell
 $env:AI_PROVIDER='mock'
-$env:AI_MAX_ATTEMPTS='0'
 $env:OPENAI_API_KEY=''
 $env:MONGODB_URI=''
 $env:MONGODB_DB=''

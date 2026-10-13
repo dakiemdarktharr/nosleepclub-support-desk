@@ -203,7 +203,7 @@ test("reviewer rejection requires a reason and records audit", async ({
     page.getByText("REJECT · public-demo-reviewer", { exact: true }),
   ).toBeVisible();
 });
-test("one click Verify and a new judge input use live decision API", async ({
+test("Verify preserves original labels, reports unverified access and accepts new judge input", async ({
   page,
 }) => {
   // Verify's server-to-server intake calls share the production 30/minute
@@ -248,20 +248,27 @@ test("one click Verify and a new judge input use live decision API", async ({
     .getByRole("button", { name: "Chạy toàn bộ test (4)", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText(
-    "4/4 · Pass: 4 · Fail: 0",
+    "4/4 · Pass: 3 · Fail: 1",
   );
   const fourCaseDecisions = page
     .getByRole("table")
     .locator("tbody tr td:nth-child(3)");
   await expect(
     fourCaseDecisions.filter({ hasText: "AUTO_APPROVE" }),
-  ).toHaveCount(2);
+  ).toHaveCount(1);
   await expect(
     fourCaseDecisions.filter({ hasText: "NEEDS_INFORMATION" }),
   ).toHaveCount(1);
   await expect(fourCaseDecisions.filter({ hasText: "ESCALATE" })).toHaveCount(
-    1,
+    2,
   );
+  // v5.14 needs verified entitlement. Preserve the source fixture's AUTO label:
+  // the UI must expose this mismatch, not silently rewrite it to a green PASS.
+  const accessRow = page.getByRole("row").filter({ hasText: "submission-read-scope" });
+  await expect(accessRow.getByRole("cell").nth(1)).toHaveText("AUTO_APPROVE");
+  await expect(accessRow.getByRole("cell").nth(2)).toHaveText("ESCALATE");
+  await expect(accessRow.getByRole("cell").nth(3)).toHaveText("FAIL");
+  await expect(accessRow.getByRole("cell").nth(5)).toContainText("AUTH-ENTITLEMENT-001");
   await expect(page.getByText("Expected: NEEDS_INFORMATION · MISSING_INFO")).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Mở request / audit" }),

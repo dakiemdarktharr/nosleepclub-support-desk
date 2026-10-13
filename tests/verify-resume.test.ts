@@ -7,7 +7,7 @@ import { GET as detail } from "@/app/api/support/requests/[id]/route";
 import { GET as events } from "@/app/api/support/events/route";
 import { GET as metrics } from "@/app/api/support/metrics/route";
 
-beforeEach(() => { vi.stubEnv("MONGODB_URI", ""); vi.stubEnv("AI_PROVIDER", "mock"); vi.stubEnv("AI_MAX_ATTEMPTS", "0"); resetSupportTestStore(); });
+beforeEach(() => { vi.stubEnv("MONGODB_URI", ""); vi.stubEnv("AI_PROVIDER", "mock"); vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0"); resetSupportTestStore(); });
 afterEach(() => vi.unstubAllEnvs());
 const api: typeof fetch = async (url, init) => {
   const request = new Request(`http://localhost${url}`, init);
@@ -95,7 +95,20 @@ it("runs the submission four-case pack through the decision API and resumes with
   }
   expect(completed.status).toBe("COMPLETE");
   expect(completed.results).toHaveLength(4);
-  expect(completed.results.every((result) => result.pass)).toBe(true);
+  const readOnlyAccess = completed.results.find(
+    (result) => result.caseId === "submission-read-scope",
+  );
+  expect(readOnlyAccess).toMatchObject({
+    pass: false,
+    expected: { action: "AUTO_APPROVE", bucket: "ROUTINE" },
+    actual: { action: "ESCALATE", bucket: "BEYOND_AUTHORITY" },
+  });
+  expect(readOnlyAccess?.actual?.ruleIds).toContain("AUTH-ENTITLEMENT-001");
+  expect(
+    completed.results
+      .filter((result) => result.caseId !== "submission-read-scope")
+      .every((result) => result.pass),
+  ).toBe(true);
   expect(completed.results.map((result) => result.requestId)).toEqual(
     run.cases.map((entry) => entry.requestId),
   );

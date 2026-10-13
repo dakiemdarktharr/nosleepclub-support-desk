@@ -2,6 +2,11 @@
 
 # GPT-6 Luna và chẩn đoán sentiment — 09/10/2026
 
+> Cập nhật vận hành 13/10/2026: hạn mức model-call theo ngày ở cấp ứng dụng đã
+> được gỡ khỏi production. Nội dung bên dưới là nhật ký sự cố của revision cũ;
+> các giá trị `AI_MAX_ATTEMPTS` và hướng dẫn chờ sang ngày UTC chỉ mô tả lịch sử.
+> Quota/rate limit của OpenAI và rate limit intake 30 request/phút/client vẫn áp dụng.
+
 Base: `c00a155855ee258d9d53e561aed147e5472e31fe`, GitHub main và revision live
 được đối chiếu trước sửa. Worktree riêng; checkout gốc dirty được bảo toàn.
 Thay đổi do AI hỗ trợ theo yêu cầu chủ repo, không suy ra human review.

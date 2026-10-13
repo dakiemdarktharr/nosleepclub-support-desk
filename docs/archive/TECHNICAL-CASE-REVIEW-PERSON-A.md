@@ -1,4 +1,4 @@
-> Báo cáo lịch sử: chỉ áp dụng cho phiên bản/ngày ghi bên dưới. Xem [mục lục hiện hành](../README.md) và [rà soát mới](../REPO-AUDIT-2026-10-14.md).
+> Phiên bản trong tài liệu gồm cả lịch sử và quyết định mới v5.14. Xem [mục lục](../README.md); metrics của mỗi phần chỉ áp dụng cho SHA ghi tại đó.
 
 # Phân tích 24 mismatch đầu — Member A
 
@@ -8,16 +8,13 @@ hỗ trợ, chưa phải phân xử độc lập. Không đổi fixture, input, 
 expected action/bucket/rule hay approval registry. Policy runtime cập nhật theo
 decision log của người dùng bên dưới.
 
-Cập nhật 12/10/2026: runtime policy v5.12 giữ bốn case thiếu thông tin thành
-ESC/MISSING, TC010 thành ESC/BEYOND và TC015 thành ESC/SECURITY theo quyết định
-người dùng. Candidate đạt 63/128 exact; trước vòng TC015 là 62/128 ở v5.10,
-baseline v5.9 là 56/128. Có 6/24 case A đạt, còn 18 mismatch expected AUTO.
-Contract VPN/database provisioning, mapping quyền và thời hạn đã được chốt
-theo quyền người dùng giao; không còn chờ chọn contract. 18 AUTO chưa đủ
-approval/facts theo runtime đã chọn; nhãn gốc giữ nguyên, chưa adjudicate độc lập.
-Decision log/evidence mới ở [PERSON-A-CONTRACT-DECISIONS.md](../decisions/PERSON-A-CONTRACT-DECISIONS.md),
-quyết định trước ở [PERSON-A-POLICY-DECISIONS.md](../decisions/PERSON-A-POLICY-DECISIONS.md).
-Các đoạn benchmark v11 bên dưới là lịch sử; bảng 24 case dùng actual v5.12.
+Cập nhật 12/10/2026 v5.12 và các benchmark v5.13 bên dưới là lịch sử. Runtime
+hiện tại là policy v5.14, hiệu lực 14/10/2026 theo câu trả lời approval 1–49;
+quyết định và điều kiện đánh giá nằm ở
+[PERSON-A-POLICY-DECISIONS.md](../decisions/PERSON-A-POLICY-DECISIONS.md) và
+[PERSON-A-CONTRACT-DECISIONS.md](../decisions/PERSON-A-CONTRACT-DECISIONS.md). Expected
+labels gốc vẫn giữ nguyên, chưa adjudicate độc lập. Bảng 24 case bên dưới phản
+ánh actual của phiên v5.12; bảng v5.13 phía sau là lịch sử.
 
 ## Phạm vi và cách chạy
 
@@ -244,3 +241,281 @@ Artifact tracked `artifacts/original-fixture-evaluation.json` đã được khô
 nguyên trạng, SHA-256 `c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
 
 Các quyết định chưa được người dùng chốt vẫn còn mở; Ground Truth không cập nhật.
+
+## Cập nhật 13/10/2026 — xử lý 27 mismatch MISSING_INFO
+
+Lượt này tiếp tục trên branch `codex/person-a-benchmark`, HEAD chung
+`b069f22b318a7caa3960eefdb5a3e69b7152e8e0`. Giữ nguyên fixtures, expected,
+evaluator, approval registry và giới hạn tài nguyên. Mục tiêu là phân loại đúng
+yêu cầu cấp resource thiếu thông tin và giữ các cổng authority/security hiện có.
+
+### Phân tích cohort
+
+27 case đều có expected `ESCALATE/MISSING_INFO`: 15 case `gt-missing-001` đến
+`gt-missing-015`, và 12 case `xcf-missing-001` đến `xcf-missing-012`. Trên
+baseline ngày 13/10, 24 case trả `ESCALATE/BEYOND_AUTHORITY` do xuất hiện
+`UNKNOWN_SUPPORT_REQUEST`/`AUTH-005`; ba case trả
+`NEEDS_INFORMATION/MISSING_INFO`: `gt-missing-002-airflow-worker`,
+`gt-missing-007-dbt-runner` và `xcf-missing-011-comms-media-db`.
+
+Các trace và ticket gốc trong fixture xác nhận bốn nguyên nhân parser:
+
+1. Danh từ resource và operation chưa được nhận diện đầy đủ: Airflow worker,
+   Kafka Connect, Debezium, Spark driver, Flink ETL, Trino coordinator,
+   Temporal worker, dbt runner, ETL box/server, data node và host chạy service.
+2. Tên database/engine hoặc cách nói “database riêng” bị phân loại thành xin
+   quyền đọc database có sẵn: PostgreSQL, Redis, MongoDB, ClickHouse, database
+   không nêu engine và time-series database.
+3. Câu nối về sizing, config mặc định, volume/retention, ngày kết thúc, hoặc
+   yêu cầu Infra setup bị tách khỏi resource trước đó thành AUTH-005. Câu phủ
+   định “không cần bỏ quy trình” cũng phải được giữ là phủ định, không biến
+   thành bypass.
+4. Trong case Care, “transcript” và “quality review” kích hoạt nhánh thu thập
+   bằng chứng cuộc họp dù ticket chỉ xin database để lưu transcript.
+
+Độ tin cậy cao về nguyên nhân kỹ thuật: baseline lưu các intent/subrequest và
+rule gây mismatch; regression mới chạy trực tiếp 27 input gốc và kiểm tra
+không còn subrequest lạ, không tự xác minh approval, đồng thời áp dụng
+`INFO-PROVISION-001`. Đây là phân tích hỗ trợ bởi AI, chưa phải adjudication
+nhãn hoặc human owner review.
+
+### Thay đổi và benchmark
+
+- `text.ts` bổ sung alias resource database/compute, nhận diện request tạo
+  resource khi động từ tạo và resource có liên hệ rõ, nối metadata/setup với
+  đúng resource, và giữ yêu cầu GPU ở luồng GPU quota. Context có thao tác mới,
+  request resource riêng, bypass/security hoặc budget/quota/capacity còn chờ
+  duyệt vẫn được tách.
+- `support.ts` không chạy work-evidence routing cho một request provision
+  database/compute duy nhất, không có subrequest. Request nhiều mục tiêu vẫn
+  qua bộ phân tích tương ứng.
+- `policy.ts` đưa kiểm tra GPU đã biết vượt giới hạn lên trước nhánh hỏi missing
+  facts. Số GPU lớn hơn 2 hoặc loại GPU ngoài T4/A10 dùng `AUTH-QUOTA` và
+  `BEYOND_AUTHORITY`; ngưỡng, whitelist AUTO và approval verification không đổi.
+  Security/authority gates đứng trước vẫn giữ precedence.
+- Regression bổ sung: 27 case gốc, cách diễn đạt ETL tương đương, request 11 GPU,
+  cài phần mềm lên worker đang có, dùng worker/database hiện có, transcript
+  storage, quota pending, request độc lập, bypass, privileged và production.
+
+| Chỉ số | Fresh baseline | Candidate |
+| --- | ---: | ---: |
+| Exact action + bucket + expected rule nếu có | 63/128 (49,22%) | 90/128 (70,31%) |
+| Coverage / readback | 128/128 | 128/128 |
+| 27 expected ESC/MISSING_INFO khớp | 0/27 | 27/27 |
+| Expected ESC thành AUTO | 0/94 | 0/94 |
+| Expected ESC thành NEEDS_INFORMATION | 3/94 | 0/94 |
+| Exact-pass regression | — | 0 |
+
+24 case trước đó ở `ESCALATE/BEYOND_AUTHORITY` nay là
+`ESCALATE/MISSING_INFO`; ba case NEEDS_INFORMATION được chuyển thành
+`ESCALATE/MISSING_INFO` theo `INFO-PROVISION-001`. Tổng exact match tăng đúng
+27, không mất exact pass cũ. FNR nhị phân của expected ESC giảm từ 3/94 xuống
+0/94; tỷ lệ expected ROUTINE bị escalated giữ 28/34. Đây là điểm khớp nhãn trên
+development set chưa adjudicate, không phải ước lượng chất lượng production.
+
+Có 42 case đổi trace so với baseline: 27 trong cohort A và 15 ngoài cohort.
+Ngoài A, 12 case GPU (`TC011`; `gt-authority-008` đến `gt-authority-014`;
+`xcf-authority-009` đến `xcf-authority-012`) nhận thêm/đổi sang `AUTH-QUOTA`
+nhưng vẫn `ESCALATE/BEYOND_AUTHORITY` và không exact-pass nào mất. Ba case còn
+lại giữ nguyên action/bucket: `gt-routine-013-confluence-kafka-docs` bỏ các
+subrequest tài liệu bị tách giả nhưng vẫn bị chặn bởi `AUTH-007`;
+`gt-authority-002-zalopay-prod-read` bỏ fragment không ánh xạ nhưng vẫn giữ
+`AUTH-001/AUTH-002`; `xcf-security-003-legal-public-rdp` nhận diện resource
+đầu là `CLOUD_SANDBOX`, trong khi `SEC-002` và kết quả security giữ nguyên.
+Đây là danh sách cần B/C cross-review; chưa có reviewer con người.
+
+### Lệnh, provenance và trạng thái
+
+Fresh baseline: `/tmp/vng-support-person-a-fresh-baseline-nFGyer/baseline.json`,
+SHA-256 `cc0df82da2f95d77a8beb2ae4d7b4cbd8b0890c3d1c886da250bc568277e923e`.
+Candidate và comparison được lưu ngoài repo tại:
+
+- `/tmp/vng-support-person-a-validation-final-s6FIqm/full-test-candidate.json`
+  — SHA-256 `e2513d2d61474381d5855351cf498c268ff4563d6c22697aa36c0d7d4d1ce43a`.
+- `/tmp/vng-support-person-a-validation-final-s6FIqm/full-test-comparison.json`
+  — SHA-256 `faee3bb1a4fa3179dd92545330143f9542cd0e70a6c485f38ebd0bc887afb655`.
+
+Provenance candidate: source revision `b069f22b318a7caa3960eefdb5a3e69b7152e8e0`,
+`runtimeDirty=true`, runtime digest
+`66696e7350f898abb619740c44f7150928dd3250eed83b33b4dd7b88ee0e951a`; Node
+`v26.0.0`, provider mock/no API, storage `memory-demo`, policy
+`support-guidance-v5.12`. Dataset SHA-256
+`e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da`, evaluator
+SHA-256 `71c404b66badc9e951245ddebd7a1d5f29369ecbe004f4308656c47b00820ef9`;
+`datasetIdentity=digest-verified`, evaluator không dirty.
+
+Kiểm tra cuối trên đúng source tree: targeted tests 182/182; `npm test` 844
+passed, 1 skipped; `npm run lint`, `npm run typecheck`, `npm run build` đều exit
+0. Benchmark harness chạy 22/22; development-report và Mongo smoke guard chạy
+15/15. Skip là
+`intent-stage-benchmark.test.ts`, có từ trước và cần `SUPPORT_INTENT_BENCH=1`.
+Tracked `artifacts/*` được backup/restore; `artifacts/original-fixture-evaluation.json`
+trở về SHA-256 `c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
+Protected diff `mlai26_new/data`, `artifacts` và `src/services/approvals.ts`
+trống. Không chạy Mongo thật, provider thật, E2E, held-out hay real-user test.
+
+## Follow-up 14/10/2026 — policy v5.14 theo approval 1–50
+
+Người dùng chốt các quyết định 1–49 ở câu 50/50 và yêu cầu hiệu lực từ lúc
+hoàn tất; runtime tăng lên `support-guidance-v5.14`, ngày hiệu lực 14/10/2026.
+Các thay đổi chính: entitlement cho routine access; registry+ITSM cùng một
+approval record; trạng thái pending/rejected/revoked và scope change; quota
+project/team từ capacity thật thay cho ngưỡng demo; giới hạn một yêu cầu mỗi
+ticket; điều kiện AUTO theo dịch vụ; break-glass có kiểm soát; bỏ bộ đếm API
+theo ngày riêng của Luna. Chi tiết từng quyết định ở
+[policy decision log](../decisions/PERSON-A-POLICY-DECISIONS.md).
+
+Benchmark trên cùng `legacy-original-128` development, chưa adjudicate độc lập,
+so với fresh base `b069f22b318a7caa3960eefdb5b3a69b7152e8e0`:
+
+| Chỉ số | Fresh base v5.12 | Candidate v5.14 |
+| --- | ---: | ---: |
+| Exact action + bucket + expected rule khi có | 63/128 (49,22%) | 90/128 (70,31%) |
+| Coverage / persistence readback | 128/128 | 128/128 |
+| Expected escalation thành AUTO | 0/94 | 0/94 |
+| Expected escalation thành NEEDS_INFORMATION | 3/94 | 1/94 |
+| Expected AUTO bị ESCALATE | 28/34 | 18/34 |
+| Expected AUTO bị NEEDS_INFORMATION | — | 16/34 |
+| Exact pass regression so với fresh base | — | 1 |
+
+V5.14 còn 38 mismatch. Trong đó 34 expected AUTO đều không đạt: 16 hiện là
+`NEEDS_INFORMATION`, 17 `BEYOND_AUTHORITY` và 1 `SECURITY_RISK`; bốn mismatch
+còn lại là bucket/action conflict trong expected escalation. Không đổi labels
+hoặc fixture. Một exact pass `gt-authority-008-eleven-gpu` mất so với base:
+không còn ngưỡng demo GPU để kết luận quota đã vượt; request thiếu dữ kiện và
+chờ scope/capacity thật. Đây là hệ quả có thể đo được của quyết định quota v5.14,
+không được che bằng cách tái áp dụng ngưỡng demo.
+
+V5.14 hiện đạt 90, thấp hơn mục tiêu 120/128 còn 30 exact pass. Tập hiện tại
+chỉ có nội dung ticket, không có nguồn entitlement, registry+ITSM, capacity,
+TTL hay owner evidence; runtime không được phép suy diễn các dữ kiện này. Muốn
+đánh giá AUTO đúng theo policy, cần tích hợp các nguồn đã duyệt và cung cấp
+evidence khớp scope cho benchmark; các expected label xung đột chỉ được sửa sau
+adjudication độc lập có evidence/lý do. Nâng điểm bằng cách bỏ các gate đã duyệt
+sẽ làm benchmark khác policy production.
+
+Full suite: 862 pass, 1 skip; lint, typecheck và production build đều pass.
+Dataset SHA giữ nguyên `e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da`,
+evaluator ghi `datasetIdentity=digest-verified`. Artifact trong repo được khôi
+phục SHA `c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
+Candidate:
+`/tmp/vng-support-v514-final-c3YMDY/candidate.json` (SHA-256
+`9f7bb9cad5c8d7f87d8594a9698a99df9c02e7825a2208b2c39aded75be68c07`);
+comparison:
+`/tmp/vng-support-v514-final-c3YMDY/comparison.json` (SHA-256
+`ba623bbd38737f9f2fad241d4e8e0979a229f4215291948b2f6700a795f81976`).
+Không có tích hợp IAM/ITSM/capacity thật, held-out test, real-user test, push,
+PR, merge hoặc deploy.
+
+Tại thời điểm chạy benchmark, candidate là diff local chưa commit trên branch A.
+B/C human cross-review 15 trace ngoài cohort, policy precedence quota và regression
+security/authority chưa được thu thập; không suy ra review từ Git identity. Expected
+gốc tiếp tục được giữ nguyên.
+
+## Follow-up 13/10/2026 — policy v5.13
+
+### Lỗi policy được sửa
+
+1. Quota CPU/RAM/disk/thời lượng chỉ được kiểm tra sau nhánh MISSING_INFO. Vì
+   vậy giới hạn đã biết, ví dụ CPU 5 vCPU nhưng thiếu provider, bị hỏi thêm thay
+   vì chuyển người duyệt quota. Policy nay nhận diện giá trị hợp lệ vượt ngưỡng
+   trước khi hỏi facts khác. Ngưỡng giữ nguyên: CPU 4, RAM 16 GB, disk 100 GB,
+   GPU 2 T4/A10, thời lượng 8 giờ. Phút, giờ, ngày và số thập phân được đổi về
+   giờ; 30 phút, 0.5 giờ và 8 giờ không tự thành quota violation. Placeholder
+   `gpuType=unknown` không bị hiểu là type ngoài allowlist.
+2. `credential` là danh từ chung, không phải bằng chứng secret đã lộ. Redaction
+   trước đây còn che từ `stored` trong câu “Credential is stored in Vault”, rồi
+   marker bị detector hiểu nhầm là secret. Câu lưu trữ nay không kích SEC-001;
+   gán value trực tiếp hoặc yêu cầu gửi/chia sẻ/đưa credential ra kênh khác vẫn
+   tạo `SECRET`. Case `gt-authority-005-prod-service-account` giữ
+   `BEYOND_AUTHORITY` qua `AUTH-002/AUTH-001` và nay khớp expected bucket.
+3. `CLOUD_GPU` là service group rộng, nhưng quota/required facts/AUTO chỉ có
+   contract cho sandbox, VM provisioning và GPU request. Trước đây label cloud
+   khác cũng nhận CPU/RAM/disk và có thể vào `ROUTINE-003` chỉ nhờ sandbox
+   environment. Nay cloud intent chưa có contract được chuyển `AUTH-005` tới
+   policy owner, sau khi rule security/authority phù hợp đã được ưu tiên.
+
+Policy version được nâng từ v5.12 lên v5.13 để preview/cache cũ hết hiệu lực.
+Ground Truth, expected, evaluator, approval registry và giới hạn quota giữ
+nguyên.
+
+### Kết quả benchmark và tác động
+
+| Chỉ số | Fresh base b069f22 | Candidate v5.13 |
+| --- | ---: | ---: |
+| Exact action + bucket + expected rule khi có | 63/128 (49,22%) | 91/128 (71,09%) |
+| Coverage / persistence readback | 128/128 | 128/128 |
+| Expected ESC thành AUTO | 0/94 | 0/94 |
+| Expected ESC thành NEEDS_INFORMATION | 3/94 | 0/94 |
+| Exact-pass regression | — | 0 |
+| Expected AUTO bị ESCALATE | 28/34 | 29/34 |
+
+So với candidate v5.12 90/128, có bốn case đổi trace: `gt-authority-005` từ
+SECURITY_RISK xuống BEYOND_AUTHORITY đúng theo evidence và expected; `TC002`
+từ MISSING_INFO sang `AUTH-QUOTA` do 48 giờ vượt giới hạn; hai sandbox
+(`xcf-routine-006` 3 ngày và `xcf-routine-010` 48 giờ) ghi nhận thêm
+`AUTH-QUOTA` trong khi outcome BEYOND_AUTHORITY giữ nguyên. `TC002` vẫn mismatch
+expected AUTO và làm tỷ lệ routine escalation tăng từ 28/34 lên 29/34; không
+đổi expected để che xung đột quota. 27 case ESCALATE/MISSING_INFO trước đó vẫn
+khớp 27/27. So với fresh base có 46 trace khác, gồm thay đổi từ v5.12 trước đó.
+
+### Policy mismatch còn lại
+
+- 34/34 expected AUTO vẫn không có `verified` approval: 6 approval `pending`,
+  28 `unverifiable`. Một số case còn thiếu TTL, provider/quota/sizing hoặc có
+  nhiều resource độc lập. Lời manager trong ticket không thay thế record
+  server-side.
+- Bảy expected AUTO nêu vi phạm rõ quota đang dùng: `TC002` (48h), `TC005`
+  (5 ngày), `gt-routine-006-sandbox-dbt-parser` (5 ngày),
+  `gt-routine-011-sandbox-k3s` (6 vCPU, 72h),
+  `gt-routine-015-sandbox-otel` (24h),
+  `xcf-routine-006-marketing-sandbox-webhook` (3 ngày) và
+  `xcf-routine-010-comms-sandbox-preview` (48h). Cần owner adjudicate nhãn
+  hoặc quyết định contract mới; lượt này không nới quota.
+- Ba expected BEYOND_AUTHORITY còn trả SECURITY_RISK: `gt-authority-001` (mở
+  production write trước approval), `gt-authority-007` (dump production về máy
+  phân tích) và `xcf-authority-004` (privacy/DSAR export thiếu owner). Security
+  precedence được giữ theo các quyết định hiện hành.
+- Timestamp ISO cho duration cloud hợp lệ về cú pháp nhưng chưa thể so với
+  giới hạn 8 giờ nếu không có thời điểm bắt đầu. Khi policy cần quyết định quota,
+  dạng này vẫn chuyển AUTH-QUOTA. Chưa có owner quyết định timestamp được tính
+  từ lúc nhận request hay cần yêu cầu lại dạng duration.
+- Dataset `legacy-original-128` là development, chưa adjudicate độc lập. Chưa
+  có B/C human cross-review; các kết quả này không phải production validation.
+
+### Provenance và kiểm tra
+
+Base: `b069f22b318a7caa3960eefdb5a3e69b7152e8e0`, branch
+`codex/person-a-benchmark`, diff local chưa commit/push/PR/deploy. Runtime digest
+`a390e215468e506533dc5d6ba0848fe6c6479f7363bcdf007cd872bc7c8a5f16`; Node
+`v26.0.0`, mock/no API, memory-demo, policy `support-guidance-v5.13`. Dataset
+SHA `e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da`;
+evaluator SHA `71c404b66badc9e951245ddebd7a1d5f29369ecbe004f4308656c47b00820ef9`;
+comparison `datasetIdentity=digest-verified`.
+
+- Full candidate: `/tmp/vng-support-person-a-v513-final3-lF3Tzs/candidate.json`,
+  SHA-256 `76308944a5e41c25b7ff6e1552f1758e182b1d7958d17f3c4d1fd23e8f09198a`.
+- Comparison from fresh base:
+  `/tmp/vng-support-person-a-v513-final3-lF3Tzs/comparison-from-base.json`,
+  SHA-256 `83accd8580a056ab043a37b12ea1725089b89489c0d63266aea00a311a9e2ef6`.
+- Incremental comparison:
+  `/tmp/vng-support-person-a-v513-final3-lF3Tzs/comparison-incremental.json`,
+  SHA-256 `1342f94924ca5a8319f61fa5d296ddaa5446b2ae59c6f66b4e982e42f0cb82a3`.
+
+Targeted tests 194/194; full suite 856 pass / 1 pre-existing skip; lint,
+typecheck, build và report/Mongo smoke guards 15/15 pass. Harness 22/22 pass.
+Tracked artifacts đã backup/restore; `artifacts/original-fixture-evaluation.json`
+giữ SHA `c827c1e11a044abaa29c1f3a97b298f70954217831f9391309437716c1ad1121`.
+Protected diff `mlai26_new/data`, `artifacts` và `src/services/approvals.ts`
+trống. Không chạy Mongo thật, provider thật, E2E, held-out hay real-user test.
+
+
+## Đồng bộ local và GitHub — 14/10/2026
+
+Candidate policy v5.14 được tích hợp trên base mới nhất origin/main tại
+e5bae44, giữ các thay đổi upstream đã có. Phần model-call giữ hành vi mới nhất
+của main: production không áp hạn mức gọi model theo ngày ở cấp ứng dụng; bộ
+AI_TEST_MAX_ATTEMPTS chỉ là guard trong test. Ground Truth và expected gốc
+không đổi. Kết quả 90/128 và 862 pass / 1 skip ở trên là bằng chứng của
+candidate trước khi tích hợp base mới; chưa chạy lại benchmark hoặc test trên
+revision đã hợp nhất. Không triển khai ứng dụng.

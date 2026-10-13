@@ -5,7 +5,7 @@ import { resetSupportTestStore } from "@/lib/support-repository";
 
 beforeEach(() => {
   vi.stubEnv("AI_PROVIDER", "mock");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   vi.stubEnv("MONGODB_URI", "");
   resetSupportTestStore();
 });
@@ -39,10 +39,11 @@ it("retains the complete multi-segment approval reference", () => {
 it.each(["prefixDEMO-GIT-1001", "DEMO-GIT-1001-extra", "DEMO-GIT-100100000000"])("does not accept a registry reference embedded in a longer token: %s", token => {
   expect(extractText(token).entities.approvalReference).toBeUndefined();
 });
-it("uses the existing verified registry only when the full scope matches", async () => {
+it("requires authenticated entitlement even when a synthetic registry sample matches", async () => {
   const row = await submit(gitRequest);
-  expect(row.decision?.action).toBe("AUTO_APPROVE");
-  expect(row.decision?.approvalStatus).toBe("verified");
+  expect(row.decision?.action).toBe("ESCALATE");
+  expect(row.decision?.ruleIds).toContain("AUTH-ENTITLEMENT-001");
+  expect(row.decision?.approvalStatus).not.toBe("verified");
 });
 it.each([
   gitRequest.replace("docrelay-demo", "synthetic-other-repo"),
@@ -51,5 +52,5 @@ it.each([
 ])( "keeps invalid scope, duration or unregistered approval in review", async rawText => {
   const row = await submit(rawText);
   expect(row.decision?.action).toBe("ESCALATE");
-  expect(row.decision?.ruleIds).toContain("AUTH-007");
+  expect(row.decision?.ruleIds).toContain("AUTH-ENTITLEMENT-001");
 });

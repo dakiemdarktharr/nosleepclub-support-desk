@@ -40,7 +40,7 @@ export function redact(text: string): { text: string; markers: string[] } {
     "[REDACTED_TOKEN]",
   );
   safe = safe.replace(
-    /\b((?:aws[ _-]?(?:secret[ _-]?access[ _-]?key|access[ _-]?key[ _-]?id|session[ _-]?token)|secret[ _-]?access[ _-]?key|access[ _-]?key[ _-]?id|password|passwd|pwd|token|api[ _-]?key|secret|credential|mật khẩu|mat khau|private[ _-]?key)\s*["']?\s*(?:[:=]|\bis\b|là(?=\s))\s*)(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi,
+    /\b((?:aws[ _-]?(?:secret[ _-]?access[ _-]?key|access[ _-]?key[ _-]?id|session[ _-]?token)|secret[ _-]?access[ _-]?key|access[ _-]?key[ _-]?id|password|passwd|pwd|token|api[ _-]?key|secret|credential|mật khẩu|mat khau|private[ _-]?key)\s*["']?\s*(?:[:=]|\bis\b|là(?=\s))\s*)(?!(?:stored|kept|saved|managed|redacted|masked|secured|encrypted|rotated|generated|configured)\b|in\s+(?:the\s+)?vault\b)(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi,
     (_, prefix: string) => {
       markers.add("SECRET_VALUE");
       return prefix + "[REDACTED]";
@@ -50,7 +50,7 @@ export function redact(text: string): { text: string; markers: string[] } {
   // support phrases such as "password reset" intact, but redact value-like
   // material before it reaches extraction, persistence, audit or a model.
   safe = safe.replace(
-    /\b((?:password|passwd|pwd|token|api[ _-]?key|secret|credential|mật khẩu|mat khau)\s+)(?!reset\b|change\b|setup\b|policy\b|field\b)([A-Za-z0-9_./+@-]{6,})\b/gi,
+    /\b((?:password|passwd|pwd|token|api[ _-]?key|secret|credential|mật khẩu|mat khau)\s+)(?!reset\b|change\b|setup\b|policy\b|field\b|stored\b|kept\b|saved\b|managed\b|redacted\b|masked\b|secured\b|encrypted\b|rotated\b|generated\b|configured\b)([A-Za-z0-9_./+@-]{6,})\b/gi,
     (_, prefix: string) => {
       markers.add("SECRET_VALUE");
       return prefix + "[REDACTED]";

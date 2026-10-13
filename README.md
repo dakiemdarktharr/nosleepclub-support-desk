@@ -18,6 +18,8 @@ Repo: [dakiemdarktharr/vng-support](https://github.com/dakiemdarktharr/vng-suppo
 | Xử lý yêu cầu | **Dành cho nhân viên → Yêu cầu cần xử lý**; xem lý do, bằng chứng và lịch sử trước khi quyết định. |
 | Chấm demo | **Dành cho nhân viên → Kiểm thử → Đề A → Chạy toàn bộ test (5)**. |
 
+**Lưu ý Verify:** bộ `submission-4` giữ nhãn gốc nhưng case read-only thiếu IAM/ITSM proof nên hiện FAIL đúng theo v5.14; không sửa Ground Truth để biến thành PASS.
+
 **Demo cho giám khảo:** chạy Đề A → đối chiếu **3 routine / 2 escalation** → mở request/audit → nhập một tình huống mới. Có thể bỏ qua tour. Verify có ghi request; khi dùng OpenAI thật có thể phát sinh chi phí. [Hướng dẫn giám khảo](docs/JUDGE-ONBOARDING.md) · [Brief](Challenge_Brief_OrganizationAI_VN.docx.md).
 
 Người gửi có thể viết câu kể, không cần biết thuật ngữ IT hay đặt thành câu hỏi. Preview chưa lưu ticket; sau xác nhận, giữ liên kết hoặc UUID đầy đủ để theo dõi. Mã `HT-…` dùng tìm trong reviewer/audit. Khách nhận hướng dẫn thông thường trong policy, không có quyền IT hay quyền đối với tài nguyên.
@@ -26,18 +28,18 @@ Các tính năng vẫn có: gửi tự do/theo danh mục, clarification, hội 
 
 ## Bằng chứng hiện tại
 
-Rà soát **14/10/2026**, bắt đầu chính xác tại `b069f22b318a7caa3960eefdb5a3e69b7152e8e0`. Các số dưới là kiểm thử **local, mock/memory hoặc fallback**, không phải điểm model live hay nghiên cứu người dùng. [Báo cáo trước/sau và giới hạn](docs/REPO-AUDIT-2026-10-14.md).
+Rà soát **14/10/2026**, bắt đầu chính xác tại `b069f22b318a7caa3960eefdb5a3e69b7152e8e0`, sau đó tích hợp main `aa9ad2c` / policy v5.14 theo chấp thuận mới của chủ repo. Các số dưới là kiểm thử **local, mock/memory hoặc fallback**, không phải điểm model live hay nghiên cứu người dùng. [Báo cáo sau tích hợp](docs/INTEGRATION-AUDIT-2026-10-14.md) · [Kết quả riêng của base chốt](docs/REPO-AUDIT-2026-10-14.md).
 
 | Phép đo | Base → bản sửa | Ý nghĩa |
 | --- | --- | --- |
-| Development exact-match | 63/128 → 63/128 (49,22%) | Action + bucket + rule kỳ vọng; không đổi Ground Truth. |
-| Ca kỳ vọng routine bị escalation | 28/34 → 28/34 | Cần adjudication policy/input; không tự coi mọi mismatch là lỗi. |
-| Ca kỳ vọng escalation chuyển sang hỏi thêm | 3/94 → 3/94 | Không có ca kỳ vọng escalation được auto-approve. |
+| Development exact-match | 63/128 (49,22%) → 90/128 (70,31%) | Action + bucket + rule kỳ vọng; không đổi Ground Truth. |
+| Ca kỳ vọng routine bị escalation | 28/34 → 18/34 | Cần adjudication policy/input; không tự coi mọi mismatch là lỗi. |
+| Ca kỳ vọng escalation chuyển sang hỏi thêm | 3/94 → 1/94 | Không có ca kỳ vọng escalation được auto-approve. |
 | Coverage / readback | 128/128 → 128/128 | Readback bộ nhớ, chưa chứng minh Mongo restart. |
 | Sentiment fallback | 12/12 nhãn rõ; 4/16 ambiguous | Synthetic development, nhãn chưa độc lập thẩm định. |
 | Retrieval | Hit@1 92%; recall@3 100%; MRR 0,96 | 50 câu có nguồn + 4 câu ngoài corpus; chưa đo chất lượng trả lời live. |
 
-Không suy ra readiness 9,5/10 từ các phép đo trên. Bộ held-out độc lập và tác động thực tế chưa được xác minh. Mongo restart và inference live chưa chạy trong lượt rà soát này. Dependency production audit sạch tại thời điểm kiểm tra; chuỗi công cụ phát triển còn advisory high chưa có bản vá tương thích.
+Một exact-pass cũ bị regression (`gt-authority-008-eleven-gpu`); 38 mismatch còn cần adjudication. Thay đổi điểm chủ yếu đến từ policy v5.14 đã có trên main, không phải việc dọn tài liệu. Không suy ra readiness 9,5/10 từ các phép đo trên. Bộ held-out độc lập và tác động thực tế chưa được xác minh. Mongo restart và inference live chưa chạy trong lượt rà soát này. Dependency production audit sạch tại thời điểm kiểm tra; chuỗi công cụ phát triển còn advisory high chưa có bản vá tương thích.
 
 ## Workflow tổng quát
 
@@ -58,7 +60,7 @@ flowchart TD
   J --> D
 ```
 
-Policy là authority cuối: **risk → authority → missing information → routine**. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
+Policy **v5.14** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
 
 ## Workflow chi tiết theo module
 
@@ -78,7 +80,7 @@ flowchart TB
     CHECK -.-> SENT[Sentiment quan sát: nhãn, quote, source]
   end
   subgraph POLICY[Policy và kết quả]
-    CAN --> RULE[evaluatePolicy: từng subrequest]
+    CAN --> RULE[evaluatePolicy: risk, authority, facts và một yêu cầu mỗi ticket]
     APPROVAL[verifyApproval: scope, role, expiry] -.-> RULE
     RULE --> ASK[NEEDS_INFORMATION: trường thiếu, câu hỏi]
     RULE --> ESC[ESCALATE: bucket, rule, câu hỏi, nơi tiếp nhận]
@@ -88,7 +90,7 @@ flowchart TB
     AUTO --> RET[retrieveKnowledge: schema, revision, expiry]
     CORPUS[Corpus local hoặc Mongo] -.-> RET
     RET --> BM[BM25, alias Việt Anh, typo: tối đa 3 bài]
-    WEB[Web tùy chọn: domain allowlist, budget] --> CTX[Context và cache]
+    WEB[Web tùy chọn: domain allowlist, timeout, token cap] --> CTX[Context và cache]
     BM --> CTX
     CTX --> ANSWER[AI_CONVERSATION_MODEL hoặc AI_MODEL]
     ANSWER --> VAL[Validate quote, ID nguồn, URL và nội dung]
@@ -116,7 +118,7 @@ flowchart TB
   end
 ```
 
-Model ID lấy từ cấu hình `AI_MODEL` (mẫu hiện tại `gpt-6-luna`), không chứng minh tài khoản API có quyền dùng model đó. Mock không gọi API; lỗi model/budget/validation ghi rõ fallback. Retrieval dùng **BM25**, không có embedding/vector database. Preview có TTL 10 phút; dữ liệu lưu gắn policy version. Audit lưu căn cứ quyết định, không lưu chain-of-thought. [Chi tiết module và nhánh xử lý](docs/ARCHITECTURE.md) · [Retrieval](docs/RAG-RETRIEVAL.md) · [Sentiment](docs/SENTIMENT-EVALUATION.md).
+Model ID lấy từ cấu hình `AI_MODEL` (mẫu hiện tại `gpt-6-luna`), không chứng minh tài khoản API có quyền dùng model đó. Mock không gọi API; lỗi model/provider quota/validation ghi rõ fallback. Retrieval dùng **BM25**, không có embedding/vector database. Preview có TTL 10 phút; dữ liệu lưu gắn policy version. Audit lưu căn cứ quyết định, không lưu chain-of-thought. [Chi tiết module và nhánh xử lý](docs/ARCHITECTURE.md) · [Retrieval](docs/RAG-RETRIEVAL.md) · [Sentiment](docs/SENTIMENT-EVALUATION.md).
 
 ## Đăng nhập, cấp ID và phạm vi quyền
 
@@ -173,7 +175,7 @@ Cấu hình mẫu chạy **Support/Verify bằng mock + memory-demo**, không c�
 | Lưu Support/Verify | `MONGODB_URI`, `MONGODB_DB` | Khi có URI, dùng MongoDB; lỗi kết nối không chuyển request sang bộ nhớ. Vercel production yêu cầu MongoDB. |
 | Model thật | `AI_PROVIDER=openai`, `AI_MODEL`, `OPENAI_API_KEY` | Nhận diện/hỗ trợ qua API có chi phí; không suy ra đang bật trên website từ README. |
 | Hội thoại và web | `AI_CONVERSATION_MODEL`, `AI_WEB_SEARCH`, `AI_WEB_MODEL` | Model hội thoại để trống dùng model chính; web mặc định tắt trong file mẫu. |
-| Hạn mức gọi model | `AI_MAX_ATTEMPTS` | Mặc định 20 lượt/ngày UTC, code giới hạn tối đa 50 lượt/ngày. Mongo đếm dùng chung theo từng ngày; mỗi ngày tự có ngân sách mới. Đây là số lần gọi, không phải số token/USD. |
+| Hạn mức gọi model | Không có hạn mức theo ngày ở cấp ứng dụng trong production | OpenAI vẫn áp dụng rate limit/quota tài khoản và mỗi inference có thể tính phí; bộ test dùng `AI_TEST_MAX_ATTEMPTS` làm guard; API intake demo giới hạn 30 request/phút/client. |
 | Giả lập lỗi Verify | `SUPPORT_VERIFY_FAULTS` | Dành cho kiểm thử/demo theo guard hiện có; không phải lỗi model thật. |
 
 Không đưa API key, URI thật hay `.env.local` vào Git. Xem [file cấu hình mẫu](.env.example) và [runbook](RUNBOOK.md) trước khi bật dịch vụ thật.

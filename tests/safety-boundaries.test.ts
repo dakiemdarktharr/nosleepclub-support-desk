@@ -75,35 +75,34 @@ it("a structured guidance label cannot smuggle an execution request", () => {
   };
   expect(evaluatePolicy(extractIntake(input)).action).toBe("ESCALATE");
 });
-it("approval is exact, scoped, server verified and expires", () => {
+it("a registry sample alone never verifies a scoped approval", () => {
   const input = {
     ...intake("", {
-      intentLabel: "DATABASE_READ_ACCESS",
-      system: "postgresql",
-      resourceScope: "demo_inventory",
-      environment: "staging",
-      permission: "read-only",
-      duration: "2 hours",
-      reason: "Synthetic demo",
-      approvalReference: "DEMO-1001",
+      intentLabel: "SOFTWARE_INSTALL",
+      software: "demo ide",
+      version: "1",
+      os: "macos",
+      approvedCatalogStatus: "approved",
+      businessPurpose: "application development",
+      licenseDuration: "30 days",
+      licenseType: "named-user",
+      approvalReference: "DEMO-LICENSE-1001",
     }),
     mode: "structured" as const,
-    serviceGroup: "DATABASE" as const,
+    serviceGroup: "SOFTWARE_LICENSE" as const,
   };
   const canonical = extractIntake(input);
-  const approval = verifyApproval(canonical, Date.parse("2026-09-20"));
-  expect(approval.status).toBe("verified");
+  const approval = verifyApproval(canonical);
+  expect(approval).toMatchObject({ status: "unverifiable", scope: "matched" });
   expect(evaluatePolicy(canonical, approval)).toMatchObject({
-    action: "AUTO_APPROVE",
-    handlingMode: "SIMULATED_WORKFLOW",
+    action: "ESCALATE",
+    bucket: "BEYOND_AUTHORITY",
+    approvalStatus: "unverifiable",
   });
-  expect(verifyApproval(canonical, Date.parse("2027-01-02")).status).toBe(
-    "expired",
-  );
   expect(
     verifyApproval({
       ...canonical,
-      entities: { ...canonical.entities, duration: "3 hours" },
+      entities: { ...canonical.entities, licenseDuration: "60 days" },
     }).status,
   ).toBe("invalid");
   expect(
@@ -113,7 +112,7 @@ it("approval is exact, scoped, server verified and expires", () => {
     }).status,
   ).toBe("unverifiable");
 });
-it("keeps documented routine approval routes executable in the synthetic registry", () => {
+it("does not treat demo registry samples as approvals or entitlement evidence", () => {
   const cases: Array<{
     serviceGroup: "ACCOUNT_ACCESS" | "GIT_PERMISSION" | "CLOUD_GPU" | "SOFTWARE_LICENSE";
     fields: Record<string, string>;
@@ -152,7 +151,8 @@ it("keeps documented routine approval routes executable in the synthetic registr
         quantity: "1",
         duration: "4 hours",
         purpose: "model testing",
-        budgetOrQuota: "verified demo quota",
+        resourceLifecycle: "ephemeral",
+        dataSensitivity: "synthetic",
         approvalReference: "DEMO-GPU-1001",
       },
     },
@@ -179,11 +179,9 @@ it("keeps documented routine approval routes executable in the synthetic registr
       fields: item.fields,
     };
     const canonical = extractIntake(request);
-    expect(verifyApproval(canonical).status, item.serviceGroup).toBe("verified");
-    expect(evaluatePolicy(canonical, verifyApproval(canonical))).toMatchObject({
-      action: "AUTO_APPROVE",
-      bucket: "ROUTINE",
-    });
+    expect(verifyApproval(canonical).status, item.serviceGroup).not.toBe("verified");
+    expect(evaluatePolicy(canonical, verifyApproval(canonical)).action, item.serviceGroup)
+      .not.toBe("AUTO_APPROVE");
   }
 });
 it("requires evidence for model environment and recomputes privileged label risk", async () => {

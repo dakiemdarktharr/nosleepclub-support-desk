@@ -23,7 +23,7 @@ export default defineConfig({
     reuseExistingServer: false,
     env: {
       AI_PROVIDER: "mock",
-      AI_MAX_ATTEMPTS: "0",
+      AI_TEST_MAX_ATTEMPTS: "0",
       SUPPORT_STORAGE: "memory-demo",
       SUPPORT_ACCESS_MODE: "public-demo",
       SUPPORT_VERIFY_FAULTS: "true",

@@ -112,8 +112,8 @@ it("rejects assistance commands outside the safe catalog", async () => {
     }),
   ).rejects.toMatchObject({ code: "MODEL_OUTPUT_INVALID" });
 });
-it("bounds time and daily call count without retries, then resets on the next UTC day", async () => {
-  vi.stubEnv("AI_MAX_ATTEMPTS", "20");
+it("keeps the test-only call guard bounded by UTC day without retrying", async () => {
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "20");
   const dayOne = new Date("2026-10-09T02:00:00.000Z");
   const dayTwo = new Date("2026-10-10T02:00:00.000Z");
   const run = vi.fn(() => new Promise<never>(() => {}));
@@ -134,31 +134,40 @@ it("bounds time and daily call count without retries, then resets on the next UT
     Array.from({ length: 25 }, () => reserveModelAttempt(dayOne)),
   );
   expect(reserved.filter(Boolean)).toHaveLength(20);
-  vi.stubEnv("AI_MAX_ATTEMPTS", "30");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "30");
   const added = await Promise.all(
     Array.from({ length: 15 }, () => reserveModelAttempt(dayOne)),
   );
   expect(added.filter(Boolean)).toHaveLength(10);
-  vi.stubEnv("AI_MAX_ATTEMPTS", "50");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "50");
   const conversationAllowance = await Promise.all(
     Array.from({ length: 25 }, () => reserveModelAttempt(dayOne)),
   );
   expect(conversationAllowance.filter(Boolean)).toHaveLength(20);
-  vi.stubEnv("AI_MAX_ATTEMPTS", "100");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "100");
   expect(await reserveModelAttempt(dayOne)).toBe(false);
   expect(await reserveModelAttempt(dayTwo)).toBe(true);
 });
 
-it("zero budget rejects concurrent reservations without consuming allowance", async () => {
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+it("test-only zero budget rejects concurrent reservations without consuming allowance", async () => {
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   const reserved = await Promise.all(
     Array.from({ length: 25 }, () => reserveModelAttempt(new Date("2026-10-09T00:00:00.000Z"))),
   );
   expect(reserved).toEqual(Array(25).fill(false));
-  vi.stubEnv("AI_MAX_ATTEMPTS", "1");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "1");
   const now = new Date("2026-10-09T00:00:00.000Z");
   expect(await reserveModelAttempt(now)).toBe(true);
   expect(await reserveModelAttempt(now)).toBe(false);
+});
+
+it("does not apply the legacy daily limit in production", async () => {
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  const allowed = await Promise.all(
+    Array.from({ length: 100 }, () => reserveModelAttempt()),
+  );
+  expect(allowed).toEqual(Array(100).fill(true));
 });
 it("known reset ambiguity asks the deterministic question even when OpenAI is enabled", async () => {
   vi.stubEnv("AI_PROVIDER", "openai");

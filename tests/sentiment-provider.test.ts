@@ -2,7 +2,10 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { analyzeSupportSentiment } from "@/lib/feedback-model";
 
 const budget = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/support-repository", () => ({ reserveModelAttempt: budget }));
+vi.mock("@/lib/support-repository", () => ({
+  reserveModelAttempt: budget,
+  reserveModelAttemptForModel: budget,
+}));
 
 beforeEach(() => {
   vi.stubEnv("AI_PROVIDER", "openai");
@@ -39,11 +42,16 @@ it.each([[401, "AUTHENTICATION"], [429, "RATE_LIMIT"], [500, "MODEL_UNAVAILABLE"
   expect(transport).toHaveBeenCalledOnce();
 });
 
-it("does not call the provider when the shared daily budget is exhausted", async () => {
+it("does not call the provider when the test-only call guard blocks it", async () => {
   budget.mockResolvedValue(false);
-  const transport = vi.fn(); vi.stubGlobal("fetch", transport);
-  expect(await analyzeSupportSentiment("Tôi bực mình", "support-request")).toMatchObject({ source: "rule-based", fallbackReason: "BUDGET_EXHAUSTED" });
+  const transport = vi.fn();
+  vi.stubGlobal("fetch", transport);
+  expect(await analyzeSupportSentiment("Tôi bực mình", "support-request")).toMatchObject({
+    source: "rule-based",
+    fallbackReason: "BUDGET_EXHAUSTED",
+  });
   expect(transport).not.toHaveBeenCalled();
+  expect(budget).toHaveBeenCalledOnce();
 });
 
 it("distinguishes an offline mock from a missing API key", async () => {
