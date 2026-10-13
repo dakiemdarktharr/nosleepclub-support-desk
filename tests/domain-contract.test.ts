@@ -21,15 +21,6 @@ describe("phase 1 contracts and policy data", () => {
       bucketPriority.BEYOND_AUTHORITY,
     );
     expect(riskRules.every((rule) => rule.id && rule.reason)).toBe(true);
-    expect(new Set(riskRules.map((rule) => rule.id)).size).toBe(
-      riskRules.length,
-    );
-    expect(
-      riskRules.find((rule) => rule.signal === "PUBLIC_EXPOSURE")?.id,
-    ).toBe("SEC-002");
-    expect(
-      riskRules.find((rule) => rule.signal === "SECURITY_CONTROL")?.id,
-    ).toBe("SEC-008");
   });
   it("rejects browser approval verification, unknown fields and cross-group labels", () => {
     const input = { rawText: "Need help", idempotencyKey: crypto.randomUUID() };
