@@ -36,7 +36,7 @@ async function start(uri, database, revision, expectUnavailable = false) {
   const env = {};
   for (const [key, value] of Object.entries(process.env))
     if (/^(path|systemroot|windir|temp|tmp|home|userprofile)$/i.test(key)) env[key] = value;
-  Object.assign(env, { NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", AI_PROVIDER: "mock", AI_MAX_ATTEMPTS: "0", OPENAI_API_KEY: "", MONGODB_URI: uri, MONGODB_DB: database, SUPPORT_ACCESS_MODE: "public-demo", APP_REVISION: revision });
+  Object.assign(env, { NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", AI_PROVIDER: "mock", OPENAI_API_KEY: "", MONGODB_URI: uri, MONGODB_DB: database, SUPPORT_ACCESS_MODE: "public-demo", APP_REVISION: revision });
   child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", "3227"], { env, stdio: "ignore", windowsHide: true });
   let launchFailed = false;
   child.on("error", () => { launchFailed = true; });

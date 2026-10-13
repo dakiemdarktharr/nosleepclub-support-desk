@@ -7,7 +7,7 @@ import { GET as detail } from "@/app/api/support/requests/[id]/route";
 import { GET as events } from "@/app/api/support/events/route";
 import { GET as metrics } from "@/app/api/support/metrics/route";
 
-beforeEach(() => { vi.stubEnv("MONGODB_URI", ""); vi.stubEnv("AI_PROVIDER", "mock"); vi.stubEnv("AI_MAX_ATTEMPTS", "0"); resetSupportTestStore(); });
+beforeEach(() => { vi.stubEnv("MONGODB_URI", ""); vi.stubEnv("AI_PROVIDER", "mock"); vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0"); resetSupportTestStore(); });
 afterEach(() => vi.unstubAllEnvs());
 const api: typeof fetch = async (url, init) => {
   const request = new Request(`http://localhost${url}`, init);

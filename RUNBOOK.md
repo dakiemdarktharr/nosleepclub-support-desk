@@ -144,7 +144,7 @@ kiểm tra này không có Mongo test: xem [bằng chứng hiện tại](docs/TE
 
 Quy trình thủ công dưới đây dành cho operator đã xác nhận database thử nghiệm riêng; không chạy trên production:
 
-Chỉ dùng Mongo local hoặc credential thử nghiệm giới hạn trên database mới, tên `sprint1_test_<suffix>`. Không copy URI/credential production. Giữ `AI_PROVIDER=mock`, `AI_MAX_ATTEMPTS=0` và model keys rỗng. Đặt `MONGODB_URI`, `MONGODB_DB` riêng cùng `SUPPORT_ACCESS_MODE=public-demo`, chạy server tại3227. Health ping thành công chưa chứng minh persistence sau restart.
+Chỉ dùng Mongo local hoặc credential thử nghiệm giới hạn trên database mới, tên `sprint1_test_<suffix>`. Không copy URI/credential production. Giữ `AI_PROVIDER=mock` và model keys rỗng. Đặt `MONGODB_URI`, `MONGODB_DB` riêng cùng `SUPPORT_ACCESS_MODE=public-demo`, chạy server tại3227. Health ping thành công chưa chứng minh persistence sau restart.
 
 Trong terminal khác, tạo duy nhất dữ liệu synthetic rồi giữ lại các biến:
 
@@ -201,7 +201,7 @@ yêu cầu chuyển người và policy được xét độc lập với nhãn c
 Model chính được chủ repo chọn là `gpt-6-luna`: đặt `AI_PROVIDER=openai`,
 `AI_MODEL=gpt-6-luna`; `AI_CONVERSATION_MODEL` để trống sẽ kế thừa cho sentiment
 sau câu trả lời. `AI_WEB_MODEL` là cấu hình riêng, không đổi theo model chính.
-Giữ `AI_MAX_ATTEMPTS` trong mức hiện có; không reset counter để làm demo đạt.
+Production không còn hạn mức model-call theo ngày ở cấp ứng dụng; không cần reset counter. Provider vẫn có thể trả 429 theo quota/rate limit tài khoản. API intake demo còn giới hạn 30 request/phút/client.
 
 Nếu preview ghi “Dự phòng theo luật”, đọc **Vì sao dùng dự phòng**:
 
@@ -209,7 +209,7 @@ Nếu preview ghi “Dự phòng theo luật”, đọc **Vì sao dùng dự ph�
   Vercel → vng-support → Settings → Environment Variables → Production,
   rồi triển khai lại để nhận biến mới. Không gửi key qua chat/Git/log.
 - `NOT_CONFIGURED`: thiếu provider/model/API key.
-- `BUDGET_EXHAUSTED`: chờ ngày UTC mới (07:00 giờ Việt Nam); không nâng cap tự động.
+- `BUDGET_EXHAUSTED`: chỉ còn ở dữ liệu lịch sử hoặc test-only; production hiện không chặn theo ngân sách ngày của ứng dụng.
 - `RATE_LIMIT`/`TIMEOUT`: thử lại sau; không retry vô hạn.
 - Output/evidence không hợp lệ: giữ fallback có nhãn và kiểm tra log đã lọc;
   không bỏ validation để ép nhãn `model`.

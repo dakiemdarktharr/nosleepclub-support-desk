@@ -8,7 +8,7 @@ import type { SupportInput } from "@/domain/contracts";
 const input = (rawText: string): SupportInput => ({ rawText, fields: { department: "engineering", employeeId: "EMP-SYNTHETIC-01" }, mode: "freeform", serviceGroup: "OTHER", confirmed: true, idempotencyKey: crypto.randomUUID() });
 beforeEach(() => {
   vi.stubEnv("AI_PROVIDER", "mock");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   vi.stubEnv("MONGODB_URI", "");
   resetSupportTestStore();
 });

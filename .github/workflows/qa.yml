@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 15
     env:
       AI_PROVIDER: mock
-      AI_MAX_ATTEMPTS: "0"
+      AI_TEST_MAX_ATTEMPTS: "0"
       MONGODB_URI: ""
       OPENAI_API_KEY: ""
       SUPPORT_STORAGE: memory-demo

@@ -39,7 +39,7 @@ it.each([[401, "AUTHENTICATION"], [429, "RATE_LIMIT"], [500, "MODEL_UNAVAILABLE"
   expect(transport).toHaveBeenCalledOnce();
 });
 
-it("does not call the provider when the shared daily budget is exhausted", async () => {
+it("does not call the provider when the test-only call guard blocks it", async () => {
   budget.mockResolvedValue(false);
   const transport = vi.fn(); vi.stubGlobal("fetch", transport);
   expect(await analyzeSupportSentiment("Tôi bực mình", "support-request")).toMatchObject({ source: "rule-based", fallbackReason: "BUDGET_EXHAUSTED" });
