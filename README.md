@@ -18,7 +18,7 @@ Repo: [dakiemdarktharr/vng-support](https://github.com/dakiemdarktharr/vng-suppo
 | Xử lý yêu cầu | **Dành cho nhân viên → Yêu cầu cần xử lý**; xem lý do, bằng chứng và lịch sử trước khi quyết định. |
 | Chấm demo | **Dành cho nhân viên → Kiểm thử → Đề A → Chạy toàn bộ test (5)**. |
 
-**Lưu ý Verify:** bộ `submission-4` giữ nhãn gốc nhưng case read-only thiếu IAM/ITSM proof nên hiện FAIL đúng theo v5.14; không sửa Ground Truth để biến thành PASS.
+**Lưu ý Verify:** bộ `submission-4` giữ nhãn gốc nhưng case read-only thiếu IAM/ITSM proof nên hiện FAIL theo contract từ v5.14; không sửa Ground Truth để biến thành PASS.
 
 **Demo cho giám khảo:** chạy Đề A → đối chiếu **3 routine / 2 escalation** → mở request/audit → nhập một tình huống mới. Có thể bỏ qua tour. Verify có ghi request; khi dùng OpenAI thật có thể phát sinh chi phí. [Hướng dẫn giám khảo](docs/JUDGE-ONBOARDING.md) · [Brief](Challenge_Brief_OrganizationAI_VN.docx.md).
 
@@ -28,18 +28,18 @@ Các tính năng vẫn có: gửi tự do/theo danh mục, clarification, hội 
 
 ## Bằng chứng hiện tại
 
-Rà soát **14/10/2026**, bắt đầu chính xác tại `b069f22b318a7caa3960eefdb5a3e69b7152e8e0`, sau đó tích hợp main `aa9ad2c` / policy v5.14 theo chấp thuận mới của chủ repo. Các số dưới là kiểm thử **local, mock/memory hoặc fallback**, không phải điểm model live hay nghiên cứu người dùng. [Báo cáo sau tích hợp](docs/INTEGRATION-AUDIT-2026-10-14.md) · [Kết quả riêng của base chốt](docs/REPO-AUDIT-2026-10-14.md).
+Rà soát mismatch **14/10/2026**, base main `fb76162` → commit code `d585d02` / policy v5.15. Đo lại 128 fixture development trên từng SHA, **local, mock/memory, không gọi API model**; giữ nguyên Ground Truth. [Báo cáo từng case và giới hạn](docs/MISMATCH-REVIEW-2026-10-14.md) · [Metadata máy đọc](docs/MISMATCH-REVIEW-2026-10-14.json). Đây không phải held-out hay accuracy tổng quát.
 
 | Phép đo | Base → bản sửa | Ý nghĩa |
 | --- | --- | --- |
-| Development exact-match | 63/128 (49,22%) → 90/128 (70,31%) | Action + bucket + rule kỳ vọng; không đổi Ground Truth. |
-| Ca kỳ vọng routine bị escalation | 28/34 → 18/34 | Cần adjudication policy/input; không tự coi mọi mismatch là lỗi. |
-| Ca kỳ vọng escalation chuyển sang hỏi thêm | 3/94 → 1/94 | Không có ca kỳ vọng escalation được auto-approve. |
+| Development exact-match | 90/128 (70,31%) → 89/128 (69,53%) | Điểm giảm một ca; nhãn gốc vẫn giữ. |
+| Ca kỳ vọng routine bị escalation | 18/34 → 8/34 | Sửa lỗi phủ định/tách ngữ cảnh; các ca vẫn thiếu facts/proof nên chưa AUTO. |
+| Ca kỳ vọng escalation chuyển sang hỏi thêm | 1/94 → 2/94 | Hai ca GPU theo contract hỏi đủ facts trước quota unavailable; không có ca được auto-approve. |
 | Coverage / readback | 128/128 → 128/128 | Readback bộ nhớ, chưa chứng minh Mongo restart. |
-| Sentiment fallback | 12/12 nhãn rõ; 4/16 ambiguous | Synthetic development, nhãn chưa độc lập thẩm định. |
-| Retrieval | Hit@1 92%; recall@3 100%; MRR 0,96 | 50 câu có nguồn + 4 câu ngoài corpus; chưa đo chất lượng trả lời live. |
 
-Một exact-pass cũ bị regression (`gt-authority-008-eleven-gpu`); 38 mismatch còn cần adjudication. Thay đổi điểm chủ yếu đến từ policy v5.14 đã có trên main, không phải việc dọn tài liệu. Không suy ra readiness 9,5/10 từ các phép đo trên. Bộ held-out độc lập và tác động thực tế chưa được xác minh. Mongo restart và inference live chưa chạy trong lượt rà soát này. Dependency production audit sạch tại thời điểm kiểm tra; chuỗi công cụ phát triển còn advisory high chưa có bản vá tương thích.
+Đã rà soát 38 mismatch cũ; sau sửa còn **39**: 25 thiếu facts, 8 approval chưa xác minh, 1 yêu cầu nhiều tài nguyên, 3 bất đồng Security/Authority và 2 GPU. Regression 11 GPU giữ hỏi bổ sung theo quyết định chủ repo. Ca 24 GPU phát sinh exact-pass regression vì trước đó khớp nhãn nhờ lỗi tách câu; không phục hồi lỗi để tăng điểm. **900 unit/integration tests đạt**, thêm 35 regression synthetic; không suy ra readiness 9,5/10. Held-out độc lập, tác động thực tế, Mongo restart và model live chưa được kiểm chứng trong lượt này.
+
+Lịch sử: [tích hợp main v5.14, sentiment/retrieval và dependency audit](docs/INTEGRATION-AUDIT-2026-10-14.md) · [base chốt b069f22](docs/REPO-AUDIT-2026-10-14.md). Các số lịch sử không được coi là phép đo mới.
 
 ## Workflow tổng quát
 
@@ -60,7 +60,7 @@ flowchart TD
   J --> D
 ```
 
-Policy **v5.14** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
+Policy **v5.15** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
 
 ## Workflow chi tiết theo module
 
