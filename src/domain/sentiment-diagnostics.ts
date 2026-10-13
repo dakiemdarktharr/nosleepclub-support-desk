@@ -6,7 +6,7 @@ export const sentimentFallbackMessages: Record<Reason, string> = {
   MOCK_PROVIDER: "Môi trường này đang dùng model mô phỏng.",
   NOT_CONFIGURED: "Chưa đủ cấu hình API model; quản trị viên cần kiểm tra provider, model và API key.",
   AUTHENTICATION: "API model từ chối xác thực (401). Quản trị viên cần cập nhật API key trên hosting.",
-  BUDGET_EXHAUSTED: "Đã hết hạn mức gọi model trong ngày UTC. Thử lại sau khi sang ngày UTC mới.",
+  BUDGET_EXHAUSTED: "Kết quả lịch sử hoặc test-only bị chặn bởi ngân sách model cũ; production hiện không có hạn mức ngày ở cấp ứng dụng.",
   RATE_LIMIT: "Dịch vụ model đang giới hạn lượt gọi. Thử lại sau.",
   TIMEOUT: "Model chưa trả lời trong thời gian cho phép. Thử lại sau.",
   INVALID_OUTPUT: "Kết quả model không đúng định dạng hoặc bị cắt ngắn.",

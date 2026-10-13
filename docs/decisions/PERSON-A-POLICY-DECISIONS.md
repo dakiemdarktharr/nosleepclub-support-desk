@@ -1,4 +1,4 @@
-> Báo cáo lịch sử: chỉ áp dụng cho phiên bản/ngày ghi bên dưới. Xem [mục lục hiện hành](../README.md) và [rà soát mới](../REPO-AUDIT-2026-10-14.md).
+> Nhật ký quyết định theo phiên bản, gồm quyết định mới v5.14. Các số đo lịch sử chỉ áp dụng cho SHA ghi tại đó. Xem [mục lục](../README.md) và [rà soát sau tích hợp](../INTEGRATION-AUDIT-2026-10-14.md).
 
 # Quyết định policy cho Member A
 
@@ -9,13 +9,13 @@ AI hỗ trợ triển khai và kiểm tra; chưa có human cross-review của B/
 
 Base trước thay đổi policy: `ab633ea0db88752a51d532cd1bc53257e2044edd`, nhánh
 `codex/person-a-benchmark`. Ground Truth, input và expected gốc được giữ nguyên.
-Runtime policy hiện tại: `support-guidance-v5.12`; các nguồn policy lịch sử trong
+Runtime policy hiện tại: `support-guidance-v5.14`, hiệu lực từ 14/10/2026; các nguồn policy lịch sử trong
 `mlai26_new/data/policy/` được giữ nguyên theo manifest.
 
 Người dùng đã giao quyền chọn các contract còn lại. Quyết định v5.12, lệnh và
-evidence mới nhất ở [PERSON-A-CONTRACT-DECISIONS.md](PERSON-A-CONTRACT-DECISIONS.md).
-Các benchmark v5.10/v5.11 bên dưới là lịch sử; 18 expected AUTO vẫn chưa đủ
-approval/thời hạn theo runtime hiện hành, không đổi nhãn gốc.
+evidence lịch sử ở [PERSON-A-CONTRACT-DECISIONS.md](PERSON-A-CONTRACT-DECISIONS.md).
+Các kết quả v5.10–v5.13 bên dưới là lịch sử; mismatch theo policy v5.14 và điều
+kiện cần để đạt ít nhất 120/128 được ghi ở phần quyết định cuối.
 
 ## Những quyết định đã được cung cấp
 
@@ -80,6 +80,31 @@ Ví dụ câu hỏi đã đề xuất trước vòng v5.12:
 Approval vẫn được xác minh qua server; câu hỏi bổ sung là “Bạn có mã phê duyệt
 cho đúng yêu cầu này không?”.
 
+## Follow-up 13/10/2026 — quota cloud và credential trong Vault
+
+Các giá trị cloud đã nêu vượt giới hạn được xét trước nhánh hỏi những facts
+còn thiếu: 2 GPU T4/A10, 4 vCPU, 16 GB RAM, 100 GB disk và 8 giờ. Thời lượng có
+đơn vị phút/giờ/ngày được đổi về giờ để so quota, bao gồm số thập phân; không
+suy thời lượng từ ngày tương đối hay lịch benchmark. Giá trị thiếu, placeholder
+hoặc không đọc được không bị coi là bằng chứng đã vượt quota.
+
+Quota và routine AUTO chỉ có contract cho ba intent provisioning
+`CLOUD_SANDBOX`, `CLOUD_VM_REQUEST`, `GPU_REQUEST`. Các cloud intent như storage
+hoặc cost không dùng nhầm sizing CPU/RAM/disk và không vào sandbox AUTO; policy
+owner xác định contract, trừ khi security/authority rule cụ thể đã khớp.
+
+Từ `credential` đứng riêng không chứng minh secret đã lộ. SEC-001 vẫn áp dụng
+khi có value được gán trực tiếp hoặc động từ gửi/chia sẻ/đưa credential vào
+ticket, log, chat hay kênh khác. Câu “credential sẽ để trong Vault” là ngữ cảnh
+lưu trữ an toàn; các gate production, quyền và approval áp dụng độc lập.
+
+Các mismatch development chưa được phân xử độc lập được ghi ở
+[TECHNICAL-CASE-REVIEW-PERSON-A.md](../archive/TECHNICAL-CASE-REVIEW-PERSON-A.md): 34 nhãn
+AUTO thiếu verified approval, bảy nhãn AUTO có giới hạn quota rõ vượt contract,
+và ba nhãn BEYOND_AUTHORITY khác bucket với Security rules hiện hành. Không tạo
+approval record từ lời khai trong ticket, không nới quota/whitelist và không
+đổi expected gốc.
+
 ## Kiểm chứng lịch sử v5.10
 
 Benchmark baseline trước sửa: `/tmp/vng-support-member-a-policy-baseline-ab633ea.json`,
@@ -142,7 +167,7 @@ và evaluator SHA-256
 `71c404b66badc9e951245ddebd7a1d5f29369ecbe004f4308656c47b00820ef9`
 đều giữ nguyên; comparison có datasetIdentity=digest-verified.
 
-Commit hiện chỉ ở local, chưa push/mở PR, chưa có B/C human cross-review.
+Tại thời điểm ghi nhận này, commit chỉ ở local; B/C human cross-review chưa được thu thập.
 Không chạy E2E, Mongo thật, held-out hoặc provider thật. TC015 được giải quyết
 trong vòng v5.11 bên dưới; 18 nhãn AUTO và required-fields/mapping còn mở.
 
@@ -267,15 +292,98 @@ readback=128, datasetIdentity=digest-verified, regressedExactPass=[], changedCas
 chỉ TC015. Nếu dataset/evaluator digest khác, không dùng kết quả để kết luận
 cải thiện. Nếu một exact-pass regression xuất hiện, điều tra trước bàn giao.
 
-### Giới hạn và quyết định còn mở
+### Giới hạn ghi nhận tại vòng v5.13 (lịch sử)
 
 - Rule phụ thuộc service/environment/destructive signal đã được extraction
   xác định; chưa mở rộng mọi cách diễn đạt DELETE/TRUNCATE hoặc ngữ cảnh mơ hồ.
 - Benchmark development chưa adjudicate độc lập. Chưa chạy E2E, Mongo thật,
   provider thật, held-out hoặc người dùng thật.
-- 18 expected AUTO cần quyết định về verified approval, required fields, TTL,
-  provider/quota và mapping quyền Git/Jira/Confluence; không tự đổi expected hay
-  nới gate để tăng điểm. TC015 không còn là quyết định đang chờ.
-- B/C cần review diff và scope SEC-007, các biên production/staging/thiết bị,
-  cùng tác động audit-production-read của vòng v5.10. Chưa có human review;
-  commit chỉ ở local trên branch A, chưa push, mở PR hoặc deploy.
+- Tại thời điểm v5.13, 18 expected AUTO còn cần chốt verified approval, required
+  fields, TTL, provider/quota và mapping quyền Git/Jira/Confluence. Các lựa chọn
+  này đã được chốt ở phần v5.14 bên dưới; expected vẫn chờ adjudication độc lập.
+- Tại thời điểm v5.13, B/C chưa review diff và scope SEC-007, các biên production/staging/thiết bị,
+  cùng tác động audit-production-read của vòng v5.10. Ghi chú này là lịch sử;
+  trạng thái commit/push hiện tại được theo dõi bằng Git.
+
+## Quyết định cuối theo câu 1–50 — policy v5.14
+
+Ngày hoàn tất và hiệu lực: **14/10/2026 (Asia/Ho_Chi_Minh)**. Người dùng phê
+duyệt cuối các câu trả lời 1–49 ở câu 50/50. Cùng một policy dùng cho benchmark
+và production; ngoại lệ self-approval chỉ dành cho demo UI/mock và không áp
+dụng cho benchmark hoặc production. Ground Truth và expected gốc được giữ
+nguyên. Đây là policy đã chốt theo chỉ dẫn trong phiên, không thay cho việc
+xác nhận thẩm quyền policy owner của VNG.
+
+### Điều kiện AUTO và approval
+
+- Request phải do người gửi đã xác thực tạo; entitlement phải được backend xác
+  minh đúng identity, resource, action và scope. Read-only không cần approval
+  riêng khi entitlement cho phép. Write routine giới hạn scope có thể AUTO và
+  phải audit; elevated hoặc write production cần approval đã xác minh.
+- Approval phải là cùng một record giữa registry và ITSM, ở trạng thái
+  `verified`/`approved`. Backend được tự tìm nếu có đúng một record duy nhất
+  khớp đầy đủ; ticket không bắt buộc nêu mã. Requester phải khớp chính xác
+  identity đã xác thực. Backend xác minh identity và quyền approver theo
+  resource/action; manager chỉ duyệt khi role mapping cho phép. Owner duyệt
+  elevated/production; Data owner duyệt sensitive/regulated data và export.
+- Resource có thể dùng parent/project scope khi approval khai báo rõ phạm vi.
+  Quyền request phải bằng hoặc hẹp hơn approval. Environment và purpose phải
+  khớp chính xác. Provisioning phải khớp quota; access dùng TTL mặc định theo
+  service/risk đã được policy owner duyệt. Approval trong ticket, email hoặc
+  screenshot không tự mở AUTO; reviewer có thể xác minh rồi ghi nhận vào hệ
+  thống.
+- Một approver có thẩm quyền và đáp ứng mọi role gate là đủ; không có yêu cầu
+  dual control và không nhận approver ủy quyền. Người yêu cầu không tự duyệt
+  benchmark/production. Demo UI/mock có thể tự duyệt nhưng không thể được dùng
+  làm bằng chứng approval trong hai môi trường đó.
+- Record ở trạng thái approved không hết hạn theo thời gian. Tái sử dụng chỉ
+  khi record khai báo standing/recurring scope và còn hiệu lực. Mọi thay đổi
+  scope cần approval mới. Khi pending, giữ request, không thực thi và đánh giá
+  lại khi trạng thái đổi. Khi rejected, đóng request; người dùng có thể gửi
+  request mới với scope đã đổi hoặc approval mới. Khi revoked, dừng phần chưa
+  chạy và thu hồi quyền/tài nguyên đã cấp khi có thể; cần approval mới để tiếp
+  tục.
+
+### Phạm vi tài nguyên, dịch vụ và ngoại lệ
+
+- Một ticket chỉ xử lý một yêu cầu. Nếu extraction tìm thấy ít nhất một
+  **yêu cầu bổ sung** ngoài yêu cầu chính, trả `NEEDS_INFORMATION` với thông
+  điệp “Vui lòng gửi từng yêu cầu một.” Giữ nguyên thứ tự ưu tiên
+  `SECURITY_RISK → BEYOND_AUTHORITY → MISSING_INFO → ROUTINE`.
+- Xóa ngưỡng demo cố định về CPU, RAM, disk, GPU và thời gian. Sandbox chỉ AUTO
+  khi ephemeral, dữ liệu synthetic/non-sensitive, purpose rõ và backend xác
+  minh quota/capacity/budget thật theo project/team, gồm usage đang hoạt động;
+  có thể áp dụng thêm giới hạn theo user. Production, persistent resource,
+  thiếu bằng chứng capacity hoặc vượt quota cần owner/approval. Mỗi gia hạn là
+  request mới với scope check.
+- GitHub read và routine write có thể AUTO theo entitlement và scope chính
+  xác. GitHub Actions chỉ AUTO đọc metadata/log khi loại trừ secret exposure;
+  sửa workflow/secrets cần Security review. Jira read và cập nhật ticket thường
+  có thể AUTO, không gồm project/admin settings. Confluence read/edit trang
+  thường có thể AUTO; trang restricted/security/secret cần owner/Security
+  review. VPN QA/dev và production cùng cần endpoint managed, subnet chỉ rõ,
+  entitlement hợp lệ và TTL theo policy.
+- Dấu hiệu nguy hại cụ thể như lộ secret, bypass control, public exposure hoặc
+  rủi ro production được gán `SECURITY_RISK`; thiếu approval đơn thuần là
+  `BEYOND_AUTHORITY`. Verified Security approval có thể đáp ứng Security gate
+  nếu scope khớp. Production DB cần DBA và các approval gate được policy yêu
+  cầu; một approver đủ thẩm quyền là đủ. Sensitive/regulated data và export
+  cần Data owner; destructive production action vẫn theo Security/DBA rules.
+- Break-glass chỉ dùng cho incident nghiêm trọng: approver khẩn cấp đã xác
+  minh, scope hẹp, TTL ngắn, incident ID, audit/cảnh báo và hậu kiểm.
+- Production không áp dụng bộ đếm số lần gọi model theo ngày ở cấp ứng dụng; quyết định câu 48 cũng bỏ bộ đếm riêng cho Luna. Provider quota/rate limit, timeout, token cap và giới hạn nguồn lực vẫn có hiệu lực. Bộ test giữ `AI_TEST_MAX_ATTEMPTS` riêng để chặn provider traffic ngoài ý muốn.
+
+### Điều kiện benchmark và giới hạn triển khai
+
+Expected label chỉ được sửa sau adjudication độc lập có evidence và lý do ghi
+lại. Các mismatch hiện có không được tự điều chỉnh để nâng điểm; phải phân xử
+riêng theo quy tắc precedence ở trên. Điểm benchmark được báo cáo là kết quả
+development trên fixture gốc, không phải chứng nhận production.
+
+Runtime hiện fail-closed khi chưa có resolver tích hợp cung cấp bằng chứng
+identity/entitlement, registry+ITSM, service TTL và capacity/budget. Repo hiện
+không kết nối các hệ thống đó; policy v5.14 xác định contract và kết quả an
+toàn nhưng chưa chứng minh các luồng thực tế có thể AUTO trong VNG. Chưa có
+watcher tự đánh giá lại khi approval đổi trạng thái, backend thu hồi quyền đã
+cấp, hoặc API kiểm tra TTL/capacity thật. Cần tích hợp và kiểm chứng các nguồn
+này trước khi dùng AUTO ngoài mock/demo.

@@ -1,15 +1,68 @@
 import type { Decision, Environment, RequestKind, RiskSignal, ServiceGroup } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.13";
-export const demoResourceLimits = {
-  gpuCount: 2,
-  gpuTypes: ["t4", "a10"],
-  cpu: 4,
-  ram: 16,
-  disk: 100,
-  hours: 8,
+export const POLICY_VERSION = "support-guidance-v5.14";
+export const POLICY_EFFECTIVE_DATE = "2026-10-14";
+
+// Quota values come from the authoritative capacity service at evaluation time.
+// Do not ship fixed demo values as a benchmark or production eligibility gate.
+export const resourceQuotaPolicy = {
+  source: "authoritative-capacity-service",
+  aggregationScope: "project-team",
+  includesActiveUsage: true,
+  checksResourceCapacityCostAndTtl: true,
+  mayApplyPerUserLimit: true,
+  fixedDemoThresholds: false,
 } as const;
+
+export const singleRequestPolicy = {
+  // The parent is the first request; any extracted child is an additional ask.
+  maxSubrequests: 0,
+  userMessage: "Vui lòng gửi từng yêu cầu một.",
+} as const;
+
+export const approvalPolicy = {
+  sourceSystems: ["approval-registry", "itsm"] as const,
+  sameRecordRequired: true,
+  ticketReferenceRequired: false,
+  uniqueScopeMatchRequired: true,
+  parentScopeMustBeDeclared: true,
+  requesterIdentityMustMatch: true,
+  approverRoleMustMatchResourceAndAction: true,
+  allowPermissionEqualOrNarrower: true,
+  environmentAndPurposeMustMatch: true,
+  allowDelegation: false,
+  selfApproval: {
+    demoUiMockAllowed: true,
+    benchmarkAllowed: false,
+    productionAllowed: false,
+  },
+  approvedRecordExpiry: "none-while-approved" as const,
+  pendingAction: "wait-and-recheck" as const,
+  rejectedAction: "close-require-new-request" as const,
+  revokedAction: "stop-and-revoke-when-possible" as const,
+  standingApprovalRequiresDeclaredScope: true,
+  scopeChangeRequiresNewApproval: true,
+  ttlRenewalRequiresNewRequest: true,
+  ttlPolicy: "per-service-and-risk" as const,
+  breakGlass: {
+    requiresVerifiedEmergencyApprover: true,
+    requiresNarrowScope: true,
+    requiresShortTtl: true,
+    requiresIncidentId: true,
+    requiresAuditAndAlert: true,
+    requiresPostReview: true,
+  },
+} as const;
+
+export const routineAccessRules = [
+  { id: "ROUTINE-GITHUB-001", service: "GIT_PERMISSION", actions: ["read", "write"] },
+  { id: "ROUTINE-GITHUB-ACTIONS-001", service: "CI_CD", actions: ["read-workflow-metadata-and-logs"] },
+  { id: "ROUTINE-JIRA-001", service: "ACCOUNT_ACCESS", actions: ["read", "ordinary-ticket-update"] },
+  { id: "ROUTINE-CONFLUENCE-001", service: "ACCOUNT_ACCESS", actions: ["ordinary-page-read", "ordinary-page-edit"] },
+  { id: "ROUTINE-VPN-001", service: "NETWORK_VPN", actions: ["qa-dev-production-subnet-access"] },
+  { id: "ROUTINE-CLOUD-SANDBOX-001", service: "CLOUD_GPU", actions: ["ephemeral-synthetic-data-within-team-quota"] },
+] as const;
 
 export const bucketPriority = {
   ROUTINE: 0,

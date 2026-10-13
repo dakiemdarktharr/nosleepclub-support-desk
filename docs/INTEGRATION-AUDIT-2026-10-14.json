@@ -1,0 +1,6287 @@
+{
+  "scope": "Authorized integration of main aa9ad2c into pinned-base review; original labels unchanged; not independent accuracy",
+  "dateLocal": "2026-10-14 Asia/Saigon",
+  "pinnedBase": "b069f22b318a7caa3960eefdb5a3e69b7152e8e0",
+  "reviewCommit": "2eeae8b",
+  "integratedMain": "aa9ad2c8f9d83ced626212e0e99bbf2fd1c657d2",
+  "provenance": {
+    "sourceRevision": "2eeae8b2cafdc72d5047e57db25b7066757ec580",
+    "runtimeDirty": true,
+    "runtimeDigest": "fe9da459eb877ff9ba678336d500eebd80e0f1d4e090328f386267917326e84c",
+    "node": "v24.18.0",
+    "storage": "memory-demo",
+    "model": "mock-no-api-call",
+    "policy": "support-guidance-v5.14",
+    "dataset": {
+      "id": "legacy-original-128",
+      "split": "development",
+      "labelStatus": "not-independently-adjudicated",
+      "count": 128,
+      "sha256": "e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da",
+      "packs": [
+        "official-original",
+        "ground-truth-original"
+      ],
+      "inputTransform": "employeeFixture supplies missing department and synthetic employeeId only"
+    },
+    "evaluator": {
+      "sha256": "8c749d3f9668ebc412f398cf517d81042ed03deb2bf6c688b95506dd2eb404a3",
+      "dirty": true
+    }
+  },
+  "metrics": {
+    "total": 128,
+    "exactMatch": {
+      "count": 90,
+      "rate": 0.703125,
+      "definition": "action + bucket + expected rule if supplied; unavailable counts as non-match"
+    },
+    "binaryEscalation": {
+      "tp": 93,
+      "tn": 16,
+      "fp": 18,
+      "fn": 1,
+      "falseNegativeRate": 0.010638297872340425,
+      "unnecessaryEscalationRate": 0.5294117647058824,
+      "definition": "ESCALATE is positive; NEEDS_INFORMATION is negative; unavailable excluded"
+    },
+    "confusionMatrix": {
+      "AUTO_APPROVE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 16,
+        "ESCALATE": 18
+      },
+      "NEEDS_INFORMATION": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 0,
+        "ESCALATE": 0
+      },
+      "ESCALATE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 1,
+        "ESCALATE": 93
+      }
+    },
+    "coverage": 1,
+    "readbackPassed": 128,
+    "mismatchGroups": {
+      "byRule": {
+        "INFO-001": 15,
+        "AUTH-007": 8,
+        "FACT-VPN-001": 3,
+        "INFO-SINGLE-REQUEST-001": 2,
+        "FACT-COLLAB-001": 6,
+        "SEC-001": 1,
+        "SEC-003": 1,
+        "AUTH-002": 4,
+        "AUTH-001": 4,
+        "SEC-005": 2,
+        "AUTH-005": 8
+      },
+      "byBucket": {
+        "ROUTINE -> MISSING_INFO": 16,
+        "ROUTINE -> BEYOND_AUTHORITY": 17,
+        "ROUTINE -> SECURITY_RISK": 1,
+        "BEYOND_AUTHORITY -> SECURITY_RISK": 3,
+        "BEYOND_AUTHORITY -> MISSING_INFO": 1
+      },
+      "bySubrequestCount": {
+        "0": 38
+      }
+    }
+  },
+  "regressedExactPass": [
+    "gt-authority-008-eleven-gpu"
+  ],
+  "changedCaseCount": 127,
+  "sentiment": {
+    "metadata": {
+      "commit": "2eeae8b2cafdc72d5047e57db25b7066757ec580",
+      "runtimeDirty": true,
+      "runtimeSha256": "e25875e55dda8d3020a0f40ba1c6888961d7651999beb9c3ab08304b01a0590c",
+      "evaluatorSha256": "8b4706e954d181d330f5c3077f70817bbd6a39127288afa07aaefecba30c7f3a",
+      "datasetSha256": "eee7d7eabd15d0a0fa833f309e3348aa238f81209d5722ae86ad08cc68cfd131",
+      "datasetId": "helpdesk-affect-synthetic",
+      "version": "1.0.0",
+      "split": "development",
+      "provenance": {
+        "kind": "original-synthetic",
+        "rights": "no-third-party-content",
+        "author": "Codex AI-assisted draft",
+        "humanReview": "NOT_COLLECTED"
+      },
+      "policyVersion": "support-guidance-v5.14",
+      "context": "support-request",
+      "node": "v24.18.0",
+      "provider": "none",
+      "model": "none",
+      "mode": "local-rule-fallback",
+      "storage": "none",
+      "liveInference": "NOT_PERFORMED",
+      "policyEvaluation": "NOT_PERFORMED"
+    },
+    "total": 16,
+    "scored": 12,
+    "correct": 12,
+    "coverage": 1,
+    "ambiguousCount": 4,
+    "ambiguousRate": 0.25,
+    "confusionMatrix": {
+      "positive": {
+        "positive": 4,
+        "neutral": 0,
+        "negative": 0,
+        "unavailable": 0
+      },
+      "neutral": {
+        "positive": 0,
+        "neutral": 5,
+        "negative": 0,
+        "unavailable": 0
+      },
+      "negative": {
+        "positive": 0,
+        "neutral": 0,
+        "negative": 3,
+        "unavailable": 0
+      }
+    },
+    "perLabel": {
+      "positive": {
+        "support": 4,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "neutral": {
+        "support": 5,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "negative": {
+        "support": 3,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "caseId": "verify-001-github-access",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "verify-002-small-sandbox",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "verify-003-etl-missing-specs",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "verify-004-production-db-write",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "verify-005-public-rdp-blockchain",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "SEC-003",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "SEC-003"
+        ],
+        "missingFields": []
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC001",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "TC002",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "TC003",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "TC004",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval",
+          "accessType",
+          "reason"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-SINGLE-REQUEST-001"
+        ],
+        "missingFields": [
+          "singleRequest"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "TC005",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "TC006",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC007",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC008",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC009",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC010",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-EXPORT-001",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-EXPORT-001",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC011",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "budgetOrQuota",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "duration",
+          "purpose",
+          "gpuType",
+          "quantity"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC012",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "AUTH-003",
+          "AUTH-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "AUTH-003",
+          "AUTH-002"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC013",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC014",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "AUTH-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "cluster",
+          "namespace",
+          "workload",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "AUTH-002"
+        ],
+        "missingFields": [
+          "cluster",
+          "namespace",
+          "workload"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "TC015",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-007",
+          "AUTH-002",
+          "AUTH-008",
+          "AUTH-001",
+          "INFO-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "rollbackPlan",
+          "verifiedApproval",
+          "pathOrBucket",
+          "desiredOutcome"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-007",
+          "AUTH-002",
+          "AUTH-008",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "rollbackPlan"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-routine-001-github-monorepo",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-002-confluence-rdp-runbook",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-003-jira-firewall-review",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-004-vpn-data-oncall",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-005-sandbox-webhook",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-006-sandbox-dbt-parser",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-007-github-blockchain-audit",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-008-jira-game-incident",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-009-confluence-prod-db-sop",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-010-vpn-qa-network",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-011-sandbox-k3s",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-012-github-actions-read",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001"
+        ],
+        "missingFields": [
+          "provider",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-013-confluence-kafka-docs",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval",
+          "targetSystem",
+          "environment",
+          "accessType",
+          "reason"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-014-jira-dataops-board",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "accessType",
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "accessType",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-routine-015-sandbox-otel",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-missing-001-etl-generic",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-002-airflow-worker",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-003-kafka-connect",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-004-debezium-cdc",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "permission",
+          "duration",
+          "verifiedApproval",
+          "reason",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-005-spark-driver",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-006-flink-etl",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-007-dbt-runner",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-008-postgres-uat",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "cpu",
+          "ram",
+          "disk",
+          "duration",
+          "reason",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "cpu",
+          "ram",
+          "disk",
+          "duration",
+          "reason"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-009-redis-test",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-010-mongodb-qa",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "permission",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-011-clickhouse-analytics",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-012-trino-coordinator",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-013-feature-store-etl",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-014-data-quality-runner",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-missing-015-temporal-worker",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-001-public-rdp-blockchain",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "SEC-003",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "SEC-003"
+        ],
+        "missingFields": []
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-002-public-ssh-bypass",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-003-torrent-dataset",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-004-crypto-miner-benchmark",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006"
+        ],
+        "missingFields": [
+          "provider",
+          "purpose",
+          "budgetOrQuota",
+          "gpuType",
+          "quantity",
+          "verifiedApproval",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006"
+        ],
+        "missingFields": [
+          "provider",
+          "purpose",
+          "gpuType",
+          "quantity",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-005-ngrok-reverse-tunnel",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "INFO-001"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-006-public-jupyter",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "SEC-002",
+          "SEC-008"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-007-docker-daemon-public",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-008-kubernetes-api-public",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "INFO-001"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "cluster",
+          "namespace",
+          "workload"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-009-public-redis",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-010-public-postgres-urgent",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "permission",
+          "duration",
+          "reason",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "permission",
+          "duration",
+          "reason"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-011-public-grafana",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "INFO-001"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-012-disable-edr-driver",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "SEC-006",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "SEC-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-013-torrent-build-cache",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-014-public-ethereum-rpc",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-security-015-conflicting-github-rdp",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "permission",
+          "duration",
+          "reason",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-001-pubg-prod-write",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-authority-002-zalopay-prod-read",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-003-zalo-prod-write",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "permission",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "permission",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-004-vnggames-schema-migration",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-003",
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-003",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-005-prod-service-account",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "reason",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-006-prod-read-replica",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-007-production-dump",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001",
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination",
+          "verifiedApproval",
+          "targetSystem",
+          "environment",
+          "duration",
+          "reason"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-authority-008-eleven-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "ASK_VS_ESCALATE_CONTRACT_REVIEW"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "gt-authority-009-twelve-a100",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "purpose",
+          "budgetOrQuota",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-010-twenty-four-h100",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "verifiedApproval",
+          "purpose",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-011-ray-sixteen-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "duration",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-012-forty-gpu-render",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-013-obfuscated-sixty-four-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-014-prod-inference-twenty-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002"
+        ],
+        "missingFields": [
+          "provider",
+          "duration",
+          "purpose",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "gt-authority-015-prod-db-and-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-009",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "reason",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-009",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "reason"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-routine-001-hr-confluence-onboarding",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "targetSystem",
+          "environment",
+          "accessType"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-002-finance-vpn-month-end",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "target",
+          "environment",
+          "duration",
+          "verifiedApproval",
+          "targetSystem",
+          "accessType",
+          "reason"
+        ]
+      },
+      "integratedActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-SINGLE-REQUEST-001"
+        ],
+        "missingFields": [
+          "singleRequest"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-003-legal-jira-dsar",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval",
+          "accessType",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "targetSystem",
+          "environment"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-004-procurement-github-sbom",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-005-salesops-jira-crm",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "duration",
+          "reason",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-006-marketing-sandbox-webhook",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-007-customer-care-vpn",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-VPN-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "target",
+          "duration",
+          "verifiedApproval",
+          "source",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-008-facilities-jira-maintenance",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "accessType",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "targetSystem",
+          "environment"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-009-audit-confluence-controls",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-010-comms-sandbox-preview",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "budgetOrQuota",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-011-eventops-vpn",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007",
+          "INFO-001",
+          "INFO-005",
+          "FACT-VPN-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "environment",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-routine-012-executive-confluence-boardpack",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "INFO-001",
+          "INFO-005",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "system",
+          "reason"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-missing-001-hr-payroll-etl",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "purpose"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-002-finance-bank-etl",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-003-legal-ediscovery-db",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "reason",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "system",
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration",
+          "reason"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-004-procurement-vendor-db",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "system",
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-005-sales-crm-etl",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-006-marketing-attribution-etl",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-007-care-transcript-db",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-EVIDENCE-001",
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "Lịch/cuộc họp và transcript hoặc biên bản",
+          "system",
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "system",
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-008-facilities-iot-db",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "reason",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "system",
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration",
+          "reason"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-009-audit-evidence-server",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-010-esg-reporting-db",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "reason",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "system",
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration",
+          "reason"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-011-comms-media-db",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "environment",
+          "permission",
+          "duration",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-DB-PROVISION-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "system",
+          "environment",
+          "cpu",
+          "ram",
+          "disk",
+          "duration"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-missing-012-risk-fraud-etl",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-001-hr-anydesk-bypass",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "software",
+          "version",
+          "os",
+          "approvedCatalogStatus",
+          "businessPurpose",
+          "licenseDuration",
+          "licenseType",
+          "verifiedApproval",
+          "targetSystem",
+          "environment",
+          "accessType",
+          "duration",
+          "reason"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003"
+        ],
+        "missingFields": [
+          "software",
+          "version",
+          "os",
+          "approvedCatalogStatus",
+          "businessPurpose",
+          "licenseDuration",
+          "licenseType"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-002-finance-disable-edr",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "SEC-002",
+          "SEC-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-001",
+          "SEC-008",
+          "SEC-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-003-legal-public-rdp",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "INFO-001",
+          "INFO-005",
+          "INFO-PROVISION-001"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "provider",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-004-procurement-public-sftp",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-005-marketing-torrent-assets",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-006-care-remote-debug-port",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-007-facilities-public-nvr",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-008-comms-cracked-font-pack",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006",
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "software",
+          "version",
+          "os",
+          "approvedCatalogStatus",
+          "businessPurpose",
+          "licenseDuration",
+          "licenseType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-006"
+        ],
+        "missingFields": [
+          "software",
+          "version",
+          "os",
+          "approvedCatalogStatus",
+          "businessPurpose",
+          "licenseDuration",
+          "licenseType"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-009-event-public-vnc",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "SEC-008"
+        ],
+        "missingFields": [
+          "source",
+          "target",
+          "port",
+          "protocol",
+          "environment"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-010-sales-sideload-extension",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "SEC-006",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "SEC-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-011-executive-bypass-mfa",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "GUIDE-006"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-008"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-security-012-esg-public-blockchain-rpc",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "cpu",
+          "ram",
+          "disk",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-002"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "cpu",
+          "ram",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-001-finance-zalopay-prod-read",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005",
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "targetSystem",
+          "environment",
+          "accessType"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-002-care-zalopay-prod-write",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "GUIDE-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "verifiedApproval",
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002"
+        ],
+        "missingFields": []
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-003-legal-zalo-prod-read",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-003",
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005",
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "targetSystem"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-003",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-004-privacy-zalo-export",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ]
+      },
+      "baseExact": false,
+      "integratedExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "requires-expert-adjudication"
+    },
+    {
+      "caseId": "xcf-authority-005-marketing-zalo-segmentation",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-006-gameops-vnggames-write",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "verifiedApproval",
+          "permission",
+          "duration",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-007-audit-production-read",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-EXPORT-001",
+          "AUTH-001",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-002",
+          "AUTH-EXPORT-001",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-008-risk-prod-write",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-003",
+          "AUTH-002",
+          "AUTH-009",
+          "AUTH-001",
+          "AUTH-005",
+          "INFO-001",
+          "INFO-005"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency",
+          "environment"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-003",
+          "AUTH-002",
+          "AUTH-009",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "duration"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "POLICY_RISK_OR_AUTHORITY_GATE"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-009-creative-render-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-010-localization-dubbing-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-011-hr-resume-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    },
+    {
+      "caseId": "xcf-authority-012-comms-video-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "baseActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "INFO-001",
+          "INFO-005",
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "purpose",
+          "budgetOrQuota",
+          "gpuType",
+          "verifiedApproval",
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "integratedActual": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-005"
+        ],
+        "missingFields": [
+          "summary",
+          "targetServiceOrDevice",
+          "environmentIfKnown",
+          "desiredOutcome",
+          "reason",
+          "urgency"
+        ]
+      },
+      "baseExact": true,
+      "integratedExact": true,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "UNMAPPED_REQUEST_OR_FRAGMENT"
+      ],
+      "reviewStatus": "development-label-match-only"
+    }
+  ]
+}

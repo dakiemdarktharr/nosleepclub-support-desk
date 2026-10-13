@@ -65,7 +65,7 @@ export const catalog: Record<ServiceGroup, Service> = {
       "CLOUD_SANDBOX CLOUD_VM_REQUEST GPU_REQUEST GPU_QUOTA GPU_CAPACITY CLOUD_STORAGE CLOUD_COST CLOUD_BUDGET PUBLIC_IP RESOURCE_SCALE RESOURCE_DELETE CLOUD_CREDENTIAL",
     ),
     fields: words(
-      "provider resourceType gpuType quantity cpu ram disk environment duration publicIp purpose budgetOrQuota estimatedCost cleanupPlan approvalStatus approvalReference",
+      "provider resourceType gpuType quantity cpu ram disk environment duration resourceLifecycle dataSensitivity publicIp purpose estimatedCost cleanupPlan approvalStatus approvalReference",
     ),
   },
   KUBERNETES: {
@@ -211,10 +211,12 @@ export const fieldOptions: Record<string, string[]> = {
   dataSensitivity: [
     "unknown",
     "synthetic",
+    "non_sensitive",
     "internal",
     "customer",
     "confidential",
   ],
+  resourceLifecycle: ["unknown", "ephemeral", "persistent"],
   dataLossRisk: ["Unknown", "No", "Yes"],
   backup: ["Unknown", "No", "Yes"],
   publicExposure: ["unknown", "no", "yes"],
@@ -317,7 +319,7 @@ export const fieldLabels: Record<string, string> = {
   reason: "Lý do",
   incidentId: "Mã sự cố",
   resetType: "Cách đặt lại máy",
-  budgetOrQuota: "Quota/budget đã kiểm tra",
+  resourceLifecycle: "Vòng đời tài nguyên",
   licenseType: "Loại license",
   timeWindow: "Khoảng thời gian quan sát",
   dashboardOrLogSource: "Dashboard/log source/alert ID",

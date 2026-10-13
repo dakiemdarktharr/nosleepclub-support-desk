@@ -119,7 +119,7 @@ export type ApprovalStatus =
   | "pending"
   | "verified"
   | "rejected"
-  | "expired"
+  | "revoked"
   | "unverifiable"
   | "invalid";
 export type ApprovalScope = "matched" | "mismatched" | "unknown";

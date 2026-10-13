@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { SupportInput } from "@/domain/contracts";
 import { catalog } from "@/domain/catalog";
-import { evaluatePolicy, missingFacts } from "@/domain/policy";
+import { evaluatePolicy, missingFacts, type Approval, type PolicyEvidence } from "@/domain/policy";
 import { questionFor } from "@/domain/questions";
 import { extractIntake } from "@/domain/text";
 import { verifyApproval } from "@/services/approvals";
@@ -23,6 +23,51 @@ function original(id: string) {
   const row = supportVerifyCases.find((item) => item.id === id);
   if (!row) throw new Error(`Missing original ${id}`);
   return extractIntake(input(row.rawText));
+}
+const entitlementEvidence: PolicyEvidence = {
+  entitlement: {
+    status: "allowed",
+    scope: "matched",
+    requesterAuthenticated: true,
+    requesterIdentityMatched: true,
+    source: "test-iam",
+  },
+  accessTtlWithinPolicy: true,
+};
+function quotaEvidence(status: "within_limit" | "exceeded" | "unavailable"): PolicyEvidence {
+  return {
+    resourceQuota: {
+      status,
+      source: "test-capacity-service",
+      projectId: "project-1",
+      teamId: "team-1",
+      activeUsageIncluded: true,
+      evaluationComplete: true,
+    },
+    dataClassification: "synthetic",
+  };
+}
+function verifiedApproval(
+  role: string,
+  overrides: Partial<Approval> = {},
+): Approval {
+  return {
+    status: "verified",
+    scope: "matched",
+    registryStatus: "verified",
+    itsmStatus: "approved",
+    sameRecord: true,
+    requesterMatched: true,
+    approverIdentityVerified: true,
+    approverAuthorized: true,
+    approverIsRequester: false,
+    delegatedApprover: false,
+    environmentAndPurposeMatched: true,
+    permissionEqualOrNarrower: true,
+    quotaAndTtlMatched: true,
+    authorizedRole: role,
+    ...overrides,
+  };
 }
 
 it.each(["TC001", "gt-routine-004-vpn-data-oncall", "gt-routine-010-vpn-qa-network"])(
@@ -86,7 +131,7 @@ it.each([
   expect(request.entities).toMatchObject({ accessType, resourceScope });
   expect(missingFacts(request)).not.toContain("environment");
   expect(missingFacts(request)).not.toContain("resourceScope");
-  expect(verifyApproval(request).status).toBe("pending");
+  expect(verifyApproval(request).status).toBe("not_required");
   expect(evaluatePolicy(request, verifyApproval(request)).action).not.toBe("AUTO_APPROVE");
 });
 it("keeps the legacy required fields for an unrelated account system", () => {
@@ -110,17 +155,70 @@ const demoGitFields = {
   repository: "docrelay-demo", duration: "8 hours", reason: "Maintain review workflows",
   approvalReference: "DEMO-GIT-1001",
 };
-it("maps push correctly while using an existing independently supplied synthetic approval", () => {
+it("maps push to write but requires entitlement instead of a separate routine approval", () => {
   const request = extractIntake(input("Need push branch access to GitHub", demoGitFields));
   const approval = verifyApproval(request);
-  expect(approval).toMatchObject({ status: "verified", scope: "matched" });
-  expect(evaluatePolicy(request, approval).action).toBe("AUTO_APPROVE");
+  expect(request.entities.permission).toBe("write");
+  expect(approval.status).toBe("not_required");
+  expect(evaluatePolicy(request, approval)).toMatchObject({
+    action: "ESCALATE",
+    ruleIds: ["AUTH-ENTITLEMENT-001"],
+  });
 });
-it("does not reuse that approval for a different repository", () => {
-  const request = extractIntake(input("Need push branch access to GitHub", { ...demoGitFields, repository: "another-demo" }));
+it.each(["GIT_READ_ACCESS", "GIT_WRITE_ACCESS"] as const)(
+  "AUTO allows scoped GitHub read/write only with exact entitlement and TTL evidence: %s",
+  (intentLabel) => {
+    const permission = intentLabel === "GIT_READ_ACCESS" ? "read" : "write";
+    const request = completeStructured("GIT_PERMISSION", "ACCESS_REQUEST", {
+      intentLabel, provider: "github", repository: "team/demo", permission,
+      duration: "2 hours", reason: "Review and fix the assigned repository issue",
+    });
+    expect(evaluatePolicy(request, { status: "not_required" }, entitlementEvidence)).toMatchObject({
+      action: "AUTO_APPROVE", bucket: "ROUTINE", ruleIds: ["ROUTINE-001"],
+    });
+  },
+);
+it("does not let a routine write approval cover an elevated permission", () => {
+  const request = extractIntake(input("Need admin access to GitHub", {
+    ...demoGitFields, permission: "admin",
+  }));
   const approval = verifyApproval(request);
   expect(approval.status).toBe("invalid");
   expect(evaluatePolicy(request, approval)).toMatchObject({ action: "ESCALATE", bucket: "BEYOND_AUTHORITY" });
+});
+it("allows a single fully verified DBA approval to clear the matching database authority gate", () => {
+  const request = completeStructured("DATABASE", "ACCESS_REQUEST", {
+    intentLabel: "DATABASE_READ_ACCESS", system: "postgresql", resourceScope: "reporting",
+    environment: "production", permission: "read-only", duration: "2 hours",
+    reason: "Review the assigned production report",
+  });
+  expect(evaluatePolicy(
+    request,
+    verifiedApproval("dba production owner"),
+    entitlementEvidence,
+  )).toMatchObject({
+    action: "AUTO_APPROVE", bucket: "BEYOND_AUTHORITY",
+    ruleIds: expect.arrayContaining(["AUTH-001", "APPROVAL-SCOPE-VERIFIED"]),
+  });
+});
+it("rejects requester self-approval in benchmark while isolating the mock UI exception", () => {
+  const request = completeStructured("DATABASE", "ACCESS_REQUEST", {
+    intentLabel: "DATABASE_READ_ACCESS", system: "postgresql", resourceScope: "reporting",
+    environment: "production", permission: "read-only", duration: "2 hours",
+    reason: "Review the assigned production report",
+  });
+  const benchmarkSelfApproval = verifiedApproval("dba production owner", {
+    approverIsRequester: true,
+    verificationContext: "benchmark",
+  });
+  expect(evaluatePolicy(request, benchmarkSelfApproval, entitlementEvidence).action)
+    .toBe("ESCALATE");
+  const demoSelfApproval = {
+    ...benchmarkSelfApproval,
+    verificationContext: "demo-ui-mock" as const,
+  };
+  expect(evaluatePolicy(request, demoSelfApproval, entitlementEvidence).action)
+    .toBe("AUTO_APPROVE");
 });
 it("asks for collaboration scope without asking for a database table", () => {
   const request = extractIntake(input("Need access to Jira for incident tracking"));
@@ -139,14 +237,82 @@ it.each(["-2 hours", "−2 hours", "–2 hours", "－2 hours", "0 hours"])(
     expect(missingFacts(request)).toContain("duration");
   },
 );
-it("does not extract 5 hours from an 8.5-hour cloud lifetime", () => {
-  const request = extractIntake(input("Need a sandbox for 8.5 hours", {
-    provider: "demo", environment: "sandbox",
-    purpose: "Replay synthetic events", budgetOrQuota: "Approved demo quota",
-    cpu: "2", ram: "4", disk: "20",
-  }));
+it("uses the team quota result instead of fixed demo thresholds", () => {
+  const request = completeStructured("CLOUD_GPU", "ROUTINE_WORKFLOW", {
+    intentLabel: "CLOUD_SANDBOX",
+    provider: "team cloud",
+    environment: "sandbox",
+    duration: "8.5 hours",
+    resourceLifecycle: "ephemeral",
+    dataSensitivity: "synthetic",
+    purpose: "Replay synthetic events",
+    cpu: "5", ram: "17", disk: "101",
+  });
   expect(request.entities.duration).toBe("8.5 hours");
-  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({ action: "ESCALATE", bucket: "BEYOND_AUTHORITY" });
+  expect(evaluatePolicy(request, { status: "not_required" }, quotaEvidence("within_limit")))
+    .toMatchObject({ action: "AUTO_APPROVE", bucket: "ROUTINE" });
+});
+it("routes a completed request over the authoritative team quota to the capacity owner", () => {
+  const request = completeStructured("CLOUD_GPU", "ROUTINE_WORKFLOW", {
+    intentLabel: "CLOUD_SANDBOX",
+    provider: "team cloud",
+    environment: "development",
+    duration: "2 days",
+    resourceLifecycle: "ephemeral",
+    dataSensitivity: "synthetic",
+    purpose: "Replay synthetic events",
+    cpu: "5", ram: "17", disk: "101",
+  });
+  expect(evaluatePolicy(request, { status: "not_required" }, quotaEvidence("exceeded"))).toMatchObject({
+    action: "ESCALATE", bucket: "BEYOND_AUTHORITY", ruleIds: ["AUTH-QUOTA"],
+  });
+});
+it("fails closed when the authoritative project/team quota source is unavailable", () => {
+  const request = completeStructured("CLOUD_GPU", "ROUTINE_WORKFLOW", {
+    intentLabel: "CLOUD_SANDBOX", provider: "team cloud", environment: "development",
+    duration: "30 minutes", resourceLifecycle: "ephemeral", dataSensitivity: "synthetic",
+    purpose: "Replay synthetic events", cpu: "2", ram: "4", disk: "20",
+  });
+  expect(evaluatePolicy(request, { status: "not_required" })).toMatchObject({
+    action: "ESCALATE", bucket: "BEYOND_AUTHORITY", ruleIds: ["AUTH-QUOTA"],
+  });
+});
+it("does not treat an unspecified GPU type as a known quota violation", () => {
+  const request = completeStructured("CLOUD_GPU", "ROUTINE_WORKFLOW", {
+    intentLabel: "GPU_REQUEST",
+    environment: "development",
+    provider: "team cloud",
+    duration: "2 hours",
+    resourceLifecycle: "ephemeral",
+    dataSensitivity: "synthetic",
+    purpose: "Model testing",
+    gpuType: "unknown",
+    quantity: "1",
+  });
+  const decision = evaluatePolicy(request, { status: "not_required" }, quotaEvidence("within_limit"));
+  expect(decision.ruleIds).not.toContain("AUTH-QUOTA");
+  expect(missingFacts(request)).toContain("gpuType");
+});
+it("does not apply VM sizing or sandbox AUTO rules to cloud storage without a contract", () => {
+  const request = completeStructured("CLOUD_GPU", "ROUTINE_WORKFLOW", {
+    intentLabel: "CLOUD_STORAGE",
+    provider: "demo",
+    environment: "development",
+    duration: "2 hours",
+    purpose: "Store synthetic test outputs",
+    cpu: "2",
+    ram: "4",
+    disk: "20",
+  });
+  expect(missingFacts(request)).not.toEqual(
+    expect.arrayContaining(["cpu", "ram", "disk"]),
+  );
+  const decision = evaluatePolicy(request, { status: "verified" });
+  expect(decision).toMatchObject({
+    action: "ESCALATE",
+    bucket: "BEYOND_AUTHORITY",
+    ruleIds: ["AUTH-005"],
+  });
 });
 it.each(["2 giờ", "3 ngày", "30 minutes", "0.5 hours", "2026-12-01T12:00:00Z"])(
   "accepts a bounded interval or an explicit timestamp without resolving a calendar: %s", (duration) => {
@@ -154,17 +320,22 @@ it.each(["2 giờ", "3 ngày", "30 minutes", "0.5 hours", "2026-12-01T12:00:00Z"
     expect(missingFacts(request)).not.toContain("duration");
   },
 );
-it("does not supply provider, quota, disk, or approval for a routine-looking sandbox", () => {
+it("does not invent resource lifecycle, data classification, quota or approval evidence", () => {
   const request = original("gt-routine-006-sandbox-dbt-parser");
-  expect(missingFacts(request)).toEqual(expect.arrayContaining(["provider", "budgetOrQuota", "disk"]));
-  expect(verifyApproval(request).status).toBe("unverifiable");
-  expect(evaluatePolicy(request, verifyApproval(request)).action).toBe("ESCALATE");
+  expect(missingFacts(request)).toEqual(expect.arrayContaining([
+    "provider", "disk", "resourceLifecycle", "dataSensitivity",
+  ]));
+  expect(verifyApproval(request).status).not.toBe("verified");
+  expect(evaluatePolicy(request, verifyApproval(request)).action).not.toBe("AUTO_APPROVE");
 });
-it("keeps manager approval claims pending through the persisted service", async () => {
-  const row = await submitSupport(input("Need push branch access to GitHub repo team/demo for bug fixes; manager đã approve"));
+it("does not treat a manager claim as entitlement evidence for routine Git access", async () => {
+  const row = await submitSupport(input(
+    "Need push branch access to GitHub repo team/demo for bug fixes; manager đã approve",
+    { duration: "2 hours", reason: "Fix the assigned repository issue" },
+  ));
   expect(row.status).not.toBe("APPROVED");
-  expect(row.decision?.approvalStatus).toBe("pending");
-  expect(row.decision?.missingFields).toContain("verifiedApproval");
+  expect(row.decision?.approvalStatus).toBe("not_required");
+  expect(row.decision?.ruleIds).toContain("AUTH-ENTITLEMENT-001");
 });
 it("exposes the required access and sizing facts to structured intake", () => {
   expect(catalog.NETWORK_VPN.fields).toEqual(expect.arrayContaining(["duration", "reason", "approvalReference"]));
@@ -175,15 +346,33 @@ function completeStructured(serviceGroup: SupportInput["serviceGroup"], requestK
   return extractIntake({ ...input("", { duration: "2 hours", reason: "Review synthetic test workload", ...fields }),
     mode: "structured", serviceGroup, requestKind });
 }
-it("routes complete authorized VPN provisioning to Network rather than asking for a missing policy", () => {
+it("keeps VPN access out of AUTO without authenticated entitlement proof", () => {
   const request = completeStructured("NETWORK_VPN", "ACCESS_REQUEST", {
     intentLabel: "VPN_SETUP", service: "VPN", source: "company laptop",
     target: "QA subnet", environment: "staging", requestedAction: "access",
   });
-  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({
-    action: "ESCALATE", bucket: "BEYOND_AUTHORITY", ruleIds: ["AUTH-VPN-001"], assignedTeam: "Network / Reviewer",
+  expect(evaluatePolicy(request)).toMatchObject({
+    action: "ESCALATE", bucket: "BEYOND_AUTHORITY", ruleIds: ["AUTH-ENTITLEMENT-001"],
   });
 });
+it.each(["staging", "production"] as const)(
+  "allows managed-endpoint VPN access only with matching entitlement, subnet and TTL proof: %s",
+  (environment) => {
+    const request = completeStructured("NETWORK_VPN", "ACCESS_REQUEST", {
+      intentLabel: "VPN_SETUP", service: "VPN", source: "company laptop",
+      target: "approved subnet", environment, requestedAction: "access",
+    });
+    const evidence: PolicyEvidence = {
+      ...entitlementEvidence,
+      endpointManaged: "verified",
+      vpnSubnet: "approved",
+      vpnDurationWithinPolicy: true,
+    };
+    expect(evaluatePolicy(request, { status: "not_required" }, evidence)).toMatchObject({
+      action: "AUTO_APPROVE", bucket: "ROUTINE", ruleIds: ["ROUTINE-005"],
+    });
+  },
+);
 it("preserves structured VPN setup diagnostics when access provisioning is not requested", () => {
   const request = completeStructured("NETWORK_VPN", undefined, { intentLabel: "VPN_SETUP" });
   expect(request.requestKind).toBe("SAFE_DIAGNOSTIC");
@@ -208,21 +397,74 @@ it.each([undefined, "CONFIGURATION_CHANGE"] as const)(
     expect(evaluatePolicy(request)).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-DB-PROVISION-001"] });
   },
 );
-it("routes complete Confluence editing to the known IAM/resource owner", () => {
+it("does not AUTO Confluence write access without an ordinary-page scope and verified entitlement", () => {
   const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
     intentLabel: "REQUEST_WRITE_ACCESS", targetSystem: "confluence", resourceScope: "TEAM", accessType: "write",
   });
-  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-COLLAB-001"] });
+  expect(evaluatePolicy(request)).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-ENTITLEMENT-001"] });
 });
 it("routes complete standard collaboration access without a permitted AUTO environment to its known owner", () => {
   const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
     intentLabel: "REQUEST_STANDARD_ACCESS", targetSystem: "jira", resourceScope: "TEAM", accessType: "standard",
   });
-  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-COLLAB-001"] });
+  expect(evaluatePolicy(request)).toMatchObject({ action: "ESCALATE", ruleIds: ["AUTH-ENTITLEMENT-001"] });
 });
-it("preserves the existing complete verified standard-access AUTO whitelist", () => {
+it("AUTO allows ordinary Jira access only with entitlement, classification and TTL proof", () => {
   const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
-    intentLabel: "REQUEST_STANDARD_ACCESS", targetSystem: "jira", resourceScope: "TEAM", accessType: "standard", environment: "staging",
+    intentLabel: "REQUEST_STANDARD_ACCESS", targetSystem: "jira", resourceScope: "TEAM",
+    accessType: "standard", environment: "staging", requestedAction: "read ticket",
   });
-  expect(evaluatePolicy(request, { status: "verified" })).toMatchObject({ action: "AUTO_APPROVE", ruleIds: ["ROUTINE-001"] });
+  const evidence: PolicyEvidence = { ...entitlementEvidence, dataClassification: "ordinary" };
+  expect(evaluatePolicy(request, { status: "not_required" }, evidence)).toMatchObject({
+    action: "AUTO_APPROVE", ruleIds: ["ROUTINE-001"],
+  });
+});
+it("requires a service/risk TTL decision even when routine entitlement matches", () => {
+  const request = completeStructured("GIT_PERMISSION", "ACCESS_REQUEST", {
+    intentLabel: "GIT_READ_ACCESS", provider: "github", repository: "team/demo",
+    permission: "read", duration: "2 hours", reason: "Review source for assigned work",
+  });
+  const evidence: PolicyEvidence = {
+    entitlement: entitlementEvidence.entitlement,
+    accessTtlWithinPolicy: false,
+  };
+  expect(evaluatePolicy(request, { status: "not_required" }, evidence)).toMatchObject({
+    action: "ESCALATE", bucket: "BEYOND_AUTHORITY", ruleIds: ["AUTH-TTL-001"],
+  });
+});
+it("returns NEEDS_INFORMATION with the single-request message when one child request is extracted", () => {
+  const parent = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
+    intentLabel: "REQUEST_STANDARD_ACCESS", targetSystem: "jira", resourceScope: "OPS",
+    accessType: "standard", environment: "staging", requestedAction: "read ticket",
+  });
+  const child = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
+    intentLabel: "REQUEST_STANDARD_ACCESS", targetSystem: "confluence", resourceScope: "RUNBOOK",
+    accessType: "standard", environment: "staging", requestedAction: "read page",
+  });
+  const multi = { ...parent, subrequests: [child] };
+  const evidence: PolicyEvidence = { ...entitlementEvidence, dataClassification: "ordinary" };
+  expect(evaluatePolicy(multi, { status: "not_required" }, evidence)).toMatchObject({
+    action: "NEEDS_INFORMATION",
+    bucket: "MISSING_INFO",
+    ruleIds: ["INFO-SINGLE-REQUEST-001"],
+    questions: ["Vui lòng gửi từng yêu cầu một."],
+  });
+});
+it("allows ordinary Confluence page edits with matching entitlement, classification and TTL proof", () => {
+  const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
+    intentLabel: "REQUEST_WRITE_ACCESS", targetSystem: "confluence", resourceScope: "RUNBOOK-PAGE-1",
+    accessType: "write", environment: "staging", requestedAction: "edit page",
+  });
+  const evidence: PolicyEvidence = { ...entitlementEvidence, dataClassification: "ordinary" };
+  expect(evaluatePolicy(request, { status: "not_required" }, evidence)).toMatchObject({
+    action: "AUTO_APPROVE", bucket: "ROUTINE", ruleIds: ["ROUTINE-001"],
+  });
+});
+it("does not AUTO Jira project/admin settings even with ordinary classification and entitlement", () => {
+  const request = completeStructured("ACCOUNT_ACCESS", "ACCESS_REQUEST", {
+    intentLabel: "REQUEST_WRITE_ACCESS", targetSystem: "jira", resourceScope: "TEAM",
+    accessType: "write", environment: "staging", requestedAction: "change project settings",
+  });
+  const evidence: PolicyEvidence = { ...entitlementEvidence, dataClassification: "ordinary" };
+  expect(evaluatePolicy(request, { status: "not_required" }, evidence).action).toBe("ESCALATE");
 });

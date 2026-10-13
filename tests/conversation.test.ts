@@ -224,11 +224,11 @@ it("continues a safe network diagnosis and retains its response history", async 
   expect(next.assistance).toHaveLength(2);
   expect(next.assistance.at(-1)?.diagnosis).toContain("Có thể");
 });
-it("classification budget exhaustion fails safely before answering", async () => {
+it("test-only call guard fails safely before answering", async () => {
   vi.stubEnv("AI_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
   vi.stubEnv("AI_MODEL", "test");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   const row = await submitSupport(input("hôm nay ăn gì"));
   expect(row.status).toBe("ESCALATED");
   expect(row.canonical?.model.failureReason).toBe("BUDGET_EXHAUSTED");
@@ -242,7 +242,7 @@ it("web lookup failure does not leak provider errors or trigger reviewer work", 
   vi.stubEnv("AI_WEB_SEARCH", "true");
   vi.stubEnv("AI_MODEL", "test");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   const answer = await createConversationAnswer(canonical);
   expect(answer.answer?.webSearch).toBe("unavailable");
   expect(answer.answer?.text).not.toContain("synthetic-unused");
@@ -253,7 +253,7 @@ it("web retrieval uses only bounded hosted search and provider citations", async
   vi.stubEnv("AI_WEB_SEARCH", "true");
   vi.stubEnv("AI_MODEL", "test");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "2");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "2");
   const fetcher = vi.fn(async () =>
     Response.json({
       status: "completed",

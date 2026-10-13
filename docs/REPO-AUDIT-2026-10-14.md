@@ -1,3 +1,5 @@
+> Kết quả riêng tại base đã chốt và bản sửa v5.13. Chủ repo sau đó cho phép tích hợp main v5.14; xem [báo cáo mới](INTEGRATION-AUDIT-2026-10-14.md).
+
 # Rà soát repo tại base đã chốt — 14/10/2026
 
 **Đã sửa 3 lỗi xác nhận được và dọn tài liệu/output tự sinh. Exact-match development vẫn 63/128 (49,22%); không có bằng chứng để kết luận 9,5/10 hoặc đã hết mọi hạn chế.**

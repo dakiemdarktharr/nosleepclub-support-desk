@@ -166,7 +166,7 @@ it("rejects instruction-bearing web text even when the citation domain is truste
   vi.stubEnv("AI_WEB_SEARCH", "true");
   vi.stubEnv("AI_WEB_MODEL", "test");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "1");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "1");
   vi.stubGlobal(
     "fetch",
     vi.fn(async () =>
@@ -260,7 +260,7 @@ it("never shares personalized, follow-up, or override questions in the public an
     ),
   );
 });
-it("coalesces same-process cache misses and expires entries without resetting the budget", async () => {
+it("coalesces same-process cache misses and expires entries without changing call allowance", async () => {
   vi.stubEnv("AI_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
   const generate = vi.fn(async () => "safe result");
@@ -287,11 +287,11 @@ it("key rotation invalidates signed cached answers", async () => {
   await withAnswerCache("same-key", run, validate);
   expect(run).toHaveBeenCalledTimes(2);
 });
-it("extraction budget exhaustion escalates without answering", async () => {
+it("test-only call guard escalates extraction without answering", async () => {
   vi.stubEnv("AI_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
   vi.stubEnv("AI_MODEL", "test");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   const row = await submitSupport(input("xin chào"));
   expect(row.decision?.action).toBe("ESCALATE");
   expect(row.canonical?.model.failureReason).toBe("BUDGET_EXHAUSTED");

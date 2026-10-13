@@ -2,6 +2,8 @@
 
 Đối chiếu code bắt đầu từ `main` SHA `a057fcbe17ac0282d6aebe0af7db62df27d80506` vào ngày 03/10/2026. Các case là dữ liệu synthetic theo policy mô phỏng của dự án; đây không phải policy nội bộ đã được VNG xác nhận. Thay đổi có AI assistance, không suy ra human review từ Git identity.
 
+> Cập nhật 14/10/2026: runtime v5.14 sau tích hợp main. Bộ `submission-4` hiện có một mismatch đã biết: `submission-read-scope` expected AUTO/ROUTINE, actual ESCALATE/BEYOND_AUTHORITY vì chưa có entitlement/approval được backend xác minh. Giữ nhãn gốc và hiển thị FAIL trung thực. Đề A 5 ca giữ mục tiêu 3 routine/2 escalation. [Bằng chứng mới](INTEGRATION-AUDIT-2026-10-14.md).
+
 ## Chạy một bộ
 
 Mở `/verify`, chọn bộ rồi bấm **Chạy toàn bộ test** một lần. Mỗi case đi qua `POST /api/support/requests` của ứng dụng; quyết định và hướng dẫn không được tính bằng nhánh riêng cho fixture. Verify đọc lại detail, events/audit, queue và metrics trước khi đánh dấu PASS. Mỗi hàng hiện expected/actual, rule, trạng thái, thời điểm và liên kết hồ sơ. Kết quả từng case được lưu cùng request ID, có thể dừng và tiếp tục mà không tạo case trùng.
@@ -80,7 +82,7 @@ Trong 72 mismatch:
 
 Đây là tín hiệu over-escalation cần theo dõi. Nhiều subrequest không được ánh xạ tạo `OTHER`/`AUTH-005` hoặc dữ kiện thiếu; kết quả hiện tại chưa phân biệt được lỗi extraction/normalization với khác biệt trong expected scope của fixture. Không thay Ground Truth, rule an toàn hoặc approval gate để tăng metric. Cần label review độc lập trên ticket synthetic mới trước khi thay policy.
 
-`artifacts/original-fixture-evaluation.json` là báo cáo lịch sử ngày 21/09/2026, ghi 55/128. Lần chạy mới ở trên chỉ dùng để cập nhật nhận xét hiện hành; không thay file báo cáo lịch sử hay expected labels.
+`artifacts/original-fixture-evaluation.json` hiện là output local được tạo lại và bỏ theo dõi Git; bản lịch sử 21/09/2026 nằm trong Git history. Không dùng file local chưa kiểm tra metadata làm bằng chứng HEAD.
 
 ## Phạm vi và giới hạn
 

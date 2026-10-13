@@ -177,7 +177,7 @@ it("expired preview cannot be submitted", async () => {
     submitSupport({ ...preview.input, confirmed: true }),
   ).rejects.toMatchObject({ code: "PREVIEW_EXPIRED" });
 });
-it("structured-only clarification progresses without retyping the ticket", async () => {
+it("structured-only clarification cannot auto-approve without verified entitlement", async () => {
   const row = await submitSupport(input("Need database read access"));
   const updated = await clarifySupport(row.id, {
     version: row.version,
@@ -191,7 +191,8 @@ it("structured-only clarification progresses without retyping the ticket", async
       approvalReference: "DEMO-1001",
     },
   });
-  expect(updated.decision?.action).toBe("AUTO_APPROVE");
+  expect(updated.decision?.action).toBe("ESCALATE");
+  expect(updated.decision?.ruleIds).toContain("AUTH-ENTITLEMENT-001");
   expect(updated.originalQuestion).toBe(row.input.rawText);
 });
 it("explain step stays in guidance and preserves history; explicit handoff creates review", async () => {
@@ -289,7 +290,7 @@ it("operation cannot launder access intent or bypass approval", async () => {
   });
   expect(row.decision?.action).toBe("ESCALATE");
   expect(row.canonical?.riskSignals).toContain("CONFLICT");
-  expect(row.decision?.missingFields).toContain("verifiedApproval");
+  expect(row.decision?.ruleIds).toContain("AUTH-006");
   await expect(
     reviewSupport(
       row.id,
@@ -325,15 +326,24 @@ it("large GPU allocation cannot be auto-approved even with a hypothetical verifi
       provider: "demo",
       environment: "development",
       duration: "2 hours",
+      resourceLifecycle: "ephemeral",
+      dataSensitivity: "synthetic",
       purpose: "Synthetic test",
       gpuType: "a100",
       quantity: "64",
-      budgetOrQuota: "Synthetic quota review",
     },
   });
-  expect(evaluatePolicy(canonical, { status: "verified" }).ruleIds).toContain(
-    "AUTH-QUOTA",
-  );
+  expect(evaluatePolicy(canonical, { status: "not_required" }, {
+    resourceQuota: {
+      status: "exceeded",
+      source: "test-capacity-service",
+      projectId: "project-1",
+      teamId: "team-1",
+      activeUsageIncluded: true,
+      evaluationComplete: true,
+    },
+    dataClassification: "synthetic",
+  }).ruleIds).toContain("AUTH-QUOTA");
 });
 
 it("still broken gives a different follow-up instead of repeating the same instructions", async () => {
@@ -355,7 +365,8 @@ it("extracted explicit scope and aliases prevent redundant questions", async () 
   );
   expect(row.decision?.missingFields).not.toContain("resourceScope");
   expect(row.decision?.missingFields).not.toContain("reason");
-  expect(row.decision?.action).toBe("AUTO_APPROVE");
+  expect(row.decision?.action).toBe("ESCALATE");
+  expect(row.decision?.ruleIds).toContain("AUTH-ENTITLEMENT-001");
 });
 
 it.each([
@@ -384,7 +395,9 @@ it("structured cluster-admin intent still requires verified authority", async ()
       requestedAction: "view_logs",
     },
   });
-  expect(row.decision?.missingFields).toContain("verifiedApproval");
+  expect(row.decision?.action).toBe("ESCALATE");
+  expect(row.decision?.bucket).toBe("BEYOND_AUTHORITY");
+  expect(row.decision?.ruleIds).toContain("AUTH-003");
   await expect(
     reviewSupport(
       row.id,

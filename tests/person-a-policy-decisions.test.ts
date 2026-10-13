@@ -2,7 +2,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import official from "../mlai26_new/data/verify/verify_cases.json";
 import development from "../mlai26_new/data/ground-truth/synthetic_tickets.json";
 import type { Environment, ServiceGroup, SupportInput } from "@/domain/contracts";
-import { evaluatePolicy } from "@/domain/policy";
+import { evaluatePolicy, type PolicyEvidence } from "@/domain/policy";
+import { approvalPolicy, resourceQuotaPolicy, singleRequestPolicy } from "@/domain/policy-source";
 import { extractIntake } from "@/domain/text";
 import { resetSupportTestStore } from "@/lib/support-repository";
 import { submitSupport } from "@/services/support";
@@ -13,6 +14,27 @@ beforeEach(() => {
   resetSupportTestStore();
 });
 afterEach(() => vi.unstubAllEnvs());
+
+it("records the approved lifecycle, quota and one-request policy choices", () => {
+  expect(approvalPolicy).toMatchObject({
+    pendingAction: "wait-and-recheck",
+    rejectedAction: "close-require-new-request",
+    revokedAction: "stop-and-revoke-when-possible",
+    standingApprovalRequiresDeclaredScope: true,
+    scopeChangeRequiresNewApproval: true,
+    ttlRenewalRequiresNewRequest: true,
+    approvedRecordExpiry: "none-while-approved",
+  });
+  expect(resourceQuotaPolicy).toMatchObject({
+    aggregationScope: "project-team",
+    includesActiveUsage: true,
+    fixedDemoThresholds: false,
+  });
+  expect(singleRequestPolicy).toMatchObject({
+    maxSubrequests: 0,
+    userMessage: "Vui lòng gửi từng yêu cầu một.",
+  });
+});
 
 function originalText(id: string) {
   const row = [...official, ...development].find((item) => item.id === id);
@@ -26,6 +48,18 @@ function intake(rawText: string, fields: Record<string, string> = {}): SupportIn
     confirmed: true, idempotencyKey: crypto.randomUUID(),
   };
 }
+
+const inLimitQuota: PolicyEvidence = {
+  resourceQuota: {
+    status: "within_limit",
+    source: "test-capacity-service",
+    projectId: "project-1",
+    teamId: "team-1",
+    activeUsageIncluded: true,
+    evaluationComplete: true,
+  },
+  dataClassification: "synthetic",
+};
 
 it.each(["verify-003-etl-missing-specs", "TC006", "TC007", "TC008"])(
   "hands incomplete resource provisioning to a person: %s", (id) => {
@@ -158,14 +192,14 @@ it.each(unsafeExportFields)("checks structured destination and sensitivity befor
 
 const resourceFields = {
   provider: "demo", environment: "sandbox", duration: "2 hours",
-  purpose: "Replay synthetic events", budgetOrQuota: "Approved demo quota",
+  purpose: "Replay synthetic events", resourceLifecycle: "ephemeral", dataSensitivity: "synthetic",
   cpu: "2", ram: "4", disk: "20",
 };
-it("keeps complete, authorized provisioning on its existing bounded workflow", () => {
+it("allows only ephemeral synthetic sandbox provisioning within authoritative team quota", () => {
   const request = extractIntake(intake("Need a sandbox", resourceFields));
-  const decision = evaluatePolicy(request, { status: "verified" });
+  const decision = evaluatePolicy(request, { status: "not_required" }, inLimitQuota);
   expect(decision.action).toBe("AUTO_APPROVE");
-  expect(decision.ruleIds).not.toContain("INFO-PROVISION-001");
+  expect(decision.ruleIds).toContain("ROUTINE-003");
 });
 it("still asks for non-sizing information when resource sizing and duration are present", () => {
   const request = extractIntake(intake("Need a sandbox", { ...resourceFields, provider: "" }));

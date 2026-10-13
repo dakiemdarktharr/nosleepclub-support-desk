@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/support-repository", () => ({
   supportDatabase: () => mocks.database,
   reserveModelAttempt: () => mocks.reserveModelAttempt(),
+  reserveModelAttemptForModel: () => mocks.reserveModelAttempt(),
 }));
 
 import { createConversationAnswer } from "@/lib/conversation-model";

@@ -1,4 +1,4 @@
-> Báo cáo lịch sử: chỉ áp dụng cho phiên bản/ngày ghi bên dưới. Xem [mục lục hiện hành](../README.md) và [rà soát mới](../REPO-AUDIT-2026-10-14.md).
+> Nhật ký quyết định theo phiên bản, gồm quyết định mới v5.14. Các số đo lịch sử chỉ áp dụng cho SHA ghi tại đó. Xem [mục lục](../README.md) và [rà soát sau tích hợp](../INTEGRATION-AUDIT-2026-10-14.md).
 
 # Quyết định contract Member A — vòng v5.12
 
@@ -198,3 +198,71 @@ Không tạo record cho approval claim gốc. 18 nhãn AUTO cần evidence appro
 scope và formal adjudication riêng; contract không còn chờ quyết định. B/C cần
 review diff/biên và tác động audit-production-read của v5.10. Chưa có human
 cross-review; commit chỉ ở local trên branch A, chưa push/mở PR/deploy.
+
+## Follow-up 13/10/2026 — GPU quota precedence
+
+Trong benchmark fresh ngày 13/10, parser nhận được `GPU_REQUEST` và quantity
+11 nhưng nhánh MISSING_INFO chạy trước rule quota; kết quả làm mất authority
+gate dù số lượng đã vượt rõ giới hạn demo. Giữ nguyên giới hạn đã chốt: tối đa
+2 GPU T4/A10. Khi quantity GPU được nêu rõ lớn hơn 2 hoặc GPU type được nêu rõ
+ngoài T4/A10, áp dụng `AUTH-QUOTA`/`BEYOND_AUTHORITY` trước câu hỏi missing
+facts. Nếu chỉ thiếu quantity hoặc type mà chưa có bằng chứng vượt giới hạn,
+request tiếp tục qua contract MISSING_INFO hiện tại. Security, approval-failure
+và request chưa ánh xạ vẫn giữ các gate đứng trước quota.
+
+Đây là thứ tự áp dụng của quota hiện hữu; không nới giới hạn, AUTO whitelist,
+hoặc approval verification. Regression dùng yêu cầu 11 GPU gốc và parser-level
+negative controls. Kết quả benchmark/evidence và 15 trace ngoài cohort được ghi
+trong [TECHNICAL-CASE-REVIEW-PERSON-A.md](../archive/TECHNICAL-CASE-REVIEW-PERSON-A.md),
+cập nhật 13/10. Chưa có human B/C review.
+
+## Follow-up 13/10/2026 — policy v5.13
+
+Giữ nguyên quota demo và approval registry. `AUTH-QUOTA` chạy trước MISSING_INFO
+khi request `CLOUD_GPU` nêu rõ CPU > 4, RAM > 16 GB, disk > 100 GB hoặc thời
+lượng tương đương trên 8 giờ; GPU quantity/type tiếp tục theo giới hạn hiện có.
+Phút, giờ, ngày và số thập phân được quy đổi về giờ. Một GPU type placeholder
+như `unknown` không phải bằng chứng vượt giới hạn. Thời lượng không thể quy đổi
+như ISO timestamp vẫn cần policy owner xác nhận cách áp dụng quota.
+Quota và routine AUTO áp dụng cho `CLOUD_SANDBOX`, `CLOUD_VM_REQUEST` và
+`GPU_REQUEST`. Cloud storage/cost và intent chưa có contract riêng được chuyển
+policy owner thay vì hỏi VM sizing hoặc dùng sandbox AUTO; security/authority
+rules cụ thể tiếp tục được đánh giá trước.
+
+`SECRET` không còn phát ra chỉ vì từ `credential` xuất hiện trong câu lưu trữ
+Vault. Gán value hoặc yêu cầu tiết lộ credential vẫn bị SEC-001 chặn.
+
+Kiểm tra: 194/194 targeted tests; full suite 856 pass / 1 pre-existing skip;
+lint, typecheck, build và 15/15 development-report/Mongo guards đạt. Benchmark
+so với fresh base b069f22: 63/128 → 91/128 exact, 128/128 readback, không có
+expected ESC thành AUTO hoặc NEEDS_INFORMATION và không có exact-pass regression.
+So với candidate v5.12, bốn trace đổi; một mismatch `gt-authority-005` được sửa,
+`TC002` giờ nhận AUTH-QUOTA vì TTL 48 giờ vượt giới hạn 8 giờ. Tỷ lệ expected
+routine bị escalated tăng 28/34 → 29/34; đây là nhãn/contract conflict đã giữ
+nguyên, không tính là cải thiện chất lượng. Chi tiết hash và trace nằm trong
+[technical review](../archive/TECHNICAL-CASE-REVIEW-PERSON-A.md).
+
+Các giới hạn còn lại: toàn bộ 34 expected AUTO đều không có verified approval
+(6 pending, 28 unverifiable); bảy trong số đó nêu thời lượng hoặc CPU vượt quota
+hiện tại. Ba expected BEYOND_AUTHORITY còn xung đột với Security bucket rules.
+Dataset development chưa adjudicate độc lập và chưa có B/C human cross-review.
+Không push, mở PR, merge hay deploy trong lượt này.
+
+## Quyết định cuối theo câu 1–50 — policy v5.14
+
+Ngày hiệu lực: 14/10/2026 (Asia/Ho_Chi_Minh). Câu 50/50 xác nhận các lựa chọn
+1–49 là phê duyệt cuối; cùng policy áp dụng cho benchmark và production, còn
+self-approval chỉ dành cho UI/mock demo. Routine access cần entitlement xác
+minh; approval elevated/production phải khớp cùng record registry+ITSM, requester,
+approver role, resource, quyền, environment, purpose và TTL/quota. Mọi scope
+change cần approval mới; pending chờ và đánh giá lại, rejected đóng request,
+revoked dừng và thu hồi khi có thể.
+
+Policy bỏ ngưỡng demo cố định, dùng quota/capacity/budget thật cộng dồn theo
+project/team; sandbox AUTO chỉ khi ephemeral, dữ liệu synthetic/non-sensitive,
+purpose rõ và quota được xác minh. Một yêu cầu bổ sung trong ticket làm dừng với
+`NEEDS_INFORMATION` và câu “Vui lòng gửi từng yêu cầu một.” Break-glass cần
+approver khẩn cấp xác minh, scope hẹp, TTL ngắn, incident ID, audit/cảnh báo và
+hậu kiểm. Quy tắc dịch vụ cụ thể và giới hạn tích hợp được ghi ở
+[policy decisions](PERSON-A-POLICY-DECISIONS.md); benchmark labels chưa được đổi
+khi chưa có adjudication độc lập.
