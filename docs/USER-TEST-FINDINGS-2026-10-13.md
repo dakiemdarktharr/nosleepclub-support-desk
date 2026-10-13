@@ -9,9 +9,10 @@
   kiểm thử không có trong hồ sơ nguồn.
 - Người tham gia trong bản nguồn đều được ghi vai trò chung là “Tester”; hồ sơ
   không nêu vị trí công việc hoặc quy trình helpdesk mà họ thường làm.
-- Nguồn không kèm consent, quyền trích dẫn nguyên văn, thời lượng, ảnh/video,
-  ticket ID hay ghi chú quan sát. Báo cáo này dùng mã người tham gia và diễn
-  giải nội dung; tên thật và câu trích dẫn được giữ ngoài Git.
+- Ngày 2026-10-14, chủ repo xác nhận cả ba người đã đồng ý công bố họ tên và
+  phản hồi nguyên văn. Tệp nguồn không đính kèm hồ sơ consent; phần thông tin
+  định danh và trích dẫn dưới đây được ghi theo xác nhận của chủ repo.
+- Nguồn không kèm thời lượng, ảnh/video, ticket ID hay ghi chú quan sát.
 - Các sửa đổi dưới đây dựa trên mã `main` tại `454497f19ae5530110720a56af78240a05aaec43`.
   Kiểm tra regression sau sửa là kiểm tra phần mềm, không phải participant
   retest. Chưa xác nhận lỗi đã được sửa trên deployment đang chạy tại URL nêu
@@ -19,17 +20,23 @@
 
 ## Tóm tắt
 
-| Mã | Quy trình người dùng mô tả | Lỗi được báo cáo | Sửa đổi | Bằng chứng retest phần mềm |
+| Mã / người kiểm thử | Quy trình người dùng mô tả | Lỗi được báo cáo | Sửa đổi | Bằng chứng retest phần mềm |
 | --- | --- | --- | --- | --- |
-| UT-01 | Báo sự cố mạng/VPN kết nối lại tạm thời rồi rớt tiếp | Câu có từ ngữ báo đã kết nối bị phân loại là `RESOLVED` và kết thúc hội thoại khi lỗi tái diễn | Từ chối xác nhận resolved khi câu có dấu hiệu lỗi quay lại/rớt tiếp; thêm regression cho tiếng Việt và tiếng Anh | `tests/sentiment-separation.test.ts` |
-| UT-02 | Đổi nhóm yêu cầu từ cấp quyền sang sự cố VPN | Form còn `requestKind` của nhóm cũ, làm sai phân loại và có thể kích hoạt escalation | Xóa `requestKind` khi đổi `serviceGroup`; người dùng cần chọn lại loại yêu cầu tương ứng | `tests/e2e/support.spec.ts` |
-| UT-03 | Xem các rule bảo mật trong policy/audit | `PUBLIC_EXPOSURE` và `SECURITY_CONTROL` cùng mang mã `SEC-002` | Giữ `SEC-002` cho `PUBLIC_EXPOSURE`, đổi `SECURITY_CONTROL` thành `SEC-008`, tăng policy lên v5.13 | `tests/domain-contract.test.ts` |
+| UT-01 — Nguyễn Lâm Khánh | Báo sự cố mạng kết nối lại tạm thời rồi rớt tiếp | Câu có từ ngữ báo đã kết nối bị phân loại là `RESOLVED` và kết thúc hội thoại khi lỗi tái diễn | Từ chối xác nhận resolved khi câu có dấu hiệu lỗi quay lại/rớt tiếp; thêm regression cho tiếng Việt và tiếng Anh | `tests/sentiment-separation.test.ts` |
+| UT-02 — Lê Nguyễn Thiên Tài | Đổi nhóm yêu cầu từ cấp quyền sang sự cố VPN | Form còn `requestKind` của nhóm cũ, làm sai phân loại và có thể kích hoạt escalation | Xóa `requestKind` khi đổi `serviceGroup`; người dùng cần chọn lại loại yêu cầu tương ứng | `tests/e2e/support.spec.ts` |
+| UT-03 — Lê Thị Trà My | Xem các rule bảo mật trong policy/audit | `PUBLIC_EXPOSURE` và `SECURITY_CONTROL` cùng mang mã `SEC-002` | Giữ `SEC-002` cho `PUBLIC_EXPOSURE`, đổi `SECURITY_CONTROL` thành `SEC-008`, tăng policy lên v5.13 | `tests/domain-contract.test.ts` |
 
 ## UT-01 — Sự cố tái diễn bị đóng nhầm
 
-**Nội dung trong báo cáo nguồn:** người dùng báo mạng vừa kết nối lại được
-trong thời gian ngắn nhưng lại rớt; bot nhận phần báo kết nối thành công và
-đóng ticket, khiến họ không tiếp tục được.
+**Người kiểm thử:** Nguyễn Lâm Khánh (UT-01), vai trò được ghi trong nguồn:
+Người kiểm thử (Tester).
+
+**Nhiệm vụ đã thực hiện:** chat với bot hỗ trợ xử lý mạng và nhập câu báo mạng
+kết nối lại được nhưng sau đó bị ngắt tiếp.
+
+**Phản hồi nguyên văn:**
+
+> “Tôi thử nhắn tin báo mạng vừa vào lại được một lúc rồi lại rớt tiếp, nhưng bot chỉ bắt đúng chữ 'vào lại được' rồi tự động báo đã xử lý xong và đóng ticket luôn, không cho nhắn tiếp.”
 
 **Cách tái hiện hồi quy:** trong một hội thoại hỗ trợ đang mở, gửi:
 
@@ -53,9 +60,15 @@ dùng UT-01 chưa retest bản sửa.
 
 ## UT-02 — Đổi nhóm nhưng giữ phân loại con cũ
 
-**Nội dung trong báo cáo nguồn:** người dùng chọn nhầm nhóm yêu cầu cấp quyền,
-sau đó chuyển sang nhóm sự cố VPN. Form bị cho là giữ lựa chọn cũ và ticket bị
-đẩy lên cấp quản lý không đúng.
+**Người kiểm thử:** Lê Nguyễn Thiên Tài (UT-02), vai trò được ghi trong nguồn:
+Người kiểm thử (Tester).
+
+**Nhiệm vụ đã thực hiện:** tạo ticket, chọn nhầm nhóm yêu cầu cấp quyền rồi
+đổi sang nhóm sự cố mạng VPN thông thường.
+
+**Phản hồi nguyên văn:**
+
+> “Tôi chọn nhầm nhóm yêu cầu cấp quyền rồi đổi lại sang nhóm sự cố VPN, nhưng form không xóa lựa chọn cũ mà vẫn giữ ngầm, gửi đi thì bị hệ thống tự động đẩy lên cấp quản lý duyệt nhầm.”
 
 **Cách tái hiện hồi quy:** mở workspace, chọn theo danh mục, chọn nhóm
 `ACCOUNT_ACCESS` và loại `ACCESS_REQUEST`; mở phần thông tin khác; đổi nhóm sang
@@ -74,9 +87,15 @@ kiểm tra của commit. Người dùng UT-02 chưa retest bản sửa.
 
 ## UT-03 — Mã rule bảo mật bị trùng
 
-**Nội dung trong báo cáo nguồn:** màn hình/bảng policy được mô tả là gắn cùng
-`SEC-002` cho rủi ro mở dịch vụ ra Internet (`PUBLIC_EXPOSURE`) và thiếu/tắt
-kiểm soát bảo mật (`SECURITY_CONTROL`).
+**Người kiểm thử:** Lê Thị Trà My (UT-03), vai trò được ghi trong nguồn:
+Người kiểm thử (Tester).
+
+**Nhiệm vụ đã thực hiện:** kiểm tra bảng audit log và danh sách quy tắc policy
+an toàn thông tin.
+
+**Phản hồi nguyên văn:**
+
+> “Tôi kiểm tra log và cấu hình thì thấy hai lỗi bảo mật khác hẳn nhau nhưng đều gắn chung mã SEC-002, nhìn vào không phân biệt được lỗi nào với lỗi nào.”
 
 **Cách tái hiện hồi quy:** kiểm tra `riskRules`, so sánh ID của hai signal nói
 trên và xác nhận mọi ID policy là duy nhất. Kỳ vọng `PUBLIC_EXPOSURE` vẫn là
@@ -108,7 +127,7 @@ người dùng UT-03 chưa retest bản sửa.
    policy version; không dùng người sửa code làm người tham gia thay thế.
 2. Ghi kết quả đạt/trượt, browser, thời lượng, trợ giúp/bỏ cuộc và nhận xét do
    từng người tự viết; ghi riêng consent và phạm vi cho phép công bố.
-3. Xác minh vai trò/quy trình nghiệp vụ bằng hồ sơ riêng có kiểm soát truy cập;
-   không đưa tên/chức danh hay raw quote vào repo công khai.
+3. Bổ sung mô tả quy trình nghiệp vụ thực tế của từng người nếu cần đánh giá
+   độ phù hợp với vai trò helpdesk; nguồn hiện chỉ ghi vai trò chung là Tester.
 4. Cập nhật protocol và báo cáo này bằng kết quả retest thật. Regression tự động
    xác nhận hành vi mã, không xác nhận trải nghiệm thực tế hay hiệu quả vận hành.
