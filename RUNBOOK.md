@@ -4,11 +4,11 @@ Hướng dẫn thao tác sản phẩm nằm trong [README](README.md). File này
 
 ## Chạy local
 
-Dùng Node.js 22+ và npm. Trong PowerShell, tại thư mục repository:
+Dùng Node.js 22.13+ và npm. Trong PowerShell, tại thư mục repository:
 
 ```powershell
 npm ci
-Copy-Item .env.example .env.local
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
 npm run dev
 ```
 
@@ -17,10 +17,11 @@ Chỉ sao chép `.env.example` khi chưa có `.env.local`; giữ cấu hình cá
 ## Kiểm tra trước khi phát hành
 
 ```powershell
+npm run check:docs
 npm run lint
 npm run typecheck
 npm test
-node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs
+node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs scripts/check-docs.test.mjs
 npm run build
 npm run test:persistence
 $env:SUPPORT_E2E_PRODUCTION='true'
@@ -72,13 +73,17 @@ chuyên gia. Metadata thêm dataset ID/hash/split và evaluator hash/dirty. So s
 từ chối nhãn/input khác nhau khi có digest; baseline cũ thiếu digest được ghi
 rõ giới hạn. Trace có thể chứa tên/PII chưa được nhận diện trong fixture cũ:
 chỉ giữ local, không stage hay công bố nếu chưa rà soát. Xem
-[báo cáo mới và danh sách adjudication](docs/TECHNICAL-READINESS.md).
+[báo cáo mới](docs/REPO-AUDIT-2026-10-14.md) và [danh sách adjudication lịch sử](docs/archive/TECHNICAL-READINESS.md).
 
 Test dùng API route + readback mock/memory; ghi SHA, runtime digest/dirty, policy,
 Node và môi trường trong artifact local. Script in confusion matrix, coverage,
 exact-match, FNR, unnecessary escalation và các nhóm lỗi. Ground Truth giữ nguyên.
-Artifact có timestamp/UUID chỉ lưu local, không stage. Kết quả độc lập/người dùng
-chưa có: xem [báo cáo readiness](docs/COMPETITION-READINESS.md).
+Artifact có timestamp/UUID chỉ lưu local, không stage. Phân biệt feedback do chủ repo khai báo
+với held-out/nghiên cứu độc lập: xem [báo cáo hiện hành](docs/REPO-AUDIT-2026-10-14.md).
+
+Policy hiện tại `support-guidance-v5.13` tách SECURITY_CONTROL thành `SEC-008`,
+giữ PUBLIC_EXPOSURE là `SEC-002`; không đổi risk/authority precedence. Preview
+v5.12 cần tạo lại. Các ghi chú phiên bản bên dưới là lịch sử thay đổi.
 
 Policy `support-guidance-v5.8` đồng bộ alias dữ kiện với bộ tách subrequest,
 giữ approval context có giới hạn và không nhầm yêu cầu quyền thành artefact.
@@ -89,7 +94,7 @@ Version v5.9 chỉ vô hiệu preview/cache sau sửa extraction: giữ mã appr
 nhiều đoạn nguyên vẹn và không coi câu cảm ơn hoàn chỉnh là tác vụ riêng.
 Rule, quota, safety threshold và registry approval không đổi.
 
-Version v5.10 áp dụng [quyết định Member A](docs/PERSON-A-POLICY-DECISIONS.md):
+Version v5.10 áp dụng [quyết định Member A](docs/decisions/PERSON-A-POLICY-DECISIONS.md):
 cấp VM/database thiếu sizing hoặc TTL được ESCALATE/MISSING_INFO. Export DB
 production có mục đích công việc, không nêu dữ liệu nhạy cảm/đích ngoài kiểm
 soát, chuyển DBA/Data reviewer với BEYOND_AUTHORITY; các trường hợp Security
@@ -102,7 +107,7 @@ Security/DBA. Approval đã xác minh hoặc lời hứa restore không bỏ qua
 AUTH-008 và các authority rule vẫn có trong audit. Scope khác tiếp tục theo
 rule hiện có; preview/cache v5.10 phải tạo lại. Ground Truth giữ nguyên.
 
-Version v5.12 áp dụng [contract do người dùng giao quyền quyết định](docs/PERSON-A-CONTRACT-DECISIONS.md):
+Version v5.12 áp dụng [contract do người dùng giao quyền quyết định](docs/decisions/PERSON-A-CONTRACT-DECISIONS.md):
 cấp VPN hỏi facts của access; cấp database hỏi sizing; Jira/Confluence hỏi
 project/space/page và mức quyền. Mapping push/User/Editor cần evidence khẳng
 định, không tự xác minh approval. Thời hạn phải dương và có đơn vị hoặc là
@@ -113,17 +118,17 @@ Preview/cache v5.11 phải tạo lại.
 - [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
 - [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
 - [Hợp đồng đánh giá](docs/EVALUATION.md) mô tả đầu vào và cách tính kết quả.
-- [Workflow theo bằng chứng](docs/EVIDENCE-WORKFLOW-FOLLOWUP.md) mô tả yêu cầu bổ sung dữ liệu và điều kiện chuyển reviewer.
+- [Workflow theo bằng chứng](docs/archive/EVIDENCE-WORKFLOW-FOLLOWUP.md) mô tả yêu cầu bổ sung dữ liệu và điều kiện chuyển reviewer.
 
 Các policy gốc trong `mlai26_new/data/policy/` là dữ liệu lịch sử được bảo vệ bằng checksum tại `artifacts/migration-baseline-manifest.json`. Giữ nguyên chúng để hồi quy; policy runtime nằm trong `src/domain/policy-source.ts` và `src/domain/policy.ts`. `POLICY-REVIEW.md` mô tả policy-v2 trước tích hợp, không phải trạng thái runtime hiện tại.
 
 Các báo cáo release, migration và prompt bàn giao cũ có thể tra cứu trong lịch sử Git. Tài liệu vận hành hiện hành không yêu cầu áp lại patch hay chia thành hai package.
 
-Policy `support-guidance-v5.5` thay đổi nhận diện câu mô tả, feedback và đích tiếp nhận policy gap; preview cũ phải tạo lại. Reviewer có thể lọc `queue=OUT_OF_POLICY` hoặc `queue=AUTHORITY_REQUIRED` qua trang review/API phân trang. Bộ lọc áp dụng cả memory/Mongo, không sửa lịch sử quyết định đã lưu và không cấp quyền reviewer. Xem [đối chiếu nhận xét doanh nghiệp](docs/ENTERPRISE-FEEDBACK.md) để phân biệt regression synthetic, Mongo mock và phần chưa xác minh live.
+Policy `support-guidance-v5.5` thay đổi nhận diện câu mô tả, feedback và đích tiếp nhận policy gap; preview cũ phải tạo lại. Reviewer có thể lọc `queue=OUT_OF_POLICY` hoặc `queue=AUTHORITY_REQUIRED` qua trang review/API phân trang. Bộ lọc áp dụng cả memory/Mongo, không sửa lịch sử quyết định đã lưu và không cấp quyền reviewer. Xem [đối chiếu nhận xét doanh nghiệp](docs/archive/ENTERPRISE-FEEDBACK.md) để phân biệt regression synthetic, Mongo mock và phần chưa xác minh live.
 
 Policy `support-guidance-v5.6` đưa nhận diện ý định freeform của provider OpenAI qua model trước khi áp dụng deterministic policy. Preview phiên bản cũ phải tạo lại; provider `mock` vẫn là mô phỏng regex để chạy demo/test offline và không chứng minh chất lượng nhận diện của OpenAI. Lỗi nhận diện, schema hoặc evidence chuyển reviewer an toàn. Không có thay đổi sentiment sau câu trả lời.
 
-Policy `support-guidance-v5.7` kiểm tra tổ hợp route/catalog của model, bỏ field tùy chọn rỗng khỏi phân tích và đánh giá riêng câu tiếp nối có rủi ro/thao tác nghiệp vụ. Phủ định trong câu cũ không được triệt tiêu rủi ro câu mới. Preview/answer cache phiên bản cũ không được dùng lại. Xem [regression và giới hạn kiểm chứng](docs/INTENT-REVIEW-FIXES.md).
+Policy `support-guidance-v5.7` kiểm tra tổ hợp route/catalog của model, bỏ field tùy chọn rỗng khỏi phân tích và đánh giá riêng câu tiếp nối có rủi ro/thao tác nghiệp vụ. Phủ định trong câu cũ không được triệt tiêu rủi ro câu mới. Preview/answer cache phiên bản cũ không được dùng lại. Xem [regression và giới hạn kiểm chứng](docs/archive/INTENT-REVIEW-FIXES.md).
 
 ## Kiểm tra Mongo trong môi trường thử nghiệm riêng
 
@@ -138,9 +143,9 @@ Harness hiện đọc lại request/audit sau restart app, thực hiện STOP/CA
 app lần nữa và đối chiếu quyết định reviewer/audit nguyên vẹn với Mongo. Chỉ khi
 mọi assertion đạt mới trả `APP_RESTART_VERIFIED`. Không restart mongod, không
 chứng minh identity transaction/replica set hay production durability. Lượt
-kiểm tra này không có Mongo test: xem [bằng chứng hiện tại](docs/TECHNICAL-READINESS.md).
+kiểm tra này không có Mongo test: xem [bằng chứng hiện tại](docs/REPO-AUDIT-2026-10-14.md).
 
-Ưu tiên harness có guard và tự restart tiến trình tại [hướng dẫn kiểm tra persistence](docs/FEEDBACK-EVIDENCE-REVIEW.md#reproducible-mongo-evidence): `node scripts/mongo-restart-smoke.mjs`. Harness chỉ chấp nhận Mongo loopback trên instance disposable được khai báo rõ, database mới do script chọn, không có `.env` local, model mock và budget 0. Chưa có kết quả live từ harness trong lượt sửa này. `durable=true` vẫn là metadata của adapter; trường health `persistenceVerification=NOT_PERFORMED` nói rõ endpoint không kiểm tra restart.
+Ưu tiên harness có guard và tự restart tiến trình tại [hướng dẫn kiểm tra persistence](docs/archive/FEEDBACK-EVIDENCE-REVIEW.md#reproducible-mongo-evidence): `node scripts/mongo-restart-smoke.mjs`. Harness chỉ chấp nhận Mongo loopback trên instance disposable được khai báo rõ, database mới do script chọn, không có `.env` local, model mock và budget 0. Chưa có kết quả live từ harness trong lượt sửa này. `durable=true` vẫn là metadata của adapter; trường health `persistenceVerification=NOT_PERFORMED` nói rõ endpoint không kiểm tra restart.
 
 Quy trình thủ công dưới đây dành cho operator đã xác nhận database thử nghiệm riêng; không chạy trên production:
 

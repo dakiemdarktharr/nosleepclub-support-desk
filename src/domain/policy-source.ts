@@ -1,7 +1,7 @@
 import type { Decision, Environment, RequestKind, RiskSignal, ServiceGroup } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.12";
+export const POLICY_VERSION = "support-guidance-v5.13";
 export const demoResourceLimits = {
   gpuCount: 2,
   gpuTypes: ["t4", "a10"],
@@ -48,7 +48,7 @@ export const riskRules: Array<{
   },
   {
     signal: "SECURITY_CONTROL",
-    id: "SEC-002",
+    id: "SEC-008",
     bucket: "SECURITY_RISK",
     uncertaintyClass: "OUT_OF_POLICY",
     reason: "Không tự tắt MFA, EDR, audit hoặc kiểm soát bảo mật.",

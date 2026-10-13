@@ -25,7 +25,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs
+      - run: node --test scripts/mongo-smoke-guard.test.mjs scripts/development-report.test.mjs scripts/check-docs.test.mjs
+      - run: npm run check:docs
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
