@@ -53,6 +53,22 @@ it("satisfaction with an unresolved issue cannot close it even if the model says
   expect(next.knowledgeCandidate).toBeUndefined();
 });
 
+it.each([
+  "Mình vào được rồi nhưng lỗi lại xuất hiện sau hai phút.",
+  "Mình thử nhắn tin báo mạng vừa vào lại được một lúc rồi lại rớt tiếp.",
+  "VPN connected again briefly, then dropped again.",
+])("a temporary recovery followed by another failure does not resolve the request: %s", async (question) => {
+  const row = await create();
+  mood("positive");
+  const next = await continueConversation(row.id, {
+    version: row.version,
+    question,
+  });
+  expect(next.status).not.toBe("COMPLETED");
+  expect(next.feedback.at(-1)?.choice).not.toBe("RESOLVED");
+  expect(next.knowledgeCandidate).toBeUndefined();
+});
+
 it("explicit resolution is independent of negative tone", async () => {
   const row = await create();
   mood("negative");
