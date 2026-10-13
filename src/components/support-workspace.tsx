@@ -238,6 +238,7 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
                   edit({
                     serviceGroup: event.target.value as ServiceGroup,
                     fields: employeeIdentityOnly(input.fields),
+                    requestKind: undefined,
                   })
                 }
               >
