@@ -1,8 +1,12 @@
 # Protocol thu thập bằng chứng độc lập
 
-Trạng thái: **NOT COLLECTED**. Chủ repo xác nhận chưa có held-out độc lập và
-phản hồi bằng văn bản từ ba người dùng thực tế. Tài liệu này là kế hoạch và
-biểu mẫu trống, không phải kết quả nghiên cứu. AI assistance: Codex.
+Trạng thái: **PARTIAL**. Ngày 2026-10-14, chủ repo cung cấp một báo cáo ngày
+2026-10-13 mô tả phản hồi của ba người dùng (mã UT-01/02/03). Bản tổng hợp đã
+ẩn danh, cách tái hiện, sửa lỗi và kiểm tra hồi quy được ghi tại
+[USER-TEST-FINDINGS-2026-10-13.md](USER-TEST-FINDINGS-2026-10-13.md). Báo cáo
+nguồn không kèm hồ sơ consent/quyền trích dẫn, SHA và cấu hình triển khai,
+thời lượng, hoặc bằng chứng chức danh/quy trình thực tế; vì vậy các mục này
+chưa được xác minh độc lập. Chưa có held-out độc lập. AI assistance: Codex.
 
 ## 1. Người phụ trách và quyền sử dụng
 
@@ -75,7 +79,18 @@ Với tối thiểu ba người, trình bày từng người và median/range; k
 đến nhân viên VNG hoặc toàn bộ ngành. Báo cả thất bại, không hoàn tất và bất cập.
 Giữ verbatim feedback; AI có thể hỗ trợ phân loại nhưng không viết thay lời họ.
 
-## 5. Biểu mẫu trống (điền sau thu thập)
+## 5. Những gì báo cáo hiện có chưa xác nhận
+
+Tài liệu được chủ repo cung cấp mô tả ba người và ba lỗi cụ thể, nhưng từng
+người đều chỉ được ghi vai trò chung là “Tester”. Bản nguồn không ghi consent,
+quyền công bố nguyên văn, SHA/policy/provider của bản chạy, thời lượng hay dữ
+liệu quan sát thô. Bản Git chỉ giữ mã UT-01/02/03 và diễn giải nội dung; tên
+thật và nguyên văn được giữ ngoài repo. Ba regression test mới kiểm tra các sửa
+đổi trên mã nguồn, không phải lượt thử lại do người tham gia thực hiện. Vì vậy
+không dùng báo cáo này để tuyên bố đã đủ điều kiện đánh giá độc lập, xác minh
+vai trò nhân viên nghiệp vụ, hoặc chứng minh hiệu quả sau sửa.
+
+## 6. Biểu mẫu cho phần còn thiếu
 
 | Mục | Giá trị |
 | --- | --- |

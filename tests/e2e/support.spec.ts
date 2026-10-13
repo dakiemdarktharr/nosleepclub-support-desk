@@ -126,6 +126,26 @@ test("structured guidance matches freeform; intake conflicts escalate", async ({
     page.getByRole("heading", { name: "Cần người phụ trách xem xét" }),
   ).toBeVisible();
 });
+test("changing the service group clears the old request kind", async ({ page }) => {
+  await page.goto("/workspace");
+  await page
+    .getByRole("button", { name: "Chọn theo danh mục", exact: true })
+    .click();
+  await fillEmployeeIdentity(page);
+  await page.getByLabel("Nhóm hỗ trợ", { exact: true }).selectOption("ACCOUNT_ACCESS");
+  await page
+    .getByText("Thông tin khác bạn đã biết (không bắt buộc)", { exact: true })
+    .click();
+  await page.getByLabel("Loại yêu cầu", { exact: true }).selectOption("ACCESS_REQUEST");
+  await page.getByLabel("Nhóm hỗ trợ", { exact: true }).selectOption("NETWORK_VPN");
+  await expect(page.getByLabel("Loại yêu cầu", { exact: true })).toHaveValue("");
+  await page.getByLabel("Nhu cầu cụ thể", { exact: true }).selectOption("VPN_NOT_CONNECTING");
+  await page.getByLabel("Mô tả yêu cầu", { exact: true }).fill("VPN không kết nối");
+  await page.getByRole("button", { name: "Gửi", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Có thể hỗ trợ an toàn" }),
+  ).toBeVisible();
+});
 test("reviewer rejection requires a reason and records audit", async ({
   page,
   request,
