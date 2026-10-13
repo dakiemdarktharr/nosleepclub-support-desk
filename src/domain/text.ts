@@ -54,7 +54,7 @@ export function asserted(text: string, pattern: RegExp) {
         .split(/[,;.\n]|\b(?:but|nhung|however|va|and)\b/)
         .at(-1) ?? "";
     if (
-      !/(?:\bkhong\b|\bnot\b|\bno\b|\bwithout\b|\bnever\b|don't|do not)(?:\s+(?:can|need|request|require|yeu|cau|co|muon|quyen|access|vao|to|for|any|a|an|the|production|real|true|admin|hay|or|mo|open|expose|service|bucket|server|services|buckets|servers|address|ip|public|port|rdp|ssh|inbound|remote|cap|grant|give|gui|send|share|token|private|key|internet|from|tu|ra|dung|dung den|dong|route|project|space|mount(?:ed|ing)?|\d+)){0,10}\s*$/.test(
+      !/(?:\bkhong\b|\bnot\b|\bno\b|\bwithout\b|\bnever\b|don't|do not)(?:\s+(?:can|need|request|require|yeu|cau|co|muon|quyen|access|vao|to|for|any|a|an|the|production|real|true|admin|hay|or|mo|open|expose|service|bucket|server|services|buckets|servers|address|ip|public|port|rdp|ssh|inbound|remote|cap|grant|give|gui|send|share|token|private|key|internet|from|tu|ra|dung|dung den|dong|route|project|space|sua|thay doi|edit|modify|change|mount(?:ed|ing)?|\d+)){0,10}\s*$/.test(
         prefix,
       )
     )
@@ -66,7 +66,9 @@ export function asserted(text: string, pattern: RegExp) {
 function hasDirectDatabaseOperation(text: string) {
   return asserted(
     text,
-    /\b(?:read|write|update|drop|delete|export|dump|query|connect|access)\b.{0,30}\b(?:(?:production|prod)\s+)?(?:database|db)\b|\b(?:(?:production|prod)\s+)?(?:database|db)\s+(?:access|read|write|update|drop|delete|export|dump|query)\b/,
+    // A document-title introducer cannot connect an earlier access verb to DB.
+    // Other clauses (including comma-separated database access) remain checked.
+    /\b(?:read|write|update|drop|delete|export|dump|query|connect|access)\b(?:(?!\b(?:page|document)\s+(?:co tieu de|is titled|titled)\b).){0,30}\b(?:(?:production|prod)\s+)?(?:database|db)\b|\b(?:(?:production|prod)\s+)?(?:database|db)\s+(?:access|read|write|update|drop|delete|export|dump|query)\b/,
   );
 }
 
@@ -163,7 +165,7 @@ function isScopeConstraint(fragment: string) {
       text,
     ) || /^(?:no|not|without|khong|khong can|khong yeu cau|do not|don't|only|just|chi)\b/.test(text);
   const mentionsScope =
-    /\b(?:public|production|secret|admin|database|db|server|firewall|port|ingress|route|network|access|quyen|synthetic)\b/.test(
+    /\b(?:public|production|secrets?|admin|database|db|server|firewall|port|ingress|route|network|access|quyen|synthetic)\b/.test(
       text,
     );
   const hasPositiveOperation = asserted(
@@ -236,12 +238,18 @@ function isCollaborationScopeContinuation(previous: string, fragment: string) {
     /\b(?:project|space|page|board)\b/.test(prior) &&
     (/\b(?:access|permission|quyen|add|role|browse|view|edit|comment)\b/.test(prior) ||
       /^(?:jira project|confluence space)\b/.test(prior));
+  // Complete permission descriptions add scope, not a second requested task.
+  // Unknown roles remain unmapped facts; this does not define their entitlements.
+  if (followsCollaborationAccess && (
+    /^(?:(?:minh|toi|i|we) )?(?:can|need) (?:browse|create|comment|transition)(?:\/(?:browse|create|comment|transition))+(?:, (?:khong can|no) project admin)?[.!]*$/.test(text) ||
+    /^quyen standard agent la du[.!]*$/.test(text)
+  )) return true;
   const startsWithScope =
-    /^(?:(?:minh|toi|i|we)\s+)?(?:only|just|chi|no|not|without|khong|do not|don't)\b/.test(
+    /^(?:(?:minh|toi|i|we|request)\s+)?(?:only|just|chi|no|not|without|khong|do not|don't)\b/.test(
       text,
     );
   const describesAccessScope =
-    /\b(?:user|editor|browse|create issue|transition issue|view|edit|comment|project admin|space admin|server|database|db|firewall|port|rdp)\b/.test(
+    /\b(?:user|editor|browse|create issue|transition issue|view|edit|comment|read(?: only)?|project admin|space admin|server|database|db|firewall|port|rdp)\b/.test(
       text,
     );
   return (
@@ -259,6 +267,7 @@ function isCollaborationScopeContinuation(previous: string, fragment: string) {
 function isGitScopeContinuation(previous: string, fragment: string) {
   if (!/\b(?:github|gitlab|repository|repo)\b/.test(normalize(previous))) return false;
   const text = normalize(fragment);
+  if (/^(?:(?:minh|toi) )?chi doc file [a-z0-9_.-]+(?:, khong push code)?[.!]*$/.test(text)) return true;
   const scope = text.replace(
     /^(?:(?:minh|toi|i|we)\s+)?(?:chi can|only need|only|just)\s+/,
     "",
@@ -285,7 +294,12 @@ function isGitScopeContinuation(previous: string, fragment: string) {
 
 function isVpnDeviceContext(previous: string, fragment: string) {
   return standardVpnAccess(normalize(previous)) &&
-    /^(?:dung laptop cong ty(?: co edr day du)?|(?:using|from) (?:a )?(?:managed|company) laptop(?: with edr)?)[.!]*$/.test(normalize(fragment));
+    /^(?:dung laptop (?:cong ty|corporate)(?: co edr day du)?|thiet bi la laptop managed cua cong ty|(?:using|from) (?:a )?(?:managed|company|corporate) laptop(?: with edr)?)(?: (?:va|and) (?:khong can|no) production route(?: rieng)?)?[.!]*$/.test(normalize(fragment));
+}
+
+function isVpnScopeContinuation(previous: string, fragment: string) {
+  return standardVpnAccess(normalize(previous)) &&
+    /^(?:(?:minh|toi|i|we) )?(?:chi can|only need) access corporate network (?:theo role hien tai|with (?:my |the )?current role)[.!]*$/.test(normalize(fragment));
 }
 
 function isDatabaseAuthorizationContext(previous: string, fragment: string) {
@@ -306,14 +320,16 @@ const approvalContextOperations = /\b(?:please|need|want|grant|give|open|change|
 
 function isApprovalContext(fragment: string, previous?: string) {
   const text = normalize(fragment);
-  const scopeStart = text.search(/,\s*(?=(?:(?:minh|toi|i|we)\s+)?(?:chi can|only need|only|just)\b)/);
+  const scopeStart = text.search(/,\s*(?=(?:(?:minh|toi|i|we)\s+)?(?:chi can|only need|only|just|thiet bi la|dung laptop|using|from)\b)/);
   const claim = scopeStart < 0 ? text : text.slice(0, scopeStart);
   if (scopeStart >= 0 && (!previous || (
     !isGitScopeContinuation(previous, text.slice(scopeStart + 1)) &&
-    !isCollaborationScopeContinuation(previous, text.slice(scopeStart + 1))
+    !isCollaborationScopeContinuation(previous, text.slice(scopeStart + 1)) &&
+    !isVpnScopeContinuation(previous, text.slice(scopeStart + 1)) &&
+    !isVpnDeviceContext(previous, text.slice(scopeStart + 1))
   ))) return false;
   const beginsWithApprover =
-    /^(?:manager|lead|team lead|producer|(?:anh|chi) [a-z]{2,20}\s*,?\s*(?:engineering )?manager)\b/.test(
+    /^(?:(?:[a-z]+ ){0,3}(?:manager|director|lead)|(?:head|chief) of [a-z]+(?: [a-z]+)?|general counsel|truong phong|producer|(?:anh|chi) [a-z]{2,20}\s*,?\s*(?:engineering )?manager)\b/.test(
       claim,
     );
   const claimsApproval = /\b(?:approve|approved|approving|duyet|phe duyet)\b/.test(
@@ -760,7 +776,7 @@ export function extractText(rawText: string): Extraction {
   }
   if (standardVpnAccess(text)) {
     entities.service = "VPN";
-    const source = rawText.match(/\b(?:managed|company) laptop\b|\blaptop (?:managed|công ty|cong ty)\b/i);
+    const source = rawText.match(/\b(?:managed|company|corporate) laptop\b|\blaptop (?:managed|corporate|công ty|cong ty)\b/i);
     const target = rawText.match(/\b(?:qa|dev|development) (?:subnet|network)\b/i);
     if (source) entities.source = source[0];
     if (target) entities.target = target[0];

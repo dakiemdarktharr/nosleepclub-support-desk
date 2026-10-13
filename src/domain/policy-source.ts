@@ -1,7 +1,7 @@
 import type { Decision, Environment, RequestKind, RiskSignal, ServiceGroup } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.14";
+export const POLICY_VERSION = "support-guidance-v5.15";
 export const POLICY_EFFECTIVE_DATE = "2026-10-14";
 
 // Quota values come from the authoritative capacity service at evaluation time.
