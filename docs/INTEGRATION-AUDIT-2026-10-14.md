@@ -12,6 +12,8 @@ Mọi code runtime trong `src/` sau merge giống `aa9ad2c`. Vì vậy cải thi
 
 User đã cung cấp Git name/email cho clone riêng; chỉ đặt local config ở clone này. Workspace gốc không truy cập được, không đụng vào file cũ. Không dùng production database/credentials, không gọi model tính phí, không triển khai thủ công. Thay đổi có AI assistance; không suy ra human review từ Git author.
 
+Code/merge đã kiểm tra: **`02658ca1c3b559f79da25e99b4e1cd81d1ddf94c`**. Đo lại benchmark và sentiment trên commit này: runtimeDirty=false, digest và metrics khớp lượt trước commit. Commit tài liệu tiếp theo chỉ ghi provenance, không đổi runtime.
+
 ## Những thay đổi được giữ
 
 - Ba lỗi ở base đã được main sửa: hồi phục tạm thời không tự đóng ticket; đổi nhóm hỗ trợ xóa loại yêu cầu cũ; SECURITY_CONTROL và PUBLIC_EXPOSURE có rule ID riêng.
