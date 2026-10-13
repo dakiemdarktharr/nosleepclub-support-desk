@@ -145,10 +145,10 @@ it("E09/E10 only asks the next relevant employee facts, with internal approval c
   expect(risk.reviewerQuestions?.length).toBeGreaterThan(0);
 });
 
-it("model budget exhaustion is explicit and never exposes provider errors", async () => {
+it("test-only call guard is explicit and never exposes provider errors", async () => {
   vi.stubEnv("AI_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused-key");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   vi.stubEnv("MONGODB_URI", "");
   let failure: unknown;
   try {

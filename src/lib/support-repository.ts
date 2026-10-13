@@ -168,36 +168,16 @@ export async function updateSupportRequest(
   return structuredClone(draft);
 }
 export async function reserveModelAttempt(now = new Date()): Promise<boolean> {
-  const db = supportDatabase();
-  const configured = Number(process.env.AI_MAX_ATTEMPTS ?? 20);
+  // Production no longer imposes an app-level daily model-call budget.
+  // Keep an in-memory guard only in tests so accidental provider traffic is bounded.
+  if (process.env.NODE_ENV !== "test") return true;
+  const configured = Number(process.env.AI_TEST_MAX_ATTEMPTS ?? 20);
   const limit =
     Number.isInteger(configured) && configured >= 0
       ? Math.min(configured, 50)
       : 0;
   const day = now.toISOString().slice(0, 10);
-  const bucket = `utc-day:${day}`;
-  if (db) {
-    const budgets = db.collection<{ _id: string; attempts: number; day: string }>(
-      "v3_model_budgets",
-    );
-    try {
-      await budgets.updateOne(
-        { _id: bucket },
-        { $setOnInsert: { attempts: 0, day } },
-        { upsert: true },
-      );
-    } catch (error) {
-      if (!(error instanceof MongoServerError) || error.code !== 11000)
-        throw error;
-    }
-    return Boolean(
-      await budgets.findOneAndUpdate(
-        { _id: bucket, attempts: { $lt: limit } },
-        { $inc: { attempts: 1 } },
-        { returnDocument: "after" },
-      ),
-    );
-  }
+  const bucket = `test-utc-day:${day}`;
   const budgets = runtime.supportV3Budgets ??= new Map();
   for (const oldBucket of budgets.keys())
     if (oldBucket !== bucket) budgets.delete(oldBucket);

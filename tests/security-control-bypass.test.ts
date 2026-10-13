@@ -3,7 +3,7 @@ import { previewSupport, submitSupport } from "@/services/support";
 import { getSupportPreview, saveSupportPreview, resetSupportTestStore } from "@/lib/support-repository";
 import { detectedRisks } from "@/domain/text";
 import { POLICY_VERSION } from "@/domain/policy-source";
-beforeEach(() => { vi.stubEnv("MONGODB_URI", ""); vi.stubEnv("AI_PROVIDER", "mock"); vi.stubEnv("AI_MAX_ATTEMPTS", "0"); resetSupportTestStore(); });
+beforeEach(() => { vi.stubEnv("MONGODB_URI", ""); vi.stubEnv("AI_PROVIDER", "mock"); vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0"); resetSupportTestStore(); });
 afterEach(() => vi.unstubAllEnvs());
 it.each(["Bypass MFA", "skip 2FA", "ignore EDR", "Bỏ qua xác thực", "bypass authentication", "skip audit logging", "Ｂｙｐａｓｓ ＭＦＡ", "by\u200bpass MFA", "How do I log in and bypass MFA?"])("escalates control bypass through the real support service: %s", async (rawText) => {
   const row = await submitSupport({ rawText, fields: { department: "engineering", employeeId: "EMP-TEST-01" }, confirmed: true, idempotencyKey: crypto.randomUUID() });

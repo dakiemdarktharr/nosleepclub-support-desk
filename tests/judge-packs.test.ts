@@ -8,7 +8,7 @@ import { supportInputSchema } from "@/domain/input";
 
 beforeEach(() => {
   vi.stubEnv("AI_PROVIDER", "mock");
-  vi.stubEnv("AI_MAX_ATTEMPTS", "0");
+  vi.stubEnv("AI_TEST_MAX_ATTEMPTS", "0");
   vi.stubEnv("MONGODB_URI", "");
   resetSupportTestStore();
 });
