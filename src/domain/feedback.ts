@@ -11,7 +11,11 @@ export function explicitFeedbackChoice(text: string): "RESOLVED" | "ADMIN" | nul
   // Questions, reported/conditional statements and unresolved clauses do not
   // confirm completion. A frustrated user may still explicitly report success.
   const unresolved = normalized.replace(/\bkhong con bi loi\b/g, "resolved");
-  if (/[?？]|\b(?:neu|if|khi nao|when|ban noi|you said|van loi|van con|van vuong|chua|still|next step|buoc tiep theo)\b|\bkhong.{0,25}(?:duoc|ket noi|hoat dong)|\b(?:not|never).{0,20}(?:fixed|solved|work)/.test(unresolved))
+  const recurringFailure =
+    /\b(?:loi|su co|mang|vpn|wifi|ket noi|network|connection)\b.{0,70}\b(?:lai xuat hien|quay lai|rot tiep|roi tiep|ngat tiep|mat ket noi lai|disconnect(?:ed)? again|dropped again|failed again)\b|\b(?:rot|roi|ngat|disconnect(?:ed)?|drop(?:ped)?|fail(?:ed)?)\b.{0,40}\b(?:lai|tiep|again|once more)\b|\b(?:again|once more)\b.{0,40}\b(?:disconnect|drop|fail|break)/.test(
+      unresolved,
+    );
+  if (recurringFailure || /[?？]|\b(?:neu|if|khi nao|when|ban noi|you said|van loi|van con|van vuong|chua|still|next step|buoc tiep theo)\b|\bkhong.{0,25}(?:duoc|ket noi|hoat dong)|\b(?:not|never).{0,20}(?:fixed|solved|work)/.test(unresolved))
     return null;
   return resolvedPatterns.some((pattern) => asserted(normalized, pattern)) ? "RESOLVED" : null;
 }
