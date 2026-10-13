@@ -266,3 +266,22 @@ approver khẩn cấp xác minh, scope hẹp, TTL ngắn, incident ID, audit/c�
 hậu kiểm. Quy tắc dịch vụ cụ thể và giới hạn tích hợp được ghi ở
 [policy decisions](PERSON-A-POLICY-DECISIONS.md); benchmark labels chưa được đổi
 khi chưa có adjudication độc lập.
+
+## Xác nhận 14/10/2026 — thiếu dữ kiện trước quota chưa xác minh
+
+Chủ repo đã chọn trong cuộc hội thoại: **“Hỏi đủ thông tin trước; sau đó kiểm
+tra quota/chuyển người phụ trách”** khi yêu cầu cấp tài nguyên vừa thiếu dữ kiện
+vừa chưa có nguồn capacity/quota. Áp dụng chung, không riêng case 11 GPU.
+Không khôi phục ngưỡng GPU demo đã bỏ ở v5.14. Security và các authority gate
+đã có bằng chứng vẫn ưu tiên; nhánh sizing cần chuyên viên vẫn theo contract
+hiện hữu. Khi đủ dữ kiện, thiếu quota/approval đáng tin cậy vẫn không được AUTO.
+
+v5.15 sửa parser cho phủ định, câu khai báo người duyệt và ngữ cảnh quyền/tài
+liệu; không đổi ngưỡng, quyền hoặc nhãn Ground Truth. Câu “Director approved”
+chỉ là lời khai, không phải xác minh. Hai case GPU 11/24 vẫn cần thẩm định nhãn
+độc lập: nhãn ESCALATE cũ khác hành vi hỏi bổ sung hiện tại. Việc chủ repo chọn
+thứ tự xử lý không thay thế adjudication của tập dữ liệu.
+
+Regression mới dùng dữ liệu giả lập riêng: thiếu facts thì hỏi, đủ facts nhưng
+quota unavailable thì chuyển owner, vi phạm security vẫn chuyển ngay. Xem
+[báo cáo mismatch v5.15](../MISMATCH-REVIEW-2026-10-14.md).
