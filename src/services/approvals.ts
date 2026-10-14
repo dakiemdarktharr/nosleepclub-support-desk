@@ -84,7 +84,7 @@ export function verifyApproval(request: CanonicalRequest): Approval {
     return { status: "not_required", scope: "matched" };
   const reference = request.entities.approvalReference;
   const permissionRank: Record<string, number> = {
-    "read-only": 0,
+    "read only": 0,
     read: 0,
     triage: 1,
     standard: 1,
@@ -93,7 +93,7 @@ export function verifyApproval(request: CanonicalRequest): Approval {
     admin: 4,
     root: 5,
     owner: 5,
-    "cluster-admin": 5,
+    "cluster admin": 5,
   };
   const permissionIsWithinApproval = (requested: string, approved: string) => {
     const requestedRank = permissionRank[normalizeFact(requested)];

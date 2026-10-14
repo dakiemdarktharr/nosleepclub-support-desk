@@ -320,10 +320,13 @@ it.each(["2 giờ", "3 ngày", "30 minutes", "0.5 hours", "2026-12-01T12:00:00Z"
     expect(missingFacts(request)).not.toContain("duration");
   },
 );
-it("does not invent resource lifecycle, data classification, quota or approval evidence", () => {
+it("reads the stated synthetic schema without inventing lifecycle, quota or verified evidence", () => {
   const request = original("gt-routine-006-sandbox-dbt-parser");
+  // The unchanged input explicitly says 'synthetic schema'; this is only a
+  // caller claim. The original AUTO label is still retained by the benchmark.
+  expect(request.entities.dataSensitivity).toBe("synthetic");
   expect(missingFacts(request)).toEqual(expect.arrayContaining([
-    "provider", "disk", "resourceLifecycle", "dataSensitivity",
+    "provider", "disk", "resourceLifecycle",
   ]));
   expect(verifyApproval(request).status).not.toBe("verified");
   expect(evaluatePolicy(request, verifyApproval(request)).action).not.toBe("AUTO_APPROVE");
