@@ -15,7 +15,6 @@ Bắt đầu từ [README sản phẩm](../README.md). Chỉ dùng báo cáo có
 | Quyền/quota và mismatch v5.16 | [Báo cáo](AUTHORITY-REVIEW-2026-10-14.md), [13 quyết định](decisions/DEMO-AUTHORITY-CONTRACT.md) |
 | Mismatch và regression v5.15 | [Báo cáo 39 case](MISMATCH-REVIEW-2026-10-14.md), [metadata và so sánh](MISMATCH-REVIEW-2026-10-14.json) |
 | Bằng chứng sau tích hợp main v5.14 | [Rà soát tích hợp](INTEGRATION-AUDIT-2026-10-14.md) |
-| Feedback đã có trên main | [Báo cáo do chủ repo cung cấp](USER-TEST-FINDINGS.md); đọc giới hạn provenance trong tài liệu |
 | Bằng chứng riêng của base đã chốt | [Rà soát 14/10/2026](REPO-AUDIT-2026-10-14.md) |
 | Thu thập bằng chứng còn thiếu | [Protocol độc lập](INDEPENDENT-EVALUATION-PROTOCOL.md), [slide/video/checklist](SUBMISSION-CONTENT.md) |
 
