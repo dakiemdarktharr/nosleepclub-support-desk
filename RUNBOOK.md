@@ -250,6 +250,47 @@ hợp lệ, quyền model và quota API; thay tên model không sửa được k
 
 ## Hệ thống ID nhân viên
 
+### Sổ quyền và quota demo
+
+Policy v5.16 bổ sung đề xuất TTL có xác nhận và role Jira theo phạm vi được
+giao. [13 quyết định của chủ repo](docs/decisions/DEMO-AUTHORITY-CONTRACT.md)
+không thay nhãn benchmark hoặc bằng chứng IAM/ITSM còn thiếu.
+
+Vào **Cấp ID nhân viên → Sổ quyền và quota DEMO-SANDBOX**. Người đăng nhập
+xin quyền read/create demo cho chính tài khoản; owner xem xét, nhập lý do,
+duyệt/từ chối hoặc thu hồi. Chỉ owner khác người gửi được xử lý. Bản ghi demo
+không cấp quyền thật và không đổi quyết định ticket Support thành AUTO.
+
+Operator được phép thao tác database thử nghiệm riêng có thể khởi tạo một
+pool mới. Không chạy chỉ vì đã push code hoặc thấy MongoDB trống:
+
+1. Dùng cấu hình identity MongoDB hiện hành; cần replica set/transaction.
+   Gọi endpoint profiles để cài validator/index. Không dùng URI production
+   cho kiểm thử, không đưa credentials vào lệnh/chat/Git.
+2. Chuẩn bị file JSON riêng gồm `ownerId` (ID IT giả lập đang ACTIVE), `actor`,
+   `reason`, `validUntil` (ISO UTC, hạn hiệu lực của snapshot usage mới).
+3. Chạy khi đã có thẩm quyền với database đích:
+
+```powershell
+node scripts/demo-authority-bootstrap.mjs --file C:\private\demo-authority.json --database $env:IDENTITY_MONGODB_DB --demo-id-only --apply
+```
+
+Script từ chối project đã tồn tại, owner không có role IT, thiếu validator/index
+hoặc database khác cấu hình. Pool mới có usage/reserved khai báo bằng 0,
+16 vCPU / 64 GB RAM / 500 GB disk / 4 GPU T4, max 24 giờ, budget unconfigured.
+Không seed entitlement hay ticket benchmark. Không chạy script trong CI.
+
+Owner cập nhật usage + giữ chỗ, thời điểm quan sát và hạn hiệu lực qua trang
+sổ demo; API kiểm tra lại role/assignment và version trước khi ghi audit cùng
+transaction. Snapshot cũ/thiếu không được coi usage bằng 0. Kiểm tra preflight
+không đặt chỗ, không tự trừ quota và không thu hồi hạ tầng khi TTL hết.
+Ngân sách/bảng giá chưa cấu hình nên luôn cần Capacity owner; chưa có connector
+để xác minh billing thật. Màn hình hiện hiển thị tối đa 100 đơn mới nhất.
+
+`tests/demo-authority.test.ts` dùng transactional double riêng trong test;
+`tests/e2e/authority.spec.ts` dùng mock UI và API local thiếu Mongo. Những test
+này không chứng minh Mongo transaction/index/concurrency/restart thật.
+
 Hệ thống ID dùng MongoDB riêng, không thay storage Support. Không có memory/CSV fallback. Khi MongoDB không cấu hình/không khả dụng, API trả 503 và UI không xác nhận thành công. Mọi thao tác dưới đây dành cho operator đã có thẩm quyền; không chạy trên production chỉ vì có quyền push code.
 
 ### Cấu hình

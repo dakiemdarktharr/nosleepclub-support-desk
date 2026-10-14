@@ -1,5 +1,34 @@
 # Hướng dẫn sử dụng VNG Support
 
+## Thời hạn đề xuất và sổ quyền demo
+
+Với yêu cầu quyền thông thường thiếu thời hạn, preview có thể đề xuất đọc
+8 giờ, ghi 4 giờ hoặc VPN QA/dev 8 giờ khi đã biết nguồn/đích. Bấm **Dùng … giờ
+và kiểm tra lại** để xác nhận giá trị; preview cũ bị hủy, cần xem lại trước
+khi gửi. Bỏ qua đề xuất thì hệ thống vẫn hỏi thời hạn, không tự điền hoặc
+gia hạn quyền. Entitlement, phạm vi và giới hạn rủi ro vẫn được kiểm tra riêng.
+
+Jira Developer chỉ sửa/chuyển trạng thái ticket được giao trong project được
+cấp. Standard agent xem hàng đợi được cấp và chỉ sửa/chuyển trạng thái ticket
+được giao. Cả hai không có quyền quản trị/xóa/bulk export hoặc duyệt đặc quyền.
+
+**Cấp ID nhân viên → Sổ quyền và quota DEMO-SANDBOX** mở sổ Mongo demo:
+
+1. Người đăng nhập xin quyền read/create trên project demo, ghi thời hạn và
+   lý do. Chỉ báo đã gửi sau khi Mongo lưu thành công.
+2. IT đã được operator gán owner xem đơn, ghi lý do duyệt/từ chối; không tự
+   xử lý đơn mình. Duyệt tạo entitlement demo có hạn; có thể thu hồi và xem
+   audit ở trang cấp ID. Đơn từ chối/thu hồi phải gửi mới, không tự gia hạn.
+3. Nhập tài nguyên và thời gian để kiểm tra quyền/quota. App cộng đang dùng,
+   giữ chỗ và xin thêm. Không coi thiếu snapshot là usage bằng 0; dữ liệu cũ
+   cần owner xác minh lại. GPU chỉ tính T4 trong pool demo.
+4. Ngân sách chưa cấu hình nên còn quota vẫn cần Capacity owner. Thao tác kiểm
+   tra không giữ chỗ, không cấp hạ tầng hoặc đổi quyết định ticket Support.
+
+Nếu sổ chưa khởi tạo, liên hệ operator theo [RUNBOOK](../RUNBOOK.md#sổ-quyền-và-quota-demo).
+Đăng nhập ID-only và mọi bản ghi ở đây đều là demo, không chứng minh danh tính,
+approval ITSM hoặc quyền IAM thật. Chỉ dùng dữ liệu giả lập; xem [contract](decisions/DEMO-AUTHORITY-CONTRACT.md).
+
 
 Trang đầu giữ hai lựa chọn vai trò và thêm nút **Đăng nhập không cần tài khoản** bên dưới:
 

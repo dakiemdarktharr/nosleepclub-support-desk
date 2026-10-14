@@ -4,7 +4,7 @@ Trạng thái: **PARTIAL**. Ngày 2026-10-14, chủ repo cung cấp một báo c
 2026-10-13 về ba người kiểm thử (UT-01/02/03) và xác nhận họ đồng ý công bố
 họ tên cùng phản hồi nguyên văn. Tệp nguồn không đính kèm hồ sơ consent. Báo cáo
 chi tiết, cách tái hiện, sửa lỗi và kiểm tra hồi quy được ghi tại
-[USER-TEST-FINDINGS-2026-10-13.md](USER-TEST-FINDINGS-2026-10-13.md). SHA và cấu hình
+[USER-TEST-FINDINGS.md](USER-TEST-FINDINGS.md). SHA và cấu hình
 triển khai, thời lượng, cùng bằng chứng quy trình/chức danh thực tế chưa có
 trong hồ sơ nguồn nên chưa được xác minh độc lập. Chưa có held-out độc lập.
 AI assistance: Codex.

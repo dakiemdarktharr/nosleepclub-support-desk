@@ -285,3 +285,10 @@ thứ tự xử lý không thay thế adjudication của tập dữ liệu.
 Regression mới dùng dữ liệu giả lập riêng: thiếu facts thì hỏi, đủ facts nhưng
 quota unavailable thì chuyển owner, vi phạm security vẫn chuyển ngay. Xem
 [báo cáo mismatch v5.15](../MISMATCH-REVIEW-2026-10-14.md).
+
+## Xác nhận tiếp theo — entitlement, approval và quota demo
+
+Chủ repo đã trả lời 13 câu hỏi về nguồn quyền, TTL, vai trò Jira, approval,
+quota, ngân sách và phạm vi owner. [Contract có nguồn gốc](DEMO-AUTHORITY-CONTRACT.md)
+ghi từng lựa chọn và giới hạn triển khai v5.16. Không nâng assurance demo
+thành production, không thêm proof vào fixture hoặc tự sửa nhãn để tăng điểm.

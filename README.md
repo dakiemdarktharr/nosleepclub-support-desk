@@ -28,6 +28,14 @@ Các tính năng vẫn có: gửi tự do/theo danh mục, clarification, hội 
 
 ## Bằng chứng hiện tại
 
+Lượt tiếp theo, **v5.16**, bắt đầu tại main `72557a2`: giữ **89/128 exact-match
+(69,53%), 39 mismatch** trên fixture development mock/memory. Hai case Jira
+không còn thiếu định nghĩa vai trò nhưng vẫn thiếu thời hạn/quyền đã xác minh.
+Không thay nhãn gốc, không đưa quyền/quota demo vào benchmark. [Báo cáo mới](docs/AUTHORITY-REVIEW-2026-10-14.md)
+ghi SHA, so sánh từng case và kết quả kiểm thử. **Không có bằng chứng đạt 9,5/10.**
+
+### Lịch sử v5.15
+
 Rà soát mismatch **14/10/2026**, base main `fb76162` → commit code `d585d02` / policy v5.15. Đo lại 128 fixture development trên từng SHA, **local, mock/memory, không gọi API model**; giữ nguyên Ground Truth. [Báo cáo từng case và giới hạn](docs/MISMATCH-REVIEW-2026-10-14.md) · [Metadata máy đọc](docs/MISMATCH-REVIEW-2026-10-14.json). Đây không phải held-out hay accuracy tổng quát.
 
 | Phép đo | Base → bản sửa | Ý nghĩa |
@@ -60,7 +68,7 @@ flowchart TD
   J --> D
 ```
 
-Policy **v5.15** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
+Policy **v5.16** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
 
 ## Workflow chi tiết theo module
 
@@ -121,6 +129,29 @@ flowchart TB
 Model ID lấy từ cấu hình `AI_MODEL` (mẫu hiện tại `gpt-6-luna`), không chứng minh tài khoản API có quyền dùng model đó. Mock không gọi API; lỗi model/provider quota/validation ghi rõ fallback. Retrieval dùng **BM25**, không có embedding/vector database. Preview có TTL 10 phút; dữ liệu lưu gắn policy version. Audit lưu căn cứ quyết định, không lưu chain-of-thought. [Chi tiết module và nhánh xử lý](docs/ARCHITECTURE.md) · [Retrieval](docs/RAG-RETRIEVAL.md) · [Sentiment](docs/SENTIMENT-EVALUATION.md).
 
 ## Đăng nhập, cấp ID và phạm vi quyền
+
+### Thời hạn và quyền demo
+
+Nếu yêu cầu quyền thông thường thiếu thời hạn, preview có thể đề xuất **đọc
+8 giờ / ghi 4 giờ**, hoặc **VPN QA/dev 8 giờ** khi đã biết nguồn và đích.
+Bấm **Dùng … giờ và kiểm tra lại**, rồi xem preview mới trước khi gửi. Không
+tự điền thời hạn hoặc tự cấp/gia hạn quyền. Production, quyền nhạy cảm và
+yêu cầu cloud không dùng mặc định này. Vai trò Jira Developer/standard agent
+giới hạn thao tác theo ticket/hàng đợi được giao; tên role không chứng minh
+entitlement.
+
+Trong **Cấp ID nhân viên → Sổ quyền và quota DEMO-SANDBOX**, người đăng nhập
+có thể xin quyền demo, theo dõi quyết định và kiểm tra quota. IT chỉ được
+duyệt khi operator đã gán owner của project này; không tự duyệt đơn mình.
+Sổ lưu bằng MongoDB identity, có version, idempotency và audit cùng giao dịch.
+Không bootstrap tự động và chưa được khởi tạo trên Mongo thật trong lượt này.
+
+Pool giả lập: **16 vCPU, 64 GB RAM, 500 GB disk, 4 GPU T4; tối đa 24 giờ**.
+Kiểm tra cộng cả usage + giữ chỗ + yêu cầu mới; snapshot thiếu/hết hiệu lực
+không coi usage bằng 0. **Ngân sách chưa cấu hình vẫn chuyển owner** dù còn
+quota. Approval và entitlement demo không thay quyết định Support, không
+được coi là IAM/ITSM thật và không cấp hạ tầng. Xem [contract 13 quyết định](docs/decisions/DEMO-AUTHORITY-CONTRACT.md)
+và [hướng dẫn operator](RUNBOOK.md#sổ-quyền-và-quota-demo).
 
 ### Đăng nhập không mật khẩu
 
