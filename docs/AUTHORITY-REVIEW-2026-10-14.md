@@ -29,7 +29,8 @@ index, schema validation, idempotency và version CAS. Chặn tự duyệt, IT c
 được gán owner, ID vô hiệu hóa và quyền hết hạn. Không có memory fallback.
 CLI bootstrap opt-in không chạy trong lượt này; không thay dữ liệu production.
 
-Báo cáo phản hồi người dùng được gỡ khỏi cây mã nguồn công khai theo yêu cầu chủ repo; tài liệu lịch sử này không sao chép nội dung phản hồi.
+Báo cáo phản hồi người dùng được gỡ khỏi cây mã nguồn công khai theo yêu cầu chủ repo;
+tài liệu lịch sử này không sao chép nội dung phản hồi.
 
 ## So sánh development
 
