@@ -1,6 +1,9 @@
 # Protocol thu thập bằng chứng độc lập
 
-Trạng thái: **PARTIAL**. Báo cáo feedback của ba người kiểm thử đã được gỡ khỏi cây mã nguồn công khai theo yêu cầu chủ repo. Protocol này không lưu tên, trích dẫn nguyên văn hoặc chi tiết nhận dạng. Việc gỡ báo cáo khỏi repository không phủ nhận việc feedback đã được thu thập. Chưa có held-out độc lập.
+Trạng thái: **PARTIAL**. Báo cáo feedback của ba người kiểm thử đã được gỡ khỏi cây mã
+nguồn công khai theo yêu cầu chủ repo. Protocol này không lưu tên, trích dẫn nguyên văn
+hoặc chi tiết nhận dạng. Việc gỡ báo cáo khỏi repository không phủ nhận việc feedback
+đã được thu thập. Chưa có held-out độc lập.
 AI assistance: Codex.
 
 ## 1. Người phụ trách và quyền sử dụng
@@ -15,7 +18,13 @@ nêu mục đích, dữ liệu thu, thời gian giữ, quyền dừng/rút trư�
 người được truy cập, có quay màn hình hay không và quyền trích dẫn. Không tạo
 tên, chức danh hoặc chữ ký thay họ. Mỗi người tự viết phản hồi.
 
-Danh tính, chức danh thật, consent và văn bản gốc giữ trong kho riêng có kiểm soát truy cập. Bản công khai mặc định dùng mã người tham gia. Chỉ công bố tên hoặc trích dẫn nguyên văn khi consent nêu rõ phạm vi đó; không suy ra quyền công bố chức danh hay thông tin cá nhân khác từ consent trích dẫn. Hồ sơ consent không được lưu trong repository này; nhóm phụ trách cần xác minh và quản lý riêng phạm vi công bố trước khi đưa thông tin định danh vào tài liệu. Chỉ dùng ticket synthetic hoặc dữ liệu tổ chức được phép và đã ẩn danh trước khi nhập app.
+Danh tính, chức danh thật, consent và văn bản gốc giữ trong kho riêng có kiểm soát truy
+cập. Bản công khai mặc định dùng mã người tham gia. Chỉ công bố tên hoặc trích dẫn
+nguyên văn khi consent nêu rõ phạm vi đó; không suy ra quyền công bố chức danh hay
+thông tin cá nhân khác từ consent trích dẫn. Hồ sơ consent không được lưu trong
+repository này; nhóm phụ trách cần xác minh và quản lý riêng phạm vi công bố trước
+khi đưa thông tin định danh vào tài liệu. Chỉ dùng ticket synthetic hoặc dữ liệu tổ
+chức được phép và đã ẩn danh trước khi nhập app.
 
 ## 2. Đóng băng tập held-out trước khi chạy
 
@@ -72,7 +81,11 @@ Giữ verbatim feedback; AI có thể hỗ trợ phân loại nhưng không vi�
 
 ## 5. Phạm vi báo cáo feedback trong repository
 
-Báo cáo ghi nhận feedback của ba người đã được gỡ khỏi cây mã nguồn công khai theo yêu cầu chủ repo. Protocol này không sao chép tên, trích dẫn nguyên văn hoặc chi tiết từng trường hợp. Thông tin này mô tả trạng thái repository; không phủ nhận việc feedback đã được thu thập. Feedback người dùng cũng không tự thay thế held-out độc lập, phép đo tác động trước/sau hoặc retest trên đúng SHA.
+Báo cáo ghi nhận feedback của ba người đã được gỡ khỏi cây mã nguồn công khai theo
+yêu cầu chủ repo. Protocol này không sao chép tên, trích dẫn nguyên văn hoặc chi tiết
+từng trường hợp. Thông tin này mô tả trạng thái repository; không phủ nhận việc
+feedback đã được thu thập. Feedback người dùng cũng không tự thay thế held-out độc
+lập, phép đo tác động trước/sau hoặc retest trên đúng SHA.
 
 ## 6. Biểu mẫu cho lượt đánh giá tiếp theo
 
@@ -89,4 +102,6 @@ Báo cáo ghi nhận feedback của ba người đã được gỡ khỏi cây m
 | Phản hồi nguyên văn do chính người dùng viết | Lưu riêng; chỉ trích dẫn khi consent cho phép |
 | Cải tiến từ phản hồi → issue/commit → thử lại | Liên kết feedback, thay đổi cụ thể và lượt retest |
 
-Một cải tiến chỉ được tính là từ người dùng sau khi nối được feedback gốc, quyết định thay đổi, diff và kết quả thử lại. Regression do AI đề xuất trong lượt này không thay thế yêu cầu đó.
+Một cải tiến chỉ được tính là từ người dùng sau khi nối được feedback gốc, quyết định
+thay đổi, diff và kết quả thử lại. Regression do AI đề xuất trong lượt này không thay
+thế yêu cầu đó.
