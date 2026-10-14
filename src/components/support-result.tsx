@@ -2,6 +2,7 @@ import type { CanonicalRequest, Decision } from "@/domain/contracts";
 import { labelForField } from "@/domain/catalog";
 import { intentName } from "@/domain/presentation";
 import { Badge, Card } from "./ui";
+import { jiraRoleProfile } from "@/domain/access-defaults";
 export function SupportResult({
   decision,
   canonical,
@@ -38,6 +39,10 @@ export function SupportResult({
       <p>
         {audience === "reviewer" ? decision.adminReason : decision.userReason}
       </p>
+      {jiraRoleProfile(canonical.entities.accessType) && <p>
+        Vai trò Jira trong demo: {jiraRoleProfile(canonical.entities.accessType)?.description}
+        {" "}Không gồm quản trị, xóa ticket, xuất dữ liệu hoặc phê duyệt đặc quyền; vẫn cần entitlement đúng phạm vi.
+      </p>}
       {canonical.workEvidence && (
         <section aria-label="Yêu cầu bổ sung dữ liệu" className="space-y-3">
           <h3 className="font-semibold">Nguồn đã kiểm tra</h3>

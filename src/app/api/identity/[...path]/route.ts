@@ -6,12 +6,17 @@ import { identityStore, identityTransaction } from "@/lib/identity-store";
 import { supportApi, supportBody } from "@/lib/support-http";
 import { SupportError } from "@/lib/support-repository";
 import { decideIdentityApplication, identityAudit, listIdentityProfiles, submitIdentityApplication, trackIdentityApplication } from "@/services/identity";
+import { mongoDemoAuthority, requestDemoGrant, decideDemoGrant, updateDemoUsage, checkDemoAuthority } from "@/services/demo-authority";
 
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
 export async function GET(request: Request, context: Context) {
   return supportApi(async () => {
     const { path } = await context.params;
+    if (path.join("/") === "authority") {
+      const { employee } = await requireIdentitySession(request);
+      return mongoDemoAuthority.read(employee);
+    }
     if (path.join("/") === "profiles") return listIdentityProfiles();
     if (path.join("/") === "session") {
       const { employee, assurance } = await requireIdentitySession(request);
@@ -37,6 +42,14 @@ export async function POST(request: Request, context: Context) {
     const { path } = await context.params;
     const route = path.join("/");
     const body = await supportBody(request);
+    if (["authority/request", "authority/decision", "authority/usage", "authority/check"].includes(route)) {
+      const { employee } = await requireIdentitySession(request);
+      await identityRateLimit(`authority:${employee.id}`, 20);
+      if (route === "authority/request") return successResponse(await requestDemoGrant(body, employee.id));
+      if (route === "authority/decision") return successResponse(await decideDemoGrant(body, employee.id));
+      if (route === "authority/usage") return successResponse(await updateDemoUsage(body, employee.id));
+      return successResponse(await checkDemoAuthority(body, employee));
+    }
     if (route === "verify") throw new SupportError("OTP_REMOVED", "OTP đã được bỏ khỏi bản demo. Đăng nhập lại bằng ID.", 410);
     if (route === "login") {
       await identityRateLimit("authentication", 100);

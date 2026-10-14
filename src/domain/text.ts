@@ -803,6 +803,7 @@ export function extractText(rawText: string): Extraction {
         (mapping.system && mapping.system !== entities.system) ||
         !asserted(text, mapping.pattern)) continue;
     const previous = entities[mapping.field];
+    if (mapping.value === "standard" && ["developer-assigned", "agent-assigned"].includes(previous)) continue;
     if (previous && previous !== mapping.value) riskSignals.push("CONFLICT");
     else entities[mapping.field] = mapping.value;
   }

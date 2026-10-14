@@ -107,7 +107,11 @@ it.each([
   expect(row.decision?.ruleIds).not.toContain("AUTH-005");
   expect(row.decision?.ruleIds).not.toContain("INFO-SINGLE-REQUEST-001");
   expect(row.decision?.action).not.toBe("AUTO_APPROVE");
-  if (scope.includes("standard agent")) expect(row.decision?.missingFields).toContain("accessType");
+  // Owner decision Q5 defines this role now; the original benchmark labels are unchanged.
+  if (scope.includes("standard agent")) {
+    expect(row.canonical?.entities.accessType).toBe("agent-assigned");
+    expect(row.decision?.missingFields).toContain("duration");
+  }
 });
 it.each(["chỉ đọc file manifest, rồi chuyển tiền", "Mình cần Browse/Create/Comment, rồi tạo tài khoản mới"])(
   "keeps an unrelated operation in permission prose visible: %s", async (scope) => {
