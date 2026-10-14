@@ -53,6 +53,12 @@ Mở **Kiểm thử**, chọn lượt đã lưu rồi tiếp tục sau khi lỗi
 
 ## Bảo trì dữ liệu và policy
 
+Policy v5.17 sửa extraction dữ kiện/thời hạn, gắn câu trả lời thời hạn ngắn với
+yêu cầu đang chờ, chuẩn hóa quyền read-only và nhận diện thao tác phá hủy DB.
+Preview/cache v5.16 phải được tạo lại. Rule, ngưỡng, entitlement/approval và
+Ground Truth giữ nguyên. [Báo cáo v5.17](docs/MISMATCH-FOLLOWUP-2026-10-14.md)
+tách cải thiện trace khỏi exact-match; dữ liệu tự khai không trở thành bằng chứng verified.
+
 Đo development trên checkout cần đánh giá (không dùng artifact cũ như kết quả HEAD):
 
 ```powershell

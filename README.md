@@ -28,11 +28,16 @@ Các tính năng vẫn có: gửi tự do/theo danh mục, clarification, hội 
 
 ## Bằng chứng hiện tại
 
-Lượt tiếp theo, **v5.16**, bắt đầu tại main `72557a2`: giữ **89/128 exact-match
-(69,53%), 39 mismatch** trên fixture development mock/memory. Hai case Jira
-không còn thiếu định nghĩa vai trò nhưng vẫn thiếu thời hạn/quyền đã xác minh.
-Không thay nhãn gốc, không đưa quyền/quota demo vào benchmark. [Báo cáo mới](docs/AUTHORITY-REVIEW-2026-10-14.md)
-ghi SHA, so sánh từng case và kết quả kiểm thử. **Không có bằng chứng đạt 9,5/10.**
+Lượt **v5.17**, base main `8eb1f09`: giữ **89/128 exact-match (69,53%), 39
+mismatch** trên fixture development mock/memory; không có regression mới.
+Sửa dữ kiện bị bỏ sót ở 8 case, chuẩn hóa quyền read-only, câu trả lời thời hạn
+ngắn và nhận diện thao tác phá hủy DB. Các blocker quyền/approval vẫn giữ;
+không thay Ground Truth hoặc bổ sung bằng chứng giả để tăng điểm.
+[Báo cáo mới và đối chiếu từng case](docs/MISMATCH-FOLLOWUP-2026-10-14.md).
+**Không có bằng chứng đạt 9,5/10.**
+
+Lịch sử [v5.16 và sổ quyền/quota demo](docs/AUTHORITY-REVIEW-2026-10-14.md):
+hai role Jira được định nghĩa, TTL có xác nhận và owner chỉ DEMO-SANDBOX.
 
 ### Lịch sử v5.15
 
@@ -68,7 +73,7 @@ flowchart TD
   J --> D
 ```
 
-Policy **v5.16** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
+Policy **v5.17** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
 
 ## Workflow chi tiết theo module
 

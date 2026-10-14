@@ -1,0 +1,1757 @@
+{
+  "reviewDate": "2026-10-14",
+  "provenance": {
+    "sourceRevision": "4a537625b615bd3408b7fc86d90122cbbd478d5d",
+    "runtimeDirty": false,
+    "runtimeDigest": "2c6e0da1ce653af1d77eca1f9b0deafdd6686393b1b85d3336d7daed3922fccc",
+    "node": "v24.18.0",
+    "storage": "memory-demo",
+    "model": "mock-no-api-call",
+    "policy": "support-guidance-v5.17",
+    "dataset": {
+      "id": "legacy-original-128",
+      "split": "development",
+      "labelStatus": "not-independently-adjudicated",
+      "count": 128,
+      "sha256": "e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da",
+      "packs": [
+        "official-original",
+        "ground-truth-original"
+      ],
+      "inputTransform": "employeeFixture supplies missing department and synthetic employeeId only"
+    },
+    "evaluator": {
+      "sha256": "8c749d3f9668ebc412f398cf517d81042ed03deb2bf6c688b95506dd2eb404a3",
+      "dirty": false
+    }
+  },
+  "baselineProvenance": {
+    "sourceRevision": "8eb1f0973fa0500592d1fef96970c1206a824454",
+    "runtimeDirty": false,
+    "runtimeDigest": "67b56feb2321a5d533ed11560020c68b4bfc734fbfb12fda273e0f3b732544e3",
+    "node": "v24.18.0",
+    "storage": "memory-demo",
+    "model": "mock-no-api-call",
+    "policy": "support-guidance-v5.16",
+    "dataset": {
+      "id": "legacy-original-128",
+      "split": "development",
+      "labelStatus": "not-independently-adjudicated",
+      "count": 128,
+      "sha256": "e817c4ac2fe64d7231b6664070703a12f74c00ecd312f958041720e7cbd6a1da",
+      "packs": [
+        "official-original",
+        "ground-truth-original"
+      ],
+      "inputTransform": "employeeFixture supplies missing department and synthetic employeeId only"
+    },
+    "evaluator": {
+      "sha256": "8c749d3f9668ebc412f398cf517d81042ed03deb2bf6c688b95506dd2eb404a3",
+      "dirty": false
+    }
+  },
+  "evidenceType": "synthetic-development-mock-memory",
+  "datasetIdentity": "digest-verified",
+  "originalGroundTruthChanged": false,
+  "independentHeldOut": "NOT_COLLECTED_BY_THIS_TASK",
+  "liveModelVerification": "NOT_PERFORMED",
+  "persistenceVerification": "NOT_PERFORMED",
+  "before": {
+    "total": 128,
+    "exactMatch": {
+      "count": 89,
+      "rate": 0.6953125,
+      "definition": "action + bucket + expected rule if supplied; unavailable counts as non-match"
+    },
+    "confusionMatrix": {
+      "AUTO_APPROVE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 26,
+        "ESCALATE": 8
+      },
+      "NEEDS_INFORMATION": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 0,
+        "ESCALATE": 0
+      },
+      "ESCALATE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 2,
+        "ESCALATE": 92
+      }
+    },
+    "binaryEscalation": {
+      "tp": 92,
+      "tn": 26,
+      "fp": 8,
+      "fn": 2,
+      "falseNegativeRate": 0.02127659574468085,
+      "unnecessaryEscalationRate": 0.23529411764705882,
+      "definition": "ESCALATE is positive; NEEDS_INFORMATION is negative; unavailable excluded"
+    },
+    "routineEscalated": 8,
+    "routineAskedForInformation": 26,
+    "expectedEscalationAutoApproved": 0,
+    "expectedEscalationAskedForInformation": 2,
+    "coverage": 1,
+    "readbackPassed": 128
+  },
+  "after": {
+    "total": 128,
+    "exactMatch": {
+      "count": 89,
+      "rate": 0.6953125,
+      "definition": "action + bucket + expected rule if supplied; unavailable counts as non-match"
+    },
+    "confusionMatrix": {
+      "AUTO_APPROVE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 26,
+        "ESCALATE": 8
+      },
+      "NEEDS_INFORMATION": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 0,
+        "ESCALATE": 0
+      },
+      "ESCALATE": {
+        "AUTO_APPROVE": 0,
+        "NEEDS_INFORMATION": 2,
+        "ESCALATE": 92
+      }
+    },
+    "binaryEscalation": {
+      "tp": 92,
+      "tn": 26,
+      "fp": 8,
+      "fn": 2,
+      "falseNegativeRate": 0.02127659574468085,
+      "unnecessaryEscalationRate": 0.23529411764705882,
+      "definition": "ESCALATE is positive; NEEDS_INFORMATION is negative; unavailable excluded"
+    },
+    "routineEscalated": 8,
+    "routineAskedForInformation": 26,
+    "expectedEscalationAutoApproved": 0,
+    "expectedEscalationAskedForInformation": 2,
+    "coverage": 1,
+    "readbackPassed": 128
+  },
+  "regressedExactPass": [],
+  "changedCases": [
+    {
+      "caseId": "TC002",
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ]
+    },
+    {
+      "caseId": "TC005",
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ]
+    },
+    {
+      "caseId": "gt-routine-006-sandbox-dbt-parser",
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ]
+    },
+    {
+      "caseId": "gt-routine-015-sandbox-otel",
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ]
+    },
+    {
+      "caseId": "gt-authority-008-eleven-gpu",
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "ASK_VS_ESCALATE_CONTRACT_REVIEW"
+      ]
+    },
+    {
+      "caseId": "xcf-routine-005-salesops-jira-crm",
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration",
+          "reason"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED"
+      ]
+    },
+    {
+      "caseId": "xcf-routine-006-marketing-sandbox-webhook",
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ]
+    },
+    {
+      "caseId": "xcf-routine-010-comms-sandbox-preview",
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "subrequests": []
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle"
+        ],
+        "subrequests": []
+      },
+      "beforeExact": false,
+      "afterExact": false,
+      "diagnosticSignals": [
+        "MISSING_FACTS_REPORTED",
+        "APPROVAL_VERIFICATION_FAILED"
+      ]
+    }
+  ],
+  "remainingMismatches": [
+    {
+      "caseId": "verify-001-github-access",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "verify-002-small-sandbox",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "TC001",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "TC002",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "pending"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle"
+        ],
+        "approvalStatus": "pending"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "TC003",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "TC004",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-SINGLE-REQUEST-001"
+        ],
+        "missingFields": [
+          "singleRequest"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-SINGLE-REQUEST-001"
+        ],
+        "missingFields": [
+          "singleRequest"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "TC005",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-001-github-monorepo",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-002-confluence-rdp-runbook",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-003-jira-firewall-review",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-004-vpn-data-oncall",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-005-sandbox-webhook",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-006-sandbox-dbt-parser",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-007-github-blockchain-audit",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-008-jira-game-incident",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-009-confluence-prod-db-sop",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-010-vpn-qa-network",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-011-sandbox-k3s",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-012-github-actions-read",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-013-confluence-kafka-docs",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-014-jira-dataops-board",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-routine-015-sandbox-otel",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-authority-001-pubg-prod-write",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope"
+        ],
+        "approvalStatus": "pending"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-003",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope"
+        ],
+        "approvalStatus": "pending"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-authority-007-production-dump",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ],
+        "approvalStatus": "pending"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ],
+        "approvalStatus": "pending"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "gt-authority-008-eleven-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "duration",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "pending"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "pending"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-001-hr-confluence-onboarding",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-002-finance-vpn-month-end",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "target",
+          "environment",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "target",
+          "environment",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-003-legal-jira-dsar",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-004-procurement-github-sbom",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-005-salesops-jira-crm",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration",
+          "reason"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-006-marketing-sandbox-webhook",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "resourceLifecycle"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-007-customer-care-vpn",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "target",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "target",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-008-facilities-jira-maintenance",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-009-audit-confluence-controls",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-010-comms-sandbox-preview",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY",
+        "rules": [
+          "AUTH-007"
+        ],
+        "missingFields": [
+          "provider",
+          "disk",
+          "resourceLifecycle"
+        ],
+        "approvalStatus": "unverifiable"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-011-eventops-vpn",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "target",
+          "environment",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-VPN-001"
+        ],
+        "missingFields": [
+          "target",
+          "environment",
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-routine-012-executive-confluence-boardpack",
+      "expected": {
+        "action": "AUTO_APPROVE",
+        "bucket": "ROUTINE"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001",
+          "FACT-COLLAB-001"
+        ],
+        "missingFields": [
+          "duration"
+        ],
+        "approvalStatus": "not_required"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-authority-004-privacy-zalo-export",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "before": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ],
+        "approvalStatus": "pending"
+      },
+      "after": {
+        "action": "ESCALATE",
+        "bucket": "SECURITY_RISK",
+        "rules": [
+          "SEC-005",
+          "AUTH-002",
+          "AUTH-001"
+        ],
+        "missingFields": [
+          "system",
+          "resourceScope",
+          "operation",
+          "dataSensitivity",
+          "destination"
+        ],
+        "approvalStatus": "pending"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    },
+    {
+      "caseId": "xcf-authority-009-creative-render-gpu",
+      "expected": {
+        "action": "ESCALATE",
+        "bucket": "BEYOND_AUTHORITY"
+      },
+      "before": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "pending"
+      },
+      "after": {
+        "action": "NEEDS_INFORMATION",
+        "bucket": "MISSING_INFO",
+        "rules": [
+          "INFO-001"
+        ],
+        "missingFields": [
+          "provider",
+          "environment",
+          "gpuType",
+          "resourceLifecycle",
+          "dataSensitivity"
+        ],
+        "approvalStatus": "pending"
+      },
+      "reviewStatus": "requires-expert-adjudication-or-missing-evidence-not-relabelled"
+    }
+  ],
+  "validation": {
+    "unit": {
+      "passed": 976,
+      "skipped": 1
+    },
+    "newSyntheticRegressions": 42,
+    "committedBenchmark": {
+      "passedTests": 22,
+      "cases": 128
+    },
+    "scripts": {
+      "passed": 18
+    },
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "e2eDesktop": {
+      "passed": 76
+    },
+    "e2eMobile": {
+      "passed": 75,
+      "skipped": 1,
+      "skipReason": "desktop-only demo video"
+    },
+    "persistence": {
+      "skipped": 1,
+      "reason": "no isolated Mongo URI/ack; no connection attempted"
+    }
+  }
+}
