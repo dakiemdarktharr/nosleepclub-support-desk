@@ -23,6 +23,7 @@ import {
   singleRequestPolicy,
 } from "./policy-source";
 import { normalize, normalizeFact, teamFor } from "./text";
+import { jiraRoleProfile } from "./access-defaults";
 
 // Verified approval is supplied by a server-only verifier, never by input fields or model output.
 export type Approval = {
@@ -68,6 +69,8 @@ export type PolicyEvidence = {
     evaluationComplete?: boolean;
   };
   accessTtlWithinPolicy?: boolean;
+  // Server evidence must verify assignment boundaries, not just a role name.
+  jiraRoleScope?: "assigned-tickets" | "assigned-queue";
   endpointManaged?: "verified" | "unmanaged" | "unknown";
   vpnSubnet?: "approved" | "denied" | "unknown";
   vpnDurationWithinPolicy?: boolean;
@@ -1199,7 +1202,11 @@ function evaluateSinglePolicy(
   const actionText = normalizeFact(request.requestedAction);
   const jiraReadOrTicketUpdate =
     targetSystem.includes("jira") &&
+    (!jiraRoleProfile(requestedPermission(request)) ||
+      jiraRoleProfile(requestedPermission(request))?.scope === evidence.jiraRoleScope) &&
     (["read-only", "read", "standard"].includes(requestedPermission(request)) ||
+      (jiraRoleProfile(requestedPermission(request)) !== undefined &&
+        jiraRoleProfile(requestedPermission(request))?.scope === evidence.jiraRoleScope) ||
       request.intentLabel === "JIRA_TICKET_UPDATE" ||
       /(?:update|edit|comment).*(?:ticket|issue)|(?:ticket|issue).*(?:update|edit|comment)/.test(actionText));
   const confluenceReadOrPageEdit =

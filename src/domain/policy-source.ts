@@ -1,7 +1,7 @@
 import type { Decision, Environment, RequestKind, RiskSignal, ServiceGroup } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.15";
+export const POLICY_VERSION = "support-guidance-v5.16";
 export const POLICY_EFFECTIVE_DATE = "2026-10-14";
 
 // Quota values come from the authoritative capacity service at evaluation time.
@@ -315,6 +315,10 @@ export const permissionMappings: Array<{
 }> = [
   { serviceGroup: "GIT_PERMISSION", field: "permission", value: "write",
     pattern: /\b(?:push (?:a |the )?(?:branch|code)|day (?:branch|code))\b/ },
+  { serviceGroup: "ACCOUNT_ACCESS", system: "jira", field: "accessType", value: "developer-assigned",
+    pattern: /\b(?:(?:role|vai tro|quyen) developer|developer role)\b/ },
+  { serviceGroup: "ACCOUNT_ACCESS", system: "jira", field: "accessType", value: "agent-assigned",
+    pattern: /\b(?:(?:role|vai tro|quyen) standard agent|standard agent role)\b/ },
   { serviceGroup: "ACCOUNT_ACCESS", system: "jira", field: "accessType", value: "standard",
     pattern: /\b(?:browse|create (?:issues?|tickets?)|transition (?:issues?|tickets?)|role user|user(?:\/editor)? role)\b/ },
   { serviceGroup: "ACCOUNT_ACCESS", system: "confluence", field: "accessType", value: "write",

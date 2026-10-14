@@ -1,5 +1,6 @@
 import { MongoClient, type ClientSession, type Db } from "mongodb";
 import { SupportError } from "./support-repository";
+import { demoAuthorityValidators } from "./demo-authority-validation";
 
 const runtime = globalThis as typeof globalThis & { identityMongo?: { uri: string; name: string; client: MongoClient }; identityIndexes?: Promise<void> };
 const validators = {
@@ -9,7 +10,7 @@ const validators = {
   identity_audit: { required: ["id", "at", "actor", "action", "subject", "reason"], properties: { id: { bsonType: "string" }, at: { bsonType: "string" }, actor: { bsonType: "string" }, action: { bsonType: "string" }, subject: { bsonType: "string" }, reason: { bsonType: "string" } } },
 } as const;
 async function initializeIdentity(db: Db) {
-  for (const [name, schema] of Object.entries(validators)) {
+  for (const [name, schema] of Object.entries({ ...validators, ...demoAuthorityValidators })) {
     const validator = { $jsonSchema: { bsonType: "object", ...schema } };
     try { await db.createCollection(name, { validator, validationLevel: "strict", validationAction: "error" }); }
     catch (error) {
@@ -34,6 +35,9 @@ export async function identityStore(): Promise<{ db: Db; client: MongoClient }> 
     await db.command({ ping: 1 });
     runtime.identityIndexes ??= initializeIdentity(db).then(() => Promise.all([
       db.collection("identity_employees").createIndex({ id: 1 }, { unique: true }),
+      db.collection("identity_demo_pool").createIndex({ id: 1 }, { unique: true }),
+      db.collection("identity_demo_grants").createIndex({ id: 1 }, { unique: true }),
+      db.collection("identity_demo_grants").createIndex({ employeeId: 1, status: 1, expiresAt: 1 }),
       db.collection("identity_profiles").createIndex({ id: 1, version: 1 }, { unique: true }),
       db.collection("identity_applications").createIndex({ id: 1 }, { unique: true }),
       db.collection("identity_applications").createIndex({ status: 1, createdAt: -1 }),

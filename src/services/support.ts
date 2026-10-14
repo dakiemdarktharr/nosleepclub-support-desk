@@ -22,6 +22,7 @@ import type {
 } from "@/domain/contracts";
 import { supportInputSchema } from "@/domain/input";
 import { POLICY_VERSION } from "@/domain/policy-source";
+import { proposeAccessDuration } from "@/domain/access-defaults";
 import { evaluatePolicy } from "@/domain/policy";
 import { extractIntake, safeInput } from "@/domain/text";
 import {
@@ -256,6 +257,7 @@ export async function previewSupport(value: unknown, options: ModelOptions = {})
     assistance: preview.assistance,
     sentiment: preview.sentiment,
     expiresAt: preview.expiresAt,
+    durationProposal: proposeAccessDuration(preview.canonical),
   };
 }
 async function waitForDecision(request: SupportRequest) {

@@ -17,6 +17,7 @@ import { EmployeeIdentityFields } from "@/components/employee-identity-fields";
 import { intentName, optionName } from "@/domain/presentation";
 import { extractIntake } from "@/domain/text";
 import { missingFacts } from "@/domain/policy";
+import type { DurationProposal } from "@/domain/access-defaults";
 import {
   requestKinds,
   serviceGroups,
@@ -36,6 +37,7 @@ import { SentimentPreview } from "@/components/sentiment-preview";
 import { SupportField } from "@/components/support-field";
 import { AssistanceHistory } from "@/components/support-history";
 type Preview = {
+  durationProposal?: DurationProposal | null;
   input: SupportInput;
   canonical: CanonicalRequest;
   decision: Decision;
@@ -382,6 +384,13 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
                   : "Bản xem trước chưa tạo hồ sơ. Kiểm tra thông tin rồi xác nhận gửi bên dưới."}
               </p>
               {!isConversation && <SupportResult {...preview} />}
+              {preview.durationProposal && <div className="identity-card" role="group" aria-label="Thời hạn đề xuất">
+                <p>{preview.durationProposal.label}</p>
+                <p>Chỉ áp dụng cho quyền thông thường. Đây chưa phải quyết định cấp quyền và không tự gia hạn.</p>
+                <Button type="button" variant="secondary" disabled={busy} onClick={() => edit({
+                  fields: { ...input.fields, duration: preview.durationProposal!.value }, confirmed: false,
+                })}>Dùng {preview.durationProposal.hours} giờ và kiểm tra lại</Button>
+              </div>}
               {preview.assistance && (
                 <AssistanceHistory items={[preview.assistance]} />
               )}
