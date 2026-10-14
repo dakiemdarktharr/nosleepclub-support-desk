@@ -20,6 +20,9 @@ const factLabels: Record<string, string> = {
   source: "source|nguồn", target: "target|đích", reason: "reason|lý do|mục đích",
   operation: "operation|thao tác", repository: "repository|repo", pipeline: "pipeline",
   provider: "provider|nhà cung cấp",
+  duration: "duration|thời hạn|thoi han|TTL",
+  dataSensitivity: "dataSensitivity|data classification|phân loại dữ liệu",
+  resourceLifecycle: "resourceLifecycle|resource lifecycle|vòng đời tài nguyên",
 };
 
 export function normalize(text: string) {
@@ -43,6 +46,48 @@ export function normalizeFact(value: string) {
     .replace(/\b(?:chi doc|chi xem|read only)\b/g, "read only")
     .replace(/\b(?:gio|tieng|hrs?|hours?)\b/g, "hours")
     .replace(/\b(?:ngay|days?)\b/g, "days");
+}
+
+// Lexical facts only. A relative weekday/sprint needs clarification, not a
+// guessed timestamp; a numeric TTL does not prove an ephemeral lifecycle.
+const relativeDuration = /\b(?:dung den|thoi han den|until)\s+(?:het\s+)?(?:thu (?:hai|ba|tu|nam|sau|bay)|cuoi sprint|cuoi tuan|ngay mai|end of (?:sprint|week)|friday)\b/;
+
+function statedDuration(rawText: string) {
+  const range = rawText.normalize("NFKC").match(/\d+(?:\.\d+)?\s*(?:to|đến|den|[-–])\s*\d+(?:\.\d+)?\s*(?:hours?|hrs?|h\b|days?|ngày|ngay|giờ|gio|tiếng|tieng|phút|phut|minutes?)(?![A-Za-z])/i);
+  if (range) return range[0]; // Preserve ambiguity so missingFacts asks, not choose the smaller interval.
+  const numeric = [...rawText.normalize("NFKC").matchAll(
+    /(?<![\w.])[-+−–]?\d+(?:\.\d+)?\s*(?:hours?|hrs?|h\b|days?|ngày|ngay|giờ|gio|tiếng|tieng|phút|phut|minutes?)(?![A-Za-z])/gi,
+  )];
+  const intervals = [...new Set(numeric.map(match =>
+    `${/^[-−–]/.test(match[0]) ? "negative " : ""}${normalizeFact(match[0])}`,
+  ))];
+  if (intervals.length > 1) return intervals.join(" / ");
+  if (numeric.length) return numeric[0][0];
+  const text = normalize(rawText.replace(/\r?\n/g, ";"));
+  const counts: Record<string, number> = { mot: 1, hai: 2, ba: 3, bon: 4, nam: 5, sau: 6, bay: 7, tam: 8, chin: 9, muoi: 10,
+    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+  const words = text.match(/(?:\b(?:trong|for|ttl|duration|thoi han)\s*[:=]?\s*|(?:^|;)\s*)(mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi|one|two|three|four|five|six|seven|eight|nine|ten)\s+(ngay|days?|gio|tieng|hours?|phut|minutes?)\b/);
+  if (words) {
+    const prefix = text.slice(0, words.index).split(/[,;.\n]|\b(?:but|nhung|va|and)\b/).at(-1) ?? "";
+    if (!/\b(?:khong|chua|not|no|without|if|neu)\b/.test(prefix)) return normalizeFact(`${counts[words[1]]} ${words[2]}`);
+  }
+  return text.match(relativeDuration)?.[0];
+}
+
+function statedDataClassification(text: string) {
+  // Never promote a caller's description into verified PolicyEvidence.
+  const sensitive = asserted(text, /\b(?:customer|personal|sensitive|confidential|restricted|regulated)\s+data\b|\bdu lieu (?:khach hang|ca nhan|nhay cam)\b/);
+  if (sensitive) return "sensitive";
+  const pattern = /\bsynthetic (?:data|schema|traces|leads)\b|\bdata (?:la|is) synthetic\b|\bdu lieu gia(?: lap)?\b/g;
+  for (const match of text.matchAll(pattern)) {
+    const prefix = text.slice(0, match.index).split(/[,;.\n]|\b(?:but|nhung|va|and)\b/).at(-1) ?? "";
+    if (!/\b(?:khong|chua|not|no|without|if|neu)\b/.test(prefix)) return "synthetic";
+  }
+  return undefined;
+}
+
+function isDurationOnlyContext(fragment: string) {
+  return /^(?:(?:trong|for)\s+)?(?:\d+(?:\.\d+)?|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:hours?|hrs?|h|days?|ngay|gio|tieng|phut|minutes?)[.!]*$/.test(normalize(fragment));
 }
 // Negation is local to the matched phrase; it cannot cancel a later risky subrequest.
 export function asserted(text: string, pattern: RegExp) {
@@ -70,6 +115,11 @@ function hasDirectDatabaseOperation(text: string) {
     // Other clauses (including comma-separated database access) remain checked.
     /\b(?:read|write|update|drop|delete|export|dump|query|connect|access)\b(?:(?!\b(?:page|document)\s+(?:co tieu de|is titled|titled)\b).){0,30}\b(?:(?:production|prod)\s+)?(?:database|db)\b|\b(?:(?:production|prod)\s+)?(?:database|db)\s+(?:access|read|write|update|drop|delete|export|dump|query)\b/,
   );
+}
+
+function hasDestructiveDatabaseOperation(text: string) {
+  return asserted(text, /\b(?:drop|delete|truncate|xoa)\s+(?:(?:production|prod|staging|sandbox|development|dev)\s+)?(?:database|db|table|bang|co so du lieu)\b|\bdelete from (?:table|bang)\b/) ||
+    (hasDirectDatabaseOperation(text) && asserted(text, /\bdelete from\b/));
 }
 
 function refersToExistingResource(text: string, resources: string) {
@@ -489,7 +539,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   )
     risks.add("PRODUCTION_CHANGE");
   if (
-    asserted(
+    hasDestructiveDatabaseOperation(text) || asserted(
       text,
       /\bwipe\b|xoa (?:het|toan bo)|factory reset|khoi phuc cai dat goc|format disk|drop table|drop bang|data delete|delete resource/,
     )
@@ -653,7 +703,7 @@ function classify(text: string): [ServiceGroup, string, RequestKind] {
   );
   // A symptom cannot route an explicitly requested destructive DB operation
   // to laptop guidance. The existing authority/destructive rules still decide.
-  if (hasDirectDatabaseOperation(relevant) && asserted(relevant, /\b(?:drop (?:table|bang)|delete (?:from|table)|truncate (?:table|bang))\b/))
+  if (hasDestructiveDatabaseOperation(relevant))
     return ["DATABASE", "DATABASE_SCHEMA_CHANGE", "CONFIGURATION_CHANGE"];
   const candidates: Array<{
     score: number;
@@ -739,10 +789,12 @@ export function extractText(rawText: string): Extraction {
     (requestKind === "ACCESS_REQUEST" || riskSignals.includes("PRIVILEGED"))
   )
     entities.permission = permission;
-  const duration = rawText.normalize("NFKC").match(
-    /(?<![\w.])[-+−–]?\d+(?:\.\d+)?\s*(?:hours?|hrs?|h\b|days?|ngày|ngay|giờ|gio|tiếng|tieng|phút|phut|minutes?)(?![A-Za-z])/i,
-  );
-  if (duration) entities.duration = duration[0];
+  const duration = statedDuration(rawText);
+  if (duration) entities.duration = duration;
+  if (serviceGroup === "CLOUD_GPU") {
+    const classification = statedDataClassification(text);
+    if (classification) entities.dataSensitivity = classification;
+  }
   const environment = environmentOf(text);
   if (environment !== "unknown") entities.environment = environment;
   // Preserve the whole bounded reference; a suffix must never resolve to a
@@ -771,7 +823,8 @@ export function extractText(rawText: string): Extraction {
   if (["GIT_PERMISSION", "CLOUD_GPU", "ACCOUNT_ACCESS", "DATABASE"].includes(serviceGroup) ||
       (intentLabel === "VPN_SETUP" && requestKind === "ACCESS_REQUEST")) {
     const purpose = rawText.match(/\s(?:để|de|cho mục đích|cho muc dich)\s+([^;.\n,]{1,250})/i) ||
-      rawText.match(/\s(?:to|for)\s+((?:test|support|review|replay|benchmark|render|backfill|sync|train|open|follow|update)\b[^;.\n,]{0,240})/i);
+      rawText.match(/\s(?:to|for)\s+((?:test|support|review|replay|benchmark|render|backfill|sync|train|open|follow|update)\b[^;.\n,]{0,240})/i) ||
+      rawText.match(/,\s*(?:cần|can|need to)\s+((?:follow|review|update|theo dõi|theo doi|cập nhật|cap nhat)\b[^;.\n,]{8,240})/i);
     if (purpose) entities[serviceGroup === "CLOUD_GPU" ? "purpose" : "reason"] = purpose[1].trim();
   }
   if (standardVpnAccess(text)) {
@@ -786,7 +839,13 @@ export function extractText(rawText: string): Extraction {
     const match = rawText.match(
       new RegExp(`(?:^|[;\\n,]|\\s)(?:${label})\\s*[:=]\\s*([^;\\n,]+)`, "i"),
     );
-    if (match) entities[key] = match[1].trim();
+    if (match) {
+      const literal = match[1].trim();
+      const value = key === "duration" ? statedDuration(`duration ${literal}`) ?? literal : literal;
+      // A label must not erase a contrary fact stated earlier in the input.
+      if (entities[key] && normalizeFact(entities[key]) !== normalizeFact(value)) riskSignals.push("CONFLICT");
+      else entities[key] = value;
+    }
   }
   if (serviceGroup === "ACCOUNT_ACCESS") {
     if (entities.system && !entities.targetSystem)
@@ -884,10 +943,15 @@ export function extractIntake(
     "accessType",
     "requestedAction",
     "operation",
+    "dataSensitivity",
+    "resourceLifecycle",
   ]) {
     if (
       fields[key] &&
       extracted.entities[key] &&
+      // A bounded answer can resolve an unresolved relative deadline. A
+      // contrary concrete interval still raises CONFLICT; no TTL is inferred.
+      !(key === "duration" && relativeDuration.test(normalize(extracted.entities[key]))) &&
       normalizeFact(fields[key]) !== normalizeFact(extracted.entities[key])
     )
       risks.add("CONFLICT");
@@ -1113,6 +1177,7 @@ export function extractIntake(
           gitScope ||
           vpnDevice ||
           databaseAuthorization ||
+          isDurationOnlyContext(fragment) ||
           uncertaintyContext)
       )
         requests[requests.length - 1] += `; ${fragment}`;

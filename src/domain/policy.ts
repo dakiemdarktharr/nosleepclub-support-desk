@@ -364,7 +364,7 @@ export function missingFacts(request: CanonicalRequest): string[] {
 function requestedPermission(request: CanonicalRequest) {
   return normalizeFact(
     request.entities.permission ?? request.entities.accessType ?? "",
-  );
+  ).replace(/^read only$/, "read-only");
 }
 
 function hasSensitiveData(request: CanonicalRequest, evidence?: PolicyEvidence) {
