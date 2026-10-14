@@ -86,7 +86,7 @@ Build và E2E chạy tuần tự, server riêng 127.0.0.1:3227, mock/memory, kh�
 3. **Mongo:** operator chuẩn bị Mongo local disposable; chạy [restart harness](../RUNBOOK.md#kiểm-tra-mongo-trong-môi-trường-thử-nghiệm-riêng). Identity transaction/unique index/concurrency cần replica set test riêng. Mongo health durable=true không đủ chứng minh restart persistence.
 4. **Dependency:** 7 mục high cùng nguồn [braces GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), chưa có bản vá tương thích lúc kiểm tra. Không force upgrade/downgrade hoặc thêm audit exception để che. Production dependency tree audit sạch không đồng nghĩa toàn app an toàn.
 5. **Identity và reviewer:** ID-only/public reviewer vẫn là demo; cần quyết định xác thực/SSO và scope reviewer production, không nhập dữ liệu nhân viên thật vào demo công khai.
-6. **Bằng chứng độc lập:** đã giữ [feedback do chủ repo cung cấp](USER-TEST-FINDINGS-2026-10-13.md), nhưng chưa tự xác minh vai trò người dùng, consent, đo tác động hoặc held-out độc lập. Hoàn thiện protocol, ít nhất 3 người dùng đúng nhóm, video/5 slide và retest trên đúng SHA.
+6. **Bằng chứng độc lập:** đã giữ [feedback do chủ repo cung cấp](USER-TEST-FINDINGS.md), nhưng chưa tự xác minh vai trò người dùng, consent, đo tác động hoặc held-out độc lập. Hoàn thiện protocol, ít nhất 3 người dùng đúng nhóm, video/5 slide và retest trên đúng SHA.
 7. **Live:** lượt này chỉ đọc health ở revision e5bae44 trước tích hợp; chưa gọi inference hoặc kiểm chứng deployment của commit mới. Push GitHub không xác nhận website đã chạy đúng source.
 
 Chưa có cơ sở chấm 9,5/10 hoặc khẳng định “đã sửa tất cả lỗi”. Báo cáo phân biệt rõ lỗi đã sửa, mismatch cần adjudication, hạn chế kiến trúc và bằng chứng chưa thu thập.
