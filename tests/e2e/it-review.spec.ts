@@ -72,7 +72,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
   await expect(approve).toHaveAttribute("title", /rủi ro bảo mật/);
   if (!isMobile) {
     const box = await page
-      .getByLabel("Lý do (bắt buộc cho mọi quyết định của reviewer)")
+      .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
       .boundingBox();
     expect(box).not.toBeNull();
     expect(box!.y + box!.height).toBeLessThan(page.viewportSize()!.height);
@@ -102,7 +102,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
   });
   const reason = "Dừng yêu cầu demo vì phạm vi truy cập chưa an toàn.";
   await page
-    .getByLabel("Lý do (bắt buộc cho mọi quyết định của reviewer)")
+    .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
     .fill(reason);
   await expect(approve).toBeDisabled();
   await page
@@ -166,7 +166,7 @@ test("queue search opens the matching request and missing information still prev
   });
   await match.click();
   await page
-    .getByLabel("Lý do (bắt buộc cho mọi quyết định của reviewer)")
+    .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
     .fill("Cần thêm nguồn và phạm vi dữ liệu cụ thể.");
   await expect(
     page.getByRole("button", { name: "Duyệt yêu cầu", exact: true }),
