@@ -13,9 +13,9 @@ export default function Home() {
             <strong>Tôi cần hỗ trợ</strong>
             <ArrowRight size={24} aria-hidden="true" />
           </Link>
-          <Link aria-label="Dành cho nhân viên" className="entry-card" href="/review">
+          <Link aria-label="Dành cho Admin" className="entry-card" href="/review">
             <span className="entry-icon"><ClipboardList size={27} /></span>
-            <strong>Dành cho nhân viên</strong>
+            <strong>Dành cho Admin</strong>
             <ArrowRight size={24} aria-hidden="true" />
           </Link>
         </div>
