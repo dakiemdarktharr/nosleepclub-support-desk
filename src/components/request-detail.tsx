@@ -10,6 +10,7 @@ import { Alert, Button, Card, Textarea } from "./ui";
 import { SupportResult } from "./support-result";
 import { SupportField } from "./support-field";
 import { AssistanceHistory, RequestProgress } from "./support-history";
+import { AiPending, ContentSkeleton } from "./loading-feedback";
 export function RequestDetail({ id }: { id: string }) {
   const [request, setRequest] = useState<SupportRequest | null>(null),
     [error, setError] = useState("");
@@ -140,12 +141,7 @@ export function RequestDetail({ id }: { id: string }) {
         <h1>Yêu cầu {displayId(id)}</h1>
       </div>
       {error && <Alert tone="error">{error}</Alert>}
-      {!request && !error && <p role="status">Đang tải yêu cầu…</p>}
-      {pending && (
-        <p role="status" className="text-sm text-slate-600">
-          Đang cập nhật yêu cầu, vui lòng chờ…
-        </p>
-      )}
+      {!request && !error && <ContentSkeleton label="Đang tải yêu cầu…" />}
       {request && (
         <>
           <Card className="request-status" data-guide="sender-result">
@@ -216,6 +212,7 @@ export function RequestDetail({ id }: { id: string }) {
               />
             )}
           {active && latest && <AssistanceHistory items={[latest]} />}
+          {pending && <AiPending message="Đang xử lý phản hồi và cập nhật yêu cầu…" />}
           {request.knowledgeCandidate && (
             <Card>
               <h2>Gợi ý tri thức đã gửi rà soát</h2>

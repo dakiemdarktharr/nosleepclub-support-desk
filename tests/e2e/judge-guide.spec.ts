@@ -200,7 +200,7 @@ test("reviewer tour is independent and never executes a decision automatically",
   await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();
   await expect(tip).not.toBeVisible();
   await page.getByRole("link", { name: "VNG Support", exact: true }).click();
-  await page.getByRole("link", { name: "Dành cho nhân viên", exact: true }).click();
+  await page.getByRole("link", { name: "Dành cho Admin", exact: true }).click();
   await expect(tip).toContainText("1. Tìm yêu cầu cần xử lý");
   await page.getByLabel("Hiển thị", { exact: true }).selectOption("all");
   await expect(tip).toContainText("2. Mở một hồ sơ");
@@ -217,7 +217,7 @@ test("reviewer tour is independent and never executes a decision automatically",
   await expect(page.locator("#request-audit")).toContainText("Dừng yêu cầu demo để kiểm tra nhật ký.");
   await tip.getByRole("button", { name: "Hoàn tất hướng dẫn" }).click();
   await page.getByRole("link", { name: "VNG Support", exact: true }).click();
-  await page.getByRole("link", { name: "Dành cho nhân viên", exact: true }).click();
+  await page.getByRole("link", { name: "Dành cho Admin", exact: true }).click();
   await expect(tip).not.toBeVisible();
 });
 

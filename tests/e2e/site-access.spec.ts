@@ -28,7 +28,7 @@ test("QR decodes to the role picker and URL can be copied from any page", async 
   await scanned.goto(decoded!.data);
   await expect(scanned.getByRole("heading", { name: "Bạn cần hỗ trợ gì hôm nay?" })).toBeVisible();
   await expect(scanned.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true })).toBeVisible();
-  await expect(scanned.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toBeVisible();
+  await expect(scanned.getByRole("link", { name: "Dành cho Admin", exact: true })).toBeVisible();
 });
 
 test("pages and QR dialog fit narrow phones and landscape without horizontal scrolling", async ({ page, request }) => {

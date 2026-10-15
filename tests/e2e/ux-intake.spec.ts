@@ -6,7 +6,7 @@ test("welcome and intake omit the five distracting screenshot captions", async (
   for (const text of ["MỖI VẤN ĐỀ · MỘT BƯỚC TIẾP THEO", "Kể cho chúng tôi điều bạn đang gặp.", "Bắt đầu: chọn", "Luôn có một cách để bắt đầu."])
     await expect(page.getByText(text, { exact: false })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Dành cho Admin", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
   await page.getByText("Hướng dẫn & tùy chọn", { exact: true }).click();
   await page.getByRole("link", { name: "Trải nghiệm demo", exact: true }).click();

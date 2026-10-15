@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Files } from "lucide-react";
 import { SiteAccess } from "./site-access";
+import { TransitionLink } from "./route-transition";
 export function Header() {
   const path = usePathname();
   const staff = /^\/(review|audit|verify|identity\/review)/.test(path);
@@ -10,12 +11,12 @@ export function Header() {
   return (
     <header className={`site-header${staff ? " it-header" : ""}`}>
       <SiteAccess />
-      <Link href="/" className="brand">
+      <TransitionLink href="/" className="brand" transition="wipe" title="Màn hình chính">
         <span className="brand-mark">
           <Files size={23} />
         </span>
         VNG Support
-      </Link>
+      </TransitionLink>
       {path !== "/" && path !== "/login" && !staff && (
         <nav aria-label="Điều hướng chính">
           <Link href={supportPath} aria-current={path === "/send-help" || path === "/workspace" || path === "/guest" ? "page" : undefined}>Gửi yêu cầu</Link>

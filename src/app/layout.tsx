@@ -23,10 +23,9 @@ export default function RootLayout({
   return (
     <html lang="vi" className={nunito.variable}>
       <body>
-        <JudgeGuide>
-          <Header />
-          <RouteTransition>{children}</RouteTransition>
-        </JudgeGuide>
+        <RouteTransition>
+          <JudgeGuide><Header />{children}</JudgeGuide>
+        </RouteTransition>
       </body>
     </html>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { ContentSkeleton } from "./loading-feedback";
 import Link from "next/link";
 import {
   Inbox,
@@ -520,7 +521,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
               </Link>
             </div>
           ) : (
-            <p role="status">Đang tải yêu cầu…</p>
+            <ContentSkeleton label="Đang tải yêu cầu…" />
           )
         ) : null}
       </main>

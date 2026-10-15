@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { GUIDE_SESSION_PREFIX, guideStages, type GuideRole } from "@/domain/judge-guide";
 import { GuideIllustration } from "./guide-illustration";
 import { usePathname } from "next/navigation";
+import { useNavigationInFlight } from "./route-transition";
 
 type Position = { left: number; top: number; width: number; height: number };
 type Guide = { stage: string; index: number };
@@ -11,6 +12,7 @@ const waitingStages = ["sender-form", "sender-preview", "reviewer-list"];
 
 export function JudgeGuide({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const navigating = useNavigationInFlight();
   const content = useRef<HTMLDivElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const tip = useRef<HTMLElement>(null);
@@ -52,7 +54,7 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
   }, [remember]);
 
   useEffect(() => {
-    if (!ready || !intro) { dialog.current?.close(); return; }
+    if (!ready || !intro || navigating) { dialog.current?.close(); return; }
     const modal = dialog.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -61,13 +63,16 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
       modal?.close();
       document.body.style.overflow = previousOverflow;
     };
-  }, [ready, intro]);
+  }, [ready, intro, navigating]);
 
   // Stages are declared by the rendered page, including asynchronous detail pages.
   // Mark a role on entry: returning from Home never restarts an abandoned tour.
   useEffect(() => {
     if (!ready || intro || !content.current) return;
     const inspect = () => {
+      // Suspense temporarily replaces the stage. Keep the active role until the
+      // destination arrives, otherwise its already-seen flag ends the tour.
+      if (Array.from(content.current?.querySelectorAll<HTMLElement>("[data-guide-loading]") ?? []).some(element => element.getClientRects().length > 0)) return;
       const stage = content.current?.querySelector<HTMLElement>("[data-guide-stage]")?.dataset.guideStage ?? "";
       const definition = guideStages[stage];
       if (!definition) {
@@ -215,10 +220,10 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
             <p>Thử A/B/C/D tùy kết quả: đã giải quyết, vẫn lỗi, giải thích thêm hoặc chuyển nhân viên. Có thể hỏi tiếp, bổ sung dữ kiện và mở lịch sử. Lưu liên kết nếu muốn xem lại yêu cầu.</p>
           </section>
           <section>
-            <h3>2. Dành cho nhân viên — human reviewer</h3>
-            <p>Về trang đầu bằng logo <strong>VNG Support</strong>, chọn <strong>Dành cho nhân viên</strong>. Mở một hồ sơ, đọc bằng chứng và lý do xử lý trước khi quyết định.</p>
+            <h3>2. Dành cho Admin — nhân viên xử lý</h3>
+            <p>Về trang đầu bằng logo <strong>VNG Support</strong>, chọn <strong>Dành cho Admin</strong>. Mở một hồ sơ, đọc bằng chứng và lý do xử lý trước khi quyết định.</p>
             <GuideIllustration kind="reviewer" />
-            <p>Nhập lý do cụ thể rồi chọn thao tác được phép: hỏi thêm, duyệt, từ chối, dừng hoặc điều chỉnh. Nút bị mờ nghĩa là chưa đủ điều kiện. Kiểm tra <strong>Lịch sử xử lý</strong> để đối chiếu kết quả.</p>
+            <p>Chọn thao tác được phép: hỏi thêm, duyệt, từ chối, dừng hoặc điều chỉnh. Duyệt không bắt buộc lý do; các quyết định khác cần lý do cụ thể. Nút bị mờ nghĩa là chưa đủ điều kiện. Kiểm tra <strong>Lịch sử xử lý</strong> để đối chiếu kết quả.</p>
             <p>Nếu danh sách trống, tạo yêu cầu demo trước. Có thể thử “Mở port 3389 public” để xem luồng cần nhân viên; yêu cầu rủi ro không được duyệt tùy tiện.</p>
           </section>
           <section className="guide-note">

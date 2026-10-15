@@ -6,7 +6,7 @@ test("home offers two roles and guest access; support opens password-free login 
   await page.goto("/");
   await expect(page.locator("main a")).toHaveCount(3);
   await expect(page.getByLabel("ID nhân viên", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toHaveAttribute("href", "/review");
+  await expect(page.getByRole("link", { name: "Dành cho Admin", exact: true })).toHaveAttribute("href", "/review");
   await page.getByRole("link", { name: "Tôi cần hỗ trợ", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("heading", { name: "Đăng nhập", exact: true })).toBeVisible();

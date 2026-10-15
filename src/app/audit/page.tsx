@@ -1,4 +1,5 @@
 "use client";
+import { ContentSkeleton } from "@/components/loading-feedback";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AuditEvent, ResultPage } from "@/domain/contracts";
 import { browserApi } from "@/lib/browser-api";
@@ -151,6 +152,7 @@ export default function AuditPage() {
           <p role="status">
             {pending ? "Đang tải lịch sử…" : `${events.length}/${total} sự kiện`}
           </p>
+          {pending && !events.length && <div aria-hidden="true"><ContentSkeleton compact /></div>}
           {events.length ? (
             <div
               className="it-contained-scroll"

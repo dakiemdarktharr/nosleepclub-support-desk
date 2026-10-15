@@ -10,7 +10,7 @@ test("fresh guest enters by keyboard, submits without employee identity and can 
   await expect(page).toHaveURL(/\/guest$/);
   await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Phòng ban", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Dành cho nhân viên", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Dành cho Admin", exact: true })).toHaveCount(0);
   await expect(page.locator("dialog[open]")).toHaveCount(0);
   await page.getByRole("button", { name: "Chọn theo danh mục", exact: true }).click();
   await page.getByRole("button", { name: "Mô tả vấn đề", exact: true }).click();

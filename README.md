@@ -12,13 +12,29 @@ Dự án thuộc **MLAI Hackathon 2026 — The Escalation Referee**. Phiên bả
 | --- | --- |
 | Người cần hỗ trợ | Chọn **Đăng nhập không cần tài khoản** để dùng ngay; hoặc **Tôi cần hỗ trợ** để đăng nhập bằng ID đã cấp. |
 | Nhân viên mới | Chọn **Nhân viên mới?**, gửi đơn cấp ID và lưu liên kết theo dõi riêng. |
-| Nhân viên hỗ trợ | Chọn **Dành cho nhân viên → Yêu cầu cần xử lý** để xem hàng đợi và xử lý hồ sơ. |
-| Người trình diễn | Chọn **Dành cho nhân viên → Kiểm thử** để chạy tình huống hoặc nhập câu hỏi mới. |
+| Nhân viên hỗ trợ | Chọn **Dành cho Admin → Yêu cầu cần xử lý** để xem hàng đợi và xử lý hồ sơ. |
+| Người trình diễn | Chọn **Dành cho Admin → Kiểm thử** để chạy tình huống hoặc nhập câu hỏi mới. |
 
 1. Mô tả vấn đề bằng lời hoặc chọn theo danh mục.
 2. Xem lại nội dung đã hiểu, hướng dẫn hoặc câu hỏi bổ sung. Bản xem trước chưa tạo hồ sơ.
 3. Xác nhận gửi để lưu yêu cầu, hỏi tiếp và phản hồi kết quả.
 4. Giữ liên kết hoặc mã đầy đủ để theo dõi. Mã ngắn `HT-…` giúp nhân viên tìm hồ sơ.
+
+## Giao diện và chuyển động
+
+Nút phản hồi khi hover/nhấn; ba lựa chọn trên trang đầu mở trang bằng hiệu ứng đường sáng từ giữa. Bấm logo **VNG Support** ở trang bất kỳ để về trang đầu qua hiệu ứng rèm cam. Skeleton shimmer xuất hiện trong lúc tải trang/dữ liệu; khung **VNG Support AI** có thanh chờ khi phân tích hoặc trả lời tiếp.
+
+Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. Chuyển động dùng màu cam VNG `#F05A22`, giữ Nunito, hỗ trợ bàn phím/touch và `prefers-reduced-motion`; không trì hoãn lời gọi API để trình diễn hiệu ứng. Nếu mạng treo quá 60 giây, app báo chưa nhận được xác nhận và giữ nội dung để kiểm tra trạng thái hoặc thử lại.
+
+Ảnh dưới chụp từ bản chạy local với dữ liệu giả lập và provider mock. Đây là minh họa giao diện, không phải bằng chứng inference AI thật hoặc phản hồi người dùng.
+
+[![Trang đầu: ba lựa chọn hỗ trợ, Admin và không cần tài khoản](docs/images/motion-home-desktop.png)](docs/images/motion-home-desktop.png)
+
+| Khung chờ AI | Trang đầu trên điện thoại |
+| --- | --- |
+| ![Thanh chờ trong khung VNG Support AI, không có phần trăm giả](docs/images/motion-ai-pending.png) | ![Ba lựa chọn và logo về trang đầu trên màn hình mobile](docs/images/motion-home-mobile.png) |
+
+[Chi tiết hiệu ứng, nguồn tham khảo và kiểm thử](docs/UI-MOTION.md).
 
 ## Chức năng
 

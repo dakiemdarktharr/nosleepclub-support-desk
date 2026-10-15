@@ -3,7 +3,7 @@ import { employeeIdentity, fillEmployeeIdentity } from "./intake-helpers";
 
 test("judge can enter from home, run De A, inspect audit and try a new input with keyboard", async ({ page }) => {
   await page.goto("/");
-  const staff = page.getByRole("link", { name: "Dành cho nhân viên", exact: true });
+  const staff = page.getByRole("link", { name: "Dành cho Admin", exact: true });
   await staff.focus();
   await page.keyboard.press("Enter");
   await page.getByRole("button", { name: "Đã hiểu", exact: true }).click();

@@ -34,6 +34,7 @@ import { Alert, Button, Card, Spinner, Textarea } from "@/components/ui";
 import { SupportResult } from "@/components/support-result";
 import { SupportField } from "@/components/support-field";
 import { AssistanceHistory } from "@/components/support-history";
+import { AiPending } from "@/components/loading-feedback";
 type Preview = {
   durationProposal?: DurationProposal | null;
   input: SupportInput;
@@ -343,6 +344,7 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
             </label>
           </fieldset>
           {error && <Alert tone="error">{error}</Alert>}
+          {busy && !preview && <AiPending />}
           {preview && (
             <section className="support-preview" aria-label="Kiểm tra dữ kiện">
               <p className="eyebrow">

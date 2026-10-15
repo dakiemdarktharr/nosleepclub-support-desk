@@ -29,7 +29,7 @@ test("role entry opens login, public demo and staff workspace", async ({
   ).toBeVisible();
   await page.goto("/");
   await page
-    .getByRole("link", { name: "Dành cho nhân viên", exact: true })
+    .getByRole("link", { name: "Dành cho Admin", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "Tiếp nhận hỗ trợ" }),

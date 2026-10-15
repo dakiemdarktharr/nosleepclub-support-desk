@@ -37,7 +37,7 @@ Trang đầu giữ hai lựa chọn vai trò và thêm nút **Đăng nhập khô
 | Gửi yêu cầu bằng ID đã cấp | **Tôi cần hỗ trợ → Đăng nhập**; nhập ID còn hiệu lực. |
 | Gửi hỗ trợ mà chưa có tài khoản | **Đăng nhập không cần tài khoản** ở trang đầu hoặc dưới form đăng nhập → `/guest`; không cần mã nhân viên/phòng ban. |
 | Xin cấp ID mới | **Tôi cần hỗ trợ → Nhân viên mới?**; gửi đơn, lưu liên kết riêng và chờ IT duyệt. |
-| Tiếp nhận, xử lý hoặc kiểm thử | **Dành cho nhân viên**; mở hàng đợi, lịch sử hoặc Verify. |
+| Tiếp nhận, xử lý hoặc kiểm thử | **Dành cho Admin**; mở hàng đợi, lịch sử hoặc Verify. |
 
 Nút **URL / QR** giúp sao chép URL hoặc mở app trên điện thoại. Hướng dẫn lần đầu chỉ vị trí thao tác theo vai trò; có thể mở lại từ **Hướng dẫn demo** ở màn hình đăng nhập. Giao diện hỗ trợ desktop/mobile, bàn phím và chế độ giảm chuyển động.
 
@@ -60,7 +60,7 @@ việc lưu yêu cầu vẫn phụ thuộc storage Support đã cấu hình.
 
 ### Người xử lý yêu cầu hỗ trợ
 
-Mở **Dành cho nhân viên → Yêu cầu cần xử lý**. Tìm theo nội dung, mã nhân viên hoặc mã `HT-…`; lọc nhanh **Chờ xử lý**, **Ngoài quy định**, **Cần thẩm quyền**, **Gợi ý tri thức**. Từ khóa/bộ lọc được giữ trong session của tab, với fallback khi trình duyệt chặn session storage.
+Mở **Dành cho Admin → Yêu cầu cần xử lý**. Tìm theo nội dung, mã nhân viên hoặc mã `HT-…`; lọc nhanh **Chờ xử lý**, **Ngoài quy định**, **Cần thẩm quyền**, **Gợi ý tri thức**. Từ khóa/bộ lọc được giữ trong session của tab, với fallback khi trình duyệt chặn session storage.
 
 Mở hồ sơ để xem nội dung gốc, hướng dẫn đã trả, dữ kiện, lý do chuyển tiếp và audit. Mục phân tích nội bộ hiển thị sentiment khi tiếp nhận và trong phản hồi; màn hình người gửi chỉ hiển thị tiến trình dễ hiểu. Có thể yêu cầu bổ sung, duyệt, từ chối, dừng, điều chỉnh quyết định hoặc ghi nhận hoàn tất tùy trạng thái; server kiểm tra chuyển trạng thái, version và lý do. Yêu cầu rủi ro bảo mật không được duyệt/hoàn tất bằng nút reviewer demo. Thao tác dừng/điều chỉnh cập nhật workflow và audit, **không hoàn tác tài nguyên bên ngoài**.
 
@@ -68,7 +68,7 @@ Không gian reviewer hỗ trợ hiện là **public demo**, tách khỏi quyền
 
 ### Giám khảo: Verify và input mới
 
-Đường demo ngắn, không cần tài khoản: **Trang đầu → Dành cho nhân viên → Đã hiểu → Kiểm thử → Đề A → Chạy toàn bộ test (5)**. Xem 3 routine/2 escalation, mở **Bằng chứng quyết định** và **Mở request / audit → Lịch sử yêu cầu và hướng dẫn**, rồi quay lại Verify để nhập một tình huống mới. Có thể bỏ qua tour; tour không tự chạy thao tác.
+Đường demo ngắn, không cần tài khoản: **Trang đầu → Dành cho Admin → Đã hiểu → Kiểm thử → Đề A → Chạy toàn bộ test (5)**. Xem 3 routine/2 escalation, mở **Bằng chứng quyết định** và **Mở request / audit → Lịch sử yêu cầu và hướng dẫn**, rồi quay lại Verify để nhập một tình huống mới. Có thể bỏ qua tour; tour không tự chạy thao tác.
 
 [Rà soát mới](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/REPO-AUDIT-2026-10-14.md) · [Readiness kỹ thuật](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/TECHNICAL-READINESS.md) · [Đánh giá trước đó](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/COMPETITION-READINESS.md) · [Protocol held-out/người dùng](INDEPENDENT-EVALUATION-PROTOCOL.md) · [Nội dung 5 slide, video và checklist](SUBMISSION-CONTENT.md). Các bằng chứng độc lập/người dùng còn thiếu được ghi `NOT COLLECTED`; không suy ra 9,5/10 từ số test đạt.
 
