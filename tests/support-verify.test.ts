@@ -47,7 +47,20 @@ it.each(supportVerifyCases.filter((item) => item.pack.endsWith("v3")))(
   async (item) => {
     const result = await runSupportCase(employeeFixture(item), productionApi);
     expect(result.actual, result.error).toBeDefined();
-    expect(result.pass, JSON.stringify(result)).toBe(true);
+    if (item.id === "v3-model-offline") {
+      // Preserve the historical fixture. The explicitly requested v5.18 safe
+      // outage template differs from its old blanket-escalation expectation.
+      expect(result.pass, JSON.stringify(result)).toBe(false);
+      expect(result.expected).toMatchObject({ action: "ESCALATE", rule: "FAIL-001" });
+      expect(result.actual).toMatchObject({ action: "AUTO_APPROVE", bucket: "ROUTINE" });
+      const response = await productionApi(`/api/support/requests/${result.requestId}`);
+      const row = (await response.json()).data;
+      expect(row.canonical.model).toMatchObject({ source: "deterministic", fallbackReason: "SIMULATED" });
+      expect(row.assistance[0].source).toBe("deterministic");
+      expect(result.persistence?.pass).toBe(true);
+    } else {
+      expect(result.pass, JSON.stringify(result)).toBe(true);
+    }
     expect(result.requestId).toBeTruthy();
   },
 );

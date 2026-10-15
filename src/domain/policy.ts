@@ -950,6 +950,25 @@ function evaluateSinglePolicy(
     };
   }
 
+  // Uncertain meaning is a request for clarification, not proof of conflicting
+  // authority. Concrete risk/conflict rules above still take precedence; known
+  // missing fields below retain their specific questions (for example resetType).
+  if (request.ambiguities.length && !missing.length && !request.workEvidence &&
+      (isGuidanceOnly(request) ||
+       request.serviceGroup === "OTHER" && request.requestKind === "OTHER")) {
+    return {
+      ...base, action: "NEEDS_INFORMATION", handlingMode: "GUIDE", bucket: "MISSING_INFO",
+      uncertaintyClass: "MISSING_FACTS", ruleIds: ["INFO-AMBIGUITY-001"],
+      questions: ["Bạn mô tả rõ hơn vấn đề và điều muốn được hướng dẫn được không?"],
+      targetedQuestions: ["Làm rõ thông tin còn thiếu trước khi chọn hướng dẫn phù hợp."],
+      reviewerQuestions: [], assignedTeam: "Trợ lý",
+      userReason: "Cần làm rõ yêu cầu để hướng dẫn đúng.",
+      adminReason: "INFO-AMBIGUITY-001: read-only ambiguity; no authority granted.",
+      nextStep: "Trả lời câu hỏi làm rõ; chưa thực hiện thay đổi hoặc cấp quyền.",
+      approvalStatus: "not_required",
+    };
+  }
+
   if (request.workEvidence) {
     const work = request.workEvidence;
     return {
@@ -1439,7 +1458,13 @@ export function evaluatePolicy(
         };
         return evaluateSinglePolicy(child, approvalFor(child, approval), evidenceFor(child, evidence));
       });
-    const highestPriorityDecision = [parent, ...childDecisions]
+    // CROSS_FUNCTION_REQUEST is a server aggregation label, not a real request
+    // without an owner. Judge its mapped children; retain every actual parent
+    // risk/failure and every child authority or unknown-owner decision.
+    const aggregateRoutingOnly = request.serviceGroup === "OTHER" &&
+      request.intentLabel === "CROSS_FUNCTION_REQUEST" && !request.riskSignals.length &&
+      !request.model.failure && parent.ruleIds.length === 1 && parent.ruleIds[0] === "AUTH-005";
+    const highestPriorityDecision = [...(aggregateRoutingOnly ? [] : [parent]), ...childDecisions]
       .filter((decision) =>
         ["SECURITY_RISK", "BEYOND_AUTHORITY"].includes(decision.bucket),
       )

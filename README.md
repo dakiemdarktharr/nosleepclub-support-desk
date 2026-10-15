@@ -28,6 +28,18 @@ Các tính năng vẫn có: gửi tự do/theo danh mục, clarification, hội 
 
 ## Bằng chứng hiện tại
 
+**Bản sửa AI v5.18 (15/10/2026):** Structured Outputs strict, kiểm chứng quote,
+phân biệt DNS khái niệm/VPN lỗi kết nối, giữ câu làm rõ reset và bàn giao từ
+hội thoại. Khi AI không sẵn sàng, chỉ tác vụ an toàn được server xác định độc
+lập mới dùng hướng dẫn đã kiểm duyệt; giao diện và audit ghi nguồn/lý do.
+[Hợp đồng dự phòng và cách kiểm tra](docs/AI-RESILIENCE-2026-10-15.md).
+
+Ca lịch sử `v3-model-offline` trong bộ `extended-v3` vẫn giữ kỳ vọng cũ và
+ghi mismatch khi VPN đủ căn cứ nhận hướng dẫn dự phòng thay vì chuyển
+người. Ca này không thuộc bộ 15 tình huống giám khảo. Không sửa nhãn gốc.
+Health `modelConnectivity=NOT_CHECKED` vẫn chỉ là kiểm tra cấu hình;
+bằng chứng inference phải được kiểm tra riêng.
+
 Lượt **v5.17**, base main `8eb1f09`: giữ **89/128 exact-match (69,53%), 39
 mismatch** trên fixture development mock/memory; không có regression mới.
 Sửa dữ kiện bị bỏ sót ở 8 case, chuẩn hóa quyền read-only, câu trả lời thời hạn
@@ -73,7 +85,7 @@ flowchart TD
   J --> D
 ```
 
-Policy **v5.17** (14/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
+Policy **v5.18** (15/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
 
 ## Workflow chi tiết theo module
 
@@ -86,7 +98,7 @@ flowchart TB
   subgraph MODEL[Nhận diện và sentiment]
     EXT --> MODE{Provider và loại input}
     MODE --> MOCK[Mock hoặc nhận diện deterministic]
-    MODE --> LLM[AI_MODEL: Chat Completions JSON]
+    MODE --> LLM[AI_MODEL: Structured Outputs strict]
     LLM --> CHECK[Validate schema, evidence, route và giữ risk]
     MOCK --> CAN[CanonicalRequest]
     CHECK --> CAN

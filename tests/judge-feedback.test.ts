@@ -303,7 +303,7 @@ it("operation cannot launder access intent or bypass approval", async () => {
     ),
   ).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
 });
-it("model ambiguity cannot produce guidance approval", async () => {
+it("model ambiguity asks for clarification without inventing conflicting facts", async () => {
   const value = input("Restart laptop");
   const facts = extractText(value.rawText);
   const row = await submitSupport(value, {
@@ -312,9 +312,9 @@ it("model ambiguity cannot produce guidance approval", async () => {
       ambiguities: ["Unsure whether restart or factory reset is intended"],
     }),
   });
-  expect(row.decision?.action).toBe("ESCALATE");
+  expect(row.decision?.action).toBe("NEEDS_INFORMATION");
   expect(row.canonical?.ambiguities).toContain("Unsure whether restart or factory reset is intended");
-  expect(row.canonical?.riskSignals).toContain("CONFLICT");
+  expect(row.canonical?.riskSignals).not.toContain("CONFLICT");
 });
 it("large GPU allocation cannot be auto-approved even with a hypothetical verified approval", () => {
   const canonical = extractIntake({

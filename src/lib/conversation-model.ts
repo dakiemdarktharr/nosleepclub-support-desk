@@ -374,11 +374,12 @@ export async function createConversationAnswer(
   let retrieval: "mongodb" | "memory" | "unavailable" = "unavailable";
   let articles = rankKnowledge(knowledgeSeed, context.question, context.label);
   const internalOnly = needsInternalPolicy(context);
+  const extractionUnavailable = request.model.source === "deterministic" && !!request.model.fallbackReason;
   // These lookups use separate read-only sources; overlap their I/O. Model output
   // validation still runs only after both sources are ready.
   const [retrieved, web] = await Promise.all([
     retrieveKnowledge(context.question, context.label).catch(() => null),
-    internalOnly
+    internalOnly || extractionUnavailable
       ? Promise.resolve({ text: "", sources: [], state: "not_needed" as const })
       : retrievePublicWeb(context, options),
   ]);
@@ -409,8 +410,13 @@ export async function createConversationAnswer(
   let generatedAt: string | undefined;
   let source: Assistance["source"] = "deterministic";
   let fallbackReason: string | undefined;
+  let modelTrace: CanonicalRequest["model"] | undefined;
   try {
     if (internalOnly) throw new Error("INTERNAL_POLICY_UNVERIFIED");
+    // The extraction call already established an outage. Do not repeat a
+    // rejected credential for optional prose; use the reviewed corpus below.
+    if (extractionUnavailable)
+      throw new Error("EXTRACTION_UNAVAILABLE");
     const generate = async () => {
       const value = await callModel(
         {
@@ -453,7 +459,10 @@ export async function createConversationAnswer(
           }),
         },
         fallback,
-        options,
+        { ...options, onModelCall: (trace) => {
+          modelTrace = { source: process.env.AI_PROVIDER === "openai" ? "openai" : "mock", ...trace };
+          options.onModelCall?.(trace);
+        } },
       );
       return validateAnswer(
         value,
@@ -484,12 +493,12 @@ export async function createConversationAnswer(
     generatedAt = result.generatedAt;
     source = process.env.AI_PROVIDER === "openai" ? "openai" : "mock";
   } catch (error) {
-    fallbackReason =
+    fallbackReason = (request.model.source === "deterministic" ? request.model.fallbackReason : undefined) ?? (
       error instanceof ModelFailure
         ? (error.reason ?? error.code)
         : internalOnly
           ? "INTERNAL_POLICY_UNVERIFIED"
-          : "INVALID_ANSWER";
+          : "INVALID_ANSWER");
   }
   // Display only sources actually used. A candidate document is not automatically a citation.
   const usedSources = [
@@ -516,6 +525,8 @@ export async function createConversationAnswer(
     nextQuestion: "",
     canPassToAdmin: true,
     source,
+    model: modelTrace,
+    fallbackReason,
     timestamp: new Date().toISOString(),
     answer: {
       text: answer.text,

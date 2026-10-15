@@ -98,6 +98,7 @@ it("overlaps knowledge retrieval with public web lookup before generating the an
   }));
 
   const request = {
+    model: { source: "deterministic" },
     conversation: {
       label: "CLOUD_GPU_GUIDE",
       question: "Hướng dẫn cấu hình GPU",

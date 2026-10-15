@@ -11,6 +11,7 @@ Bắt đầu từ [README sản phẩm](../README.md). Chỉ dùng báo cáo có
 | Vận hành, cấu hình ID/Mongo, đo lại | [RUNBOOK](../RUNBOOK.md) |
 | Kiến trúc và AI/policy | [Module](ARCHITECTURE.md), [retrieval](RAG-RETRIEVAL.md), [answer validation](RAG-ANSWER.md), [quản trị tri thức](KNOWLEDGE-REVIEW.md) |
 | Đánh giá và riêng tư | [Evaluation](EVALUATION.md), [sentiment](SENTIMENT-EVALUATION.md), [PII inventory](PRIVACY-INVENTORY.md) |
+| Khôi phục AI và hướng dẫn dự phòng v5.18 | [Contract và kiểm tra 15/10](AI-RESILIENCE-2026-10-15.md) |
 | Rà soát mismatch v5.17 | [Báo cáo mới](MISMATCH-FOLLOWUP-2026-10-14.md), [đối chiếu từng case](MISMATCH-FOLLOWUP-2026-10-14.json) |
 | Quyền/quota và mismatch v5.16 | [Báo cáo](AUTHORITY-REVIEW-2026-10-14.md), [13 quyết định](decisions/DEMO-AUTHORITY-CONTRACT.md) |
 | Mismatch và regression v5.15 | [Báo cáo 39 case](MISMATCH-REVIEW-2026-10-14.md), [metadata và so sánh](MISMATCH-REVIEW-2026-10-14.json) |

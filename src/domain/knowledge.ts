@@ -136,3 +136,21 @@ knowledgeSeed.push({
 });
 
 knowledgeSeed.push(...additionalKnowledge);
+
+// A bounded concept answer, not instructions to change corporate DNS settings.
+knowledgeSeed.push({
+  _id: "support-kb-v1-dns-concept",
+  label: "GENERAL_GUIDE",
+  title: "DNS là gì?",
+  keywords: ["dns", "domain name system", "phan giai ten mien"],
+  answer: "DNS (Domain Name System) là hệ thống phân giải tên miền thành địa chỉ IP để thiết bị tìm đúng máy chủ. Khi bạn nhập tên một website, thiết bị tra cứu DNS để biết địa chỉ cần kết nối; bạn không phải nhớ địa chỉ IP. Đây là giải thích khái niệm, không phải yêu cầu mở cổng hoặc thay đổi cấu hình mạng.",
+  sources: [{
+    title: "Cloudflare: What is DNS?",
+    url: "https://www.cloudflare.com/learning/dns/what-is-dns/",
+    scope: "public",
+    checkedAt: "2026-10-15",
+  }],
+  version: 1,
+  reviewedAt: "2026-10-15",
+  expiresAt: "2027-01-15T00:00:00.000Z",
+});

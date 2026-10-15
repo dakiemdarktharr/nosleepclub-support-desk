@@ -110,6 +110,10 @@ export type CanonicalRequest = Extraction & {
   redactions: string[];
   model: {
     source: "deterministic" | "mock" | "openai";
+    model?: string;
+    attempts?: number;
+    latencyMs?: number;
+    fallbackReason?: string;
     failure?: string;
     failureReason?: string;
   };
@@ -214,6 +218,8 @@ export type ConversationAnswer = {
   ignoredOverride: boolean;
 };
 export type Assistance = {
+  model?: CanonicalRequest["model"];
+  fallbackReason?: string;
   answer?: ConversationAnswer;
   summary: string;
   diagnosis?: string;
@@ -230,6 +236,10 @@ export type Assistance = {
   timestamp: string;
 };
 export type AuditEvent = {
+  model?: CanonicalRequest["model"];
+  assistanceModel?: CanonicalRequest["model"];
+  assistanceSource?: Assistance["source"];
+  fallbackReason?: string;
   sourceChecks?: WorkEvidence["sourceChecks"];
   id: string;
   requestId: string;

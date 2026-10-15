@@ -82,7 +82,7 @@ export function conversationRoute(
   if (!conversationEligible(input, baseline, question)) return null;
   const text = normalize(question);
   const how =
-    /lam sao|lam the nao|cach |huong dan|su dung|how (?:to|do|can)|explain|what is/.test(
+    /lam sao|lam the nao|cach |huong dan|su dung|la gi\b|giai thich|how (?:to|do|can)|explain|what is/.test(
       text,
     );
   const accessProblem = /khong.{0,45}(?:vao|dang nhap|mo).{0,25}duoc|khong vao duoc|(?:cannot|can't|can not|unable to).{0,25}(?:sign in|log in|login|access)|khoi phuc|lay lai|recover|quen|forgot|dang nhap|login/.test(text);

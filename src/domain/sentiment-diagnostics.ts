@@ -22,7 +22,7 @@ export function sentimentFallbackReason(reason?: string): Reason {
       return reason;
     case "MODEL_EVIDENCE_INVALID": case "EVIDENCE_MISMATCH":
       return "INVALID_EVIDENCE";
-    case "MODEL_OUTPUT_INVALID": case "SCHEMA_INVALID": case "TRUNCATED":
+    case "MODEL_OUTPUT_INVALID": case "SCHEMA_INVALID": case "ROUTING_INVALID": case "TRUNCATED":
       return "INVALID_OUTPUT";
     default: return "MODEL_UNAVAILABLE";
   }

@@ -8,7 +8,8 @@ import {
   employeeIdentityError,
   isEmployeeIdentityField,
 } from "@/domain/employee-identity";
-import { retrieveKnowledge } from "@/lib/support-knowledge";
+import { retrieveKnowledge, rankKnowledge } from "@/lib/support-knowledge";
+import { knowledgeSeed } from "@/domain/knowledge";
 import { validateVerificationInput } from "./verification";
 import { createHash, randomUUID } from "node:crypto";
 import type {
@@ -21,10 +22,10 @@ import type {
   SupportPreview,
 } from "@/domain/contracts";
 import { supportInputSchema } from "@/domain/input";
-import { POLICY_VERSION } from "@/domain/policy-source";
+import { POLICY_VERSION, guidanceRules } from "@/domain/policy-source";
 import { proposeAccessDuration } from "@/domain/access-defaults";
 import { evaluatePolicy } from "@/domain/policy";
-import { extractIntake, safeInput } from "@/domain/text";
+import { extractIntake, safeInput, safeDeterministicGuidance } from "@/domain/text";
 import {
   getSupportRequest,
   getSupportPreview,
@@ -35,7 +36,7 @@ import {
 } from "@/lib/support-repository";
 import { verifyApproval } from "./approvals";
 import {
-  createAssistance,
+  createAssistanceWithFallback as createAssistance,
   extractWithModel,
   modelFailure,
   type ModelOptions,
@@ -54,6 +55,12 @@ export function auditEvent(
   explanation: string,
 ): AuditEvent {
   return {
+    ...(request.canonical ? { model: request.canonical.model } : {}),
+    ...(request.assistance.length ? {
+      assistanceSource: request.assistance.at(-1)!.source,
+      assistanceModel: request.assistance.at(-1)!.model,
+      fallbackReason: request.assistance.at(-1)!.fallbackReason ?? request.assistance.at(-1)!.answer?.fallbackReason,
+    } : {}),
     id: randomUUID(),
     requestId: request.id,
     timestamp: new Date().toISOString(),
@@ -97,6 +104,47 @@ function requireIntakeIdentity(input: SupportInput) {
   if (identityError)
     throw new SupportError("IDENTITY_REQUIRED", identityError, 422);
 }
+
+// Unavailability is not invalid extraction. Only independently established,
+// read-only guidance with a reviewed template may survive an upstream outage.
+function recoverSafeGuidance(
+  input: SupportInput,
+  baseline: CanonicalRequest,
+  failed: CanonicalRequest,
+): CanonicalRequest {
+  if (failed.model.failure !== "MODEL_UNAVAILABLE" ||
+      !["AUTHENTICATION", "TIMEOUT", "RATE_LIMIT", "UPSTREAM_ERROR", "NOT_CONFIGURED", "BUDGET_EXHAUSTED", "SIMULATED"].includes(failed.model.failureReason ?? "") ||
+      !safeDeterministicGuidance(input, baseline) ||
+      baseline.riskSignals.length || baseline.redactions.length ||
+      baseline.subrequests.length || baseline.ambiguities.length) return failed;
+  let candidate = baseline;
+  const conversation = baseline.intentLabel === "GENERAL_HOW_TO"
+    ? conversationRoute(input, baseline) : null;
+  const reviewedTopic = conversation
+    ? rankKnowledge(knowledgeSeed, conversation.question, conversation.label)[0] : undefined;
+  if (conversation?.label === "GENERAL_GUIDE" &&
+      reviewedTopic?.label === conversation.label &&
+      reviewedTopic._id !== "support-kb-v1-general_guide") {
+    candidate = conversationalCanonical(baseline, conversation);
+  } else if (baseline.intentLabel === "GENERAL_HOW_TO" ||
+      !guidanceRules.some((rule) => rule.labels.some((label) => label === baseline.intentLabel))) {
+    return failed;
+  }
+  const decision = evaluatePolicy(candidate, verifyApproval);
+  if (decision.action !== "AUTO_APPROVE" ||
+      !["GUIDE", "LLM_ASSIST"].includes(decision.handlingMode) ||
+      decision.missingFields.length) return failed;
+  return {
+    ...candidate,
+    model: {
+      source: "deterministic",
+      model: failed.model.model,
+      attempts: failed.model.attempts,
+      latencyMs: failed.model.latencyMs,
+      fallbackReason: failed.model.failureReason ?? failed.model.failure,
+    },
+  };
+}
 export async function analyze(
   input: SupportInput,
   markers: string[],
@@ -118,6 +166,7 @@ export async function analyze(
   const baseline = extractIntake(analysisInput, markers);
   const mockRouting = (process.env.AI_PROVIDER || "mock") === "mock";
   const intentModelSkipped = baseline.riskSignals.length > 0 ||
+    baseline.subrequests.length > 1 ||
     !analysisInput.rawText.trim() ||
     input.mode === "structured" ||
     baseline.intentLabel === "DEVICE_RESET_GUIDANCE";
@@ -149,7 +198,7 @@ export async function analyze(
     const extraction = await extractWithModel(analysisInput, baseline, options);
     const { sentimentAssessment, ...canonicalOnly } = extraction;
     sentiment = sentimentAssessment;
-    canonical = canonicalOnly;
+    canonical = recoverSafeGuidance(analysisInput, baseline, canonicalOnly);
     if (
       !sentiment &&
       !mockRouting &&
@@ -239,7 +288,9 @@ export async function previewSupport(value: unknown, options: ModelOptions = {})
         ? "MOCK_PROVIDER"
         : analysis.canonical.model.failure
           ? sentimentFallbackReason(analysis.canonical.model.failureReason ?? analysis.canonical.model.failure)
-          : "INVALID_EVIDENCE",
+          : analysis.canonical.model.fallbackReason
+            ? sentimentFallbackReason(analysis.canonical.model.fallbackReason)
+            : "INVALID_EVIDENCE",
       process.env.AI_MODEL,
     );
   const preview: SupportPreview = {

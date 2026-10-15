@@ -6,7 +6,10 @@ export type FeedbackSentiment = "positive" | "neutral" | "negative";
 /** Explicit user intent, independent of a model's emotional-tone prediction. */
 export function explicitFeedbackChoice(text: string): "RESOLVED" | "ADMIN" | null {
   const normalized = normalize(text);
-  if (asserted(normalized, /(?:chuyen|noi|ket noi|transfer|connect).{0,35}\b(?:nhan vien|nguoi ho tro|admin|it support|human|agent|support|staff member)\b|need a human|speak to support/))
+  // Vietnamese "nhờ" (ask) and "nhớ" (remember) collapse to the same accentless
+  // token. A reported memory must not become a new request for a human.
+  const handoffText = normalize(text.normalize("NFC").replace(/(?<!\p{L})nhớ(?!\p{L})/giu, "remember"));
+  if (asserted(handoffText, /(?:chuyen|noi|ket noi|nho|transfer|connect).{0,35}\b(?:nhan vien|nguoi ho tro|admin|it support|human|agent|support|staff member)\b|need a human|speak to support/))
     return "ADMIN";
   // Questions, reported/conditional statements and unresolved clauses do not
   // confirm completion. A frustrated user may still explicitly report success.

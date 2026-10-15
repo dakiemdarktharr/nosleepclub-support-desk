@@ -53,6 +53,17 @@ Mở **Kiểm thử**, chọn lượt đã lưu rồi tiếp tục sau khi lỗi
 
 ## Bảo trì dữ liệu và policy
 
+Policy v5.18 dùng strict intent schema, quote đã xác minh và tách lỗi AI khỏi
+quyền nghiệp vụ. Preview/cache v5.17 cần tạo lại. Không đổi ngưỡng quyền,
+approval/quota hoặc Ground Truth. [Hướng dẫn dự phòng](docs/AI-RESILIENCE-2026-10-15.md)
+ghi giới hạn retry, trace và ca Verify lịch sử còn khác kỳ vọng.
+
+Kiểm tra local với OpenAI thật chỉ khi đã được phép dùng API: cấu hình key
+trong file môi trường riêng (không commit), rồi chạy
+`node --env-file=.env.local scripts/check-support-ai-live.mjs --live`.
+Script từ chối chạy nếu thiếu opt-in; ép storage bộ nhớ, tắt web search,
+không tạo ticket/preview hoặc ghi Mongo. Kết quả này chưa phải UI Production.
+
 Policy v5.17 sửa extraction dữ kiện/thời hạn, gắn câu trả lời thời hạn ngắn với
 yêu cầu đang chờ, chuẩn hóa quyền read-only và nhận diện thao tác phá hủy DB.
 Preview/cache v5.16 phải được tạo lại. Rule, ngưỡng, entitlement/approval và

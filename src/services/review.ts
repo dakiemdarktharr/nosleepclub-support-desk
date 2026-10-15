@@ -17,8 +17,8 @@ import {
   SupportError,
   updateSupportRequest,
 } from "@/lib/support-repository";
-import { createAssistance, modelFailure } from "@/lib/support-model";
-import { analyze, auditEvent, prepareInput } from "./support";
+import { createAssistanceWithFallback as createAssistance, modelFailure, type ModelOptions } from "@/lib/support-model";
+import { completeAnalysis, auditEvent, prepareInput } from "./support";
 import { verifyApproval } from "./approvals";
 
 const reviewSchema = z
@@ -201,6 +201,7 @@ export async function feedbackSupport(
   id: string,
   value: unknown,
   precomputedAssessment?: SentimentAssessment,
+  options: ModelOptions = {},
 ) {
   const input = feedbackSchema.parse(value);
   // Reject invalid/stale targets before spending the shared model budget.
@@ -258,7 +259,7 @@ export async function feedbackSupport(
       422,
     );
   const assessment = safeReply
-    ? precomputedAssessment ?? await analyzeSupportSentiment(safeReply.text, "post-answer")
+    ? precomputedAssessment ?? await analyzeSupportSentiment(safeReply.text, "post-answer", options)
     : undefined;
   // Clicking a workflow option is not an expression of emotion.
   const sentiment = assessment?.sentiment ?? "neutral";
@@ -293,11 +294,11 @@ export async function feedbackSupport(
   ) {
     try {
       nextAssistance = snapshot.canonical.conversation
-        ? await createConversationAnswer(snapshot.canonical)
+        ? await createConversationAnswer(snapshot.canonical, options)
         : await createAssistance(
             snapshot.canonical,
             snapshot.decision?.handlingMode === "LLM_ASSIST",
-            { assistanceRound: snapshot.assistance.length },
+            { ...options, assistanceRound: snapshot.assistance.length },
           );
     } catch (error) {
       failedCanonical = modelFailure(snapshot.canonical, error);
@@ -380,7 +381,7 @@ const clarificationSchema = z
     fields: z.record(z.string().max(300)).default({}),
   })
   .strict();
-export async function clarifySupport(id: string, value: unknown) {
+export async function clarifySupport(id: string, value: unknown, options: ModelOptions = {}) {
   const input = clarificationSchema.parse(value);
   if (
     !input.rawText &&
@@ -419,24 +420,8 @@ export async function clarifySupport(id: string, value: unknown) {
       ...(resolvedRestart ? { resetType: "restart" } : {}),
     },
   });
-  const result = await analyze(safe.input, safe.markers);
-  let assistance = null;
-  if (
-    result.decision.action === "AUTO_APPROVE" &&
-    ["GUIDE", "LLM_ASSIST"].includes(result.decision.handlingMode)
-  ) {
-    try {
-      assistance = result.canonical.conversation
-        ? await createConversationAnswer(result.canonical)
-        : await createAssistance(
-            result.canonical,
-            result.decision.handlingMode === "LLM_ASSIST",
-          );
-    } catch (error) {
-      result.canonical = modelFailure(result.canonical, error);
-      result.decision = evaluatePolicy(result.canonical, verifyApproval);
-    }
-  }
+  const result = await completeAnalysis(safe.input, safe.markers, options);
+  const assistance = result.assistance;
   return updateSupportRequest(id, input.version, (request) => {
     request.originalQuestion ??= request.input.rawText;
     request.input = safe.input;

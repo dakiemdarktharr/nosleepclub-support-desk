@@ -10,7 +10,7 @@ import type {
 } from "./contracts";
 import { redact } from "./redaction";
 import { isEmployeeIdentityField } from "./employee-identity";
-import { permissionMappings } from "./policy-source";
+import { guidanceRules, permissionMappings } from "./policy-source";
 
 // One vocabulary for extracting a labelled fact and keeping it with its request.
 const factLabels: Record<string, string> = {
@@ -46,6 +46,45 @@ export function normalizeFact(value: string) {
     .replace(/\b(?:chi doc|chi xem|read only)\b/g, "read only")
     .replace(/\b(?:gio|tieng|hrs?|hours?)\b/g, "hours")
     .replace(/\b(?:ngay|days?)\b/g, "days");
+}
+
+function statedPermission(text: string) {
+  return asserted(text, /\badmin\b|\broot\b|\bowner\b/)
+    ? text.match(/\b(admin|root|owner)\b/)?.[1]
+    : asserted(text, /read.only|\bread\b|\bselect\b|chi doc|chi xem/)
+      ? "read-only"
+      : asserted(text, /write|quyen ghi/)
+        ? "write"
+        : undefined;
+}
+
+/** Keep server semantics only when the literal quote independently confirms
+ * the same fact. Evidence remains the original quote; this never creates proof. */
+export function normalizeQuotedFact(field: string, quote: string, baseline: CanonicalRequest): string {
+  const prior = baseline.entities[field];
+  if (!prior) return quote;
+  if (field === "duration") {
+    const bounded = /^(?:(?:for|trong|duration|ttl|thoi han)\s*[:=]?\s*)?(?:\d+(?:\.\d+)?|mot|hai|ba|bon|nam|sau|bay|tam|chin|muoi|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:hours?|hrs?|h|days?|ngay|gio|tieng|phut|minutes?)$/;
+    const negative = /(?:^|[\s:=])[-−–]\s*\d/;
+    if (!bounded.test(normalize(quote)) || negative.test(quote) || negative.test(prior)) return quote;
+    const duration = statedDuration(`duration ${quote}`);
+    return duration && normalizeFact(duration) === normalizeFact(prior) ? prior : quote;
+  }
+  if (field !== "permission" && field !== "accessType") return quote;
+  const normalized = normalize(quote);
+  const permission = statedPermission(normalized);
+  const plainPermission = /^(?:read[ -]?only|read|select|chi doc|chi xem|write|quyen ghi|admin|root|owner)$/;
+  if (plainPermission.test(normalized) && permission && normalizeFact(permission) === normalizeFact(prior)) return prior;
+  for (const mapping of permissionMappings) {
+    if (mapping.serviceGroup !== baseline.serviceGroup || mapping.field !== field ||
+        mapping.value !== prior || mapping.system && mapping.system !== baseline.entities.system) continue;
+    // A quoted bare role name may use the existing mapping only because the
+    // complete input already established that role in this exact service.
+    for (const phrase of [normalized, `role ${normalized}`]) {
+      if (phrase.match(mapping.pattern)?.[0] === phrase) return prior;
+    }
+  }
+  return quote;
 }
 
 // Lexical facts only. A relative weekday/sprint needs clarification, not a
@@ -204,8 +243,12 @@ function isNegatedControlRefusal(fragment: string) {
   const text = normalize(fragment);
   return (
     /^(?:(?:i|we|toi|minh)\s+)?(?:do not|dont|never|khong|khong duoc|khong can|khong yeu cau)\s+(?:bypass|skip|disable|turn off|bo qua|tat|vuot qua)\b/.test(text) &&
-    /\b(?:mfa|2fa|change ticket|change control|approval|audit|logging|edr|security control|quy trinh thay doi|phieu thay doi)\b/.test(text)
+    /\b(?:mfa|2fa|change ticket|change control|approval|audit|logging|edr|firewall|tuong lua|security control|quy trinh thay doi|phieu thay doi)\b/.test(text)
   );
+}
+
+function isNegatedDeviceChangeRefusal(fragment: string) {
+  return /^(?:(?:toi|minh|i|we)\s+)?(?:khong|khong duoc|do not|don't|never)\s+(?:cai(?: dat)?|cap nhat|install|update|upgrade)\s+(?:driver|drivers|firmware)[.!]*$/.test(normalize(fragment));
 }
 
 function isScopeConstraint(fragment: string) {
@@ -489,7 +532,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   if (
     asserted(
       text,
-      /(?:(?:disable|turn off|stop|remove|deactivate|tat|dung|bo)\s+(?:the |agent |security )?(?:mfa|2fa|edr|audit(?: logging)?|logging|security control|approval prompt|password)|(?:turn|switch)\s+(?:the |agent |security )?(?:mfa|2fa|edr|audit(?: logging)?|logging|security control)\s+off)/,
+      /(?:(?:disable|turn off|stop|remove|deactivate|tat|dung|bo)\s+(?:the |agent |security )?(?:mfa|2fa|edr|firewall|tuong lua|audit(?: logging)?|logging|security control|approval prompt|password)|(?:turn|switch)\s+(?:the |agent |security )?(?:mfa|2fa|edr|firewall|tuong lua|audit(?: logging)?|logging|security control)\s+off)/,
     )
   )
     risks.add("SECURITY_CONTROL");
@@ -571,7 +614,93 @@ function environmentOf(text: string): Environment {
   return "unknown";
 }
 
+function isConceptExplanation(text: string) {
+  const question = text.replace(/^(?:can|could|would) you (?:please )?/, "")
+    .replace(/^ban (?:co the )?/, "");
+  return /^(?:(?:hay|vui long|please) )?(?:giai thich|dinh nghia|explain|define|what (?:is|are)|.{2,60} la gi\b)/.test(question) &&
+    !/\b(?:grant|give|open|close|enable|disable|deploy|delete|drop|export|dump|change|modify|configure|create|provision|restart|reset|install|bypass|need|want|request|connect|execute|run|cap|mo|tat|xoa|doi|sua|tao|cai|can|xin|chay|yeu cau|trien khai|thay doi|cau hinh|khoi dong)\b/.test(question);
+}
+
+// Both UI labels describe the same read-only help only for a vetted guide.
+// This does not equate access/configuration requests, intents or supplied facts.
+function equivalentGuidanceKinds(first: RequestKind, second: RequestKind, intent: string) {
+  return [first, second].every((kind) => ["GUIDANCE", "SAFE_DIAGNOSTIC"].includes(kind)) &&
+    guidanceRules.some((rule) => rule.labels.some((label) => label === intent));
+}
+
+function isRepeatedSafeSymptom(previous: string, fragment: string) {
+  // A complete, unqualified restatement during clarification adds no new target
+  // or operation. Named profiles/devices and appended instructions remain asks.
+  const symptoms: Partial<Record<string, RegExp>> = {
+    VPN_NOT_CONNECTING: /^vpn\s+(?:(?:bi|van|dang|lien tuc|thuong xuyen|keeps|is|still)\s+)*(?:ngat ket noi|khong ket noi|disconnecting|disconnected|connection drops|not connecting)(?:\s+(?:lien tuc|thuong xuyen|hoai|again|repeatedly|continuously))*[.!?]*$/,
+    DEVICE_PRINTER: /^(?:may in|printer)\s+(?:(?:bi|van|dang|bao|is|still)\s+)*(?:ket giay|khong in|jammed|not printing|offline)[.!?]*$/,
+  };
+  const before = extractText(previous);
+  const pattern = symptoms[before.intentLabel];
+  if (!pattern?.test(normalize(fragment))) return false;
+  const after = extractText(fragment);
+  return before.intentLabel === after.intentLabel && before.serviceGroup === after.serviceGroup &&
+    before.requestKind === "SAFE_DIAGNOSTIC" && after.requestKind === "SAFE_DIAGNOSTIC" &&
+    before.riskSignals.length === 0 && after.riskSignals.length === 0;
+}
+
+function isBoundedFallbackContext(fragment: string) {
+  const text = normalize(fragment);
+  const helpOnly = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) (?:tu dau|gi truoc)|ban huong dan(?: giup toi)? duoc khong|(?:huong dan|chi) (?:toi|minh) (?:kiem tra|xu ly)(?: an toan)?|what should i check first|where should i start|please guide me through safe checks|(?:(?:hay|vui long) )?giai thich(?: ngan gon| ro hon)?|please explain(?: briefly)?)[?.!]*$/;
+  const unchangedControl = /^(?:(?:toi|minh|i|we) )?(?:khong|khong duoc|do not|don't|never) (?:tat|bo qua|thay doi|doi|disable|bypass|turn off|change|modify) (?:mfa|2fa|edr|firewall|tuong lua|dns|proxy|cau hinh|audit|logging)[.!]*$/;
+  const noNewAccess = /^(?:(?:toi|minh|i|we) )?(?:khong (?:can|xin|yeu cau)|do not (?:need|request)|no) (?:quyen(?: truy cap)?|access|permissions?)(?: (?:github|gitlab|jira|confluence))?[.!]*$/;
+  return helpOnly.test(text) || unchangedControl.test(text) || noNewAccess.test(text) ||
+    isNegatedDeviceChangeRefusal(fragment);
+}
+
+/** An outage may use a vetted guide only when server-visible facts establish
+ * a bounded help task. A model label alone is not sufficient evidence. */
+export function safeDeterministicGuidance(input: SupportInput, baseline: CanonicalRequest) {
+  if (baseline.riskSignals.length || baseline.redactions.length ||
+      baseline.ambiguities.length || baseline.subrequests.length ||
+      !["GUIDANCE", "SAFE_DIAGNOSTIC"].includes(baseline.requestKind) ||
+      !["guidance", "diagnose", "restart", "answer"].includes(baseline.requestedAction)) return false;
+  const text = normalize(input.rawText);
+  // An unrecognized comma/colon continuation may be a second task. During an
+  // outage, require the complete clause to be known context, not just a keyword.
+  const clauses = input.rawText.split(/[,:]/).map((part) => part.trim());
+  if (clauses.slice(1).some((part) => !isBoundedFallbackContext(part) &&
+      !isRepeatedSafeSymptom(clauses[0], part))) return false;
+  const allContext = normalize([input.rawText, ...Object.values(input.fields)].join("; ")
+    .split(/[;,:\n]|\.\s+/).filter((part) => !isNegatedDeviceChangeRefusal(part)).join("; "));
+  // Commas/colons can join a symptom to a separate request for access, an ID or
+  // resources. Do not silently answer only the symptom during an AI outage.
+  if (asserted(allContext,
+    /\b(?:grant|give|add|allow|need|want|request|increase|provision|allocate|create|cap|cho|can|muon|xin|them|tang|tao|yeu cau|cung cap)\b[^.!?;]{0,50}\b(?:permissions?|access|roles?|quota|capacity|resources?|accounts?|id|quyen|truy cap|tai khoan|tai nguyen|gpu|vcpu|ram|disk|storage|cloud|sandbox|budget|ngan sach|repo|repository|github|gitlab|jira|confluence|database|schema)\b/,
+  )) return false;
+  // Decline active changes even when the broad symptom classifier found a
+  // printer/VPN noun first. Local negations cannot cancel a later instruction.
+  if (asserted(allContext,
+    /\b(?:install|uninstall|update|upgrade|firmware|driver|drivers|deploy|execute|run|script|command|sudo|powershell|terminal|regedit|registry|chmod|grant|provision|export|dump|wipe|format|delete|erase|factory reset|cai dat|cai lai|nang cap|cap nhat|chay lenh|thuc thi|cap quyen|xoa|khoi phuc cai dat goc)\b|\b(?:change|modify|configure|open|close|enable|disable|mo|tat|sua|doi|thay doi|cau hinh)\s+(?:the\s+)?(?:port|cong|firewall|tuong lua|dns|proxy|vpn|mfa|edr|profile|cau hinh)\b/,
+  )) return false;
+  const knownGuide = guidanceRules.some((rule) => rule.labels.some((label) => label === baseline.intentLabel));
+  if (!text) return input.mode === "structured" && knownGuide && input.fields.intentLabel === baseline.intentLabel;
+  if (isConceptExplanation(text)) return true;
+  if (!knownGuide) return false;
+  if (baseline.intentLabel === "DEVICE_RESTART_GUIDANCE" || baseline.intentLabel === "DEVICE_SHUTDOWN_GUIDANCE") {
+    return asserted(text, /\b(?:restart|reboot|khoi dong lai|shutdown|shut down|tat may|power off)\b/) &&
+      !/\b(?:server|service|pod|cluster|workload|database)\b/.test(text);
+  }
+  const symptomPatterns: Partial<Record<string, RegExp>> = {
+    DEVICE_PRINTER: /\b(?:printer|may in)\b.{0,60}\b(?:ket giay|loi|error|jam|jammed|not print|khong in|offline|khong hoat dong)\b/,
+    VPN_NOT_CONNECTING: /\bvpn\b.{0,60}\b(?:ngat ket noi|khong ket noi|not connect|disconnect|disconnecting|disconnected|connection drops|loi|error|fail|timeout|timed out)\b/,
+    VPN_LOGIN: /\bvpn\b.{0,60}\b(?:authentication failed|sai mat khau|dang nhap that bai)\b/,
+    WIFI_NOT_WORKING: /\b(?:wifi|wi fi)\b.{0,60}\b(?:khong ket noi|khong hoat dong|not work|not working|not connect|loi|error|disconnect|disconnecting)\b/,
+    DEVICE_FREEZE: /\b(?:may|laptop|computer|device)\b.{0,60}\b(?:bi treo|bi do|freeze|frozen|hangs|not responding|sap nguon|mat nguon)\b/,
+    DEVICE_WONT_BOOT: /\b(?:may|laptop|computer|device)\b.{0,60}\b(?:khong bat|khong khoi dong|won.t boot|won.t start|boot loop)\b/,
+  };
+  return symptomPatterns[baseline.intentLabel]?.test(text) ?? false;
+}
+
 function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
+  // A technical noun in a definition question is not a request to change it.
+  // Full-input risk and independent-subrequest checks still run afterwards.
+  if (isConceptExplanation(text)) return ["OTHER", "GENERAL_HOW_TO", "GUIDANCE"];
   if (
     /chuyen.{0,20}admin|pass.{0,15}admin|human (?:agent|reviewer)|khong hieu/.test(
       text,
@@ -580,7 +709,7 @@ function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
     return ["OTHER", "REQUEST_CLASSIFICATION_HELP", "OTHER"];
   if (
     /vpn/.test(text) &&
-    /loi|fail|not connect|khong ket noi|troubleshoot|setup|cai dat|dang nhap/.test(
+    /loi|fail|not connect|khong ket noi|ngat ket noi|disconnect|connection drops|troubleshoot|setup|cai dat|dang nhap/.test(
       text,
     )
   )
@@ -730,7 +859,7 @@ function classify(text: string): [ServiceGroup, string, RequestKind] {
       group: "NETWORK_VPN",
       label: "VPN_NOT_CONNECTING",
       pattern:
-        /\bvpn\b.{0,30}(?:not connect|khong ket noi|loi|fail|timeout|timed out)|(?:loi|khong ket noi|cannot connect to).{0,15}\bvpn\b/,
+        /\bvpn\b.{0,30}(?:not connect|khong ket noi|ngat ket noi|disconnect|connection drops|loi|fail|timeout|timed out)|(?:loi|khong ket noi|cannot connect to).{0,15}\bvpn\b/,
     },
     {
       score: 2,
@@ -777,13 +906,7 @@ export function extractText(rawText: string): Extraction {
     /\b(mysql|postgresql|postgres|redis|mongodb|clickhouse|jira|confluence|github|gitlab)\b/,
   );
   if (system) entities.system = system[1];
-  const permission = asserted(text, /\badmin\b|\broot\b|\bowner\b/)
-    ? text.match(/\b(admin|root|owner)\b/)?.[1]
-    : asserted(text, /read.only|\bread\b|\bselect\b|chi doc|chi xem/)
-      ? "read-only"
-      : asserted(text, /write|quyen ghi/)
-        ? "write"
-        : undefined;
+  const permission = statedPermission(text);
   if (
     permission &&
     (requestKind === "ACCESS_REQUEST" || riskSignals.includes("PRIVILEGED"))
@@ -980,7 +1103,8 @@ export function extractIntake(
     input.requestKind !== "OTHER" &&
     input.rawText &&
     extracted.requestKind !== "OTHER" &&
-    input.requestKind !== extracted.requestKind
+    input.requestKind !== extracted.requestKind &&
+    !equivalentGuidanceKinds(input.requestKind, extracted.requestKind, extracted.intentLabel)
   )
     risks.add("CONFLICT");
   let serviceGroup = extracted.serviceGroup;
@@ -1032,7 +1156,8 @@ export function extractIntake(
     if (
       input.requestKind &&
       input.requestKind !== "OTHER" &&
-      input.requestKind !== requestKind
+      input.requestKind !== requestKind &&
+      !equivalentGuidanceKinds(input.requestKind, requestKind, intentLabel)
     )
       risks.add("CONFLICT");
     if (!fields.requestedAction && !fields.operation)
@@ -1138,9 +1263,13 @@ export function extractIntake(
     // A complete courtesy is not an extra task. Keep the original input and
     // its risk/evidence checks; never discard a clause with appended content.
     .filter((part) => !/^(?:thanks(?: team)?|thank you(?: team)?|cam on(?: team| ban)?)[.!]*$/.test(normalize(part)))
+    // A complete statement that another service works is context, not a
+    // requested port/configuration change. Appended actions never match this.
+    .filter((part) => !/^(?:vpn|wi fi|wifi|mfa)\s+(?:van on|van binh thuong|binh thuong|hoat dong binh thuong|khong bi loi|is working|works fine|is working normally|is fine|is okay|is ok)[.!]*$/.test(normalize(part)))
     // A standalone refusal to bypass a control is context for the actual task,
     // not a second requested operation.
     .filter((part) => !isNegatedControlRefusal(part))
+    .filter((part) => !isNegatedDeviceChangeRefusal(part))
     .reduce<string[]>((requests, fragment) => {
       const label = fragment.match(/^([^:=]+)[:=]/)?.[1];
       // Labelled facts describe the preceding request, not an independent task.
@@ -1151,7 +1280,7 @@ export function extractIntake(
           .some((field) => normalize(field) === normalize(label));
       // These complete, bounded questions add no operation or scope. Do not
       // discard arbitrary unknown fragments, or extra actions hidden in prose.
-      const guidanceFollowup = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) tu dau|ban huong dan(?: giup toi)? duoc khong)[?.!]*$/.test(normalize(fragment));
+      const guidanceFollowup = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) (?:tu dau|gi truoc)|ban huong dan(?: giup toi)? duoc khong|(?:huong dan|chi) (?:toi|minh) (?:kiem tra|xu ly)(?: an toan)?|(?:what should i check first|where should i start|please guide me through safe checks))[?.!]*$/.test(normalize(fragment));
       // Approval claims add provenance, not a task or verified authority.
       const previous = requests.at(-1);
       const approvalContext = isApprovalContext(fragment, previous);
@@ -1165,6 +1294,7 @@ export function extractIntake(
       const vpnDevice = previous && isVpnDeviceContext(previous, fragment);
       const databaseAuthorization = previous && isDatabaseAuthorizationContext(previous, fragment);
       const uncertaintyContext = isUncertaintyContext(fragment);
+      const repeatedSymptom = previous && isRepeatedSafeSymptom(previous, fragment);
       if (
         requests.length &&
         (factLabel ||
@@ -1178,6 +1308,7 @@ export function extractIntake(
           vpnDevice ||
           databaseAuthorization ||
           isDurationOnlyContext(fragment) ||
+          repeatedSymptom ||
           uncertaintyContext)
       )
         requests[requests.length - 1] += `; ${fragment}`;

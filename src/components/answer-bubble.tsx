@@ -18,6 +18,13 @@ export function AnswerBubble({
               ? "VNG Support · Câu trả lời mẫu"
               : "VNG Support · Hướng dẫn đã kiểm duyệt"}
         </p>
+        {item.fallbackReason && !item.answer && (
+          <p className="assistant-note" role="status">
+            Đang dùng hướng dẫn đã kiểm duyệt vì AI chưa trả về kết quả hợp lệ.
+            Bạn vẫn có thể làm theo các bước an toàn hoặc nhờ nhân viên hỗ trợ.
+            <span className="block">Mã lý do: {item.fallbackReason}</span>
+          </p>
+        )}
         {item.answer ? (
           <>
             <div className="assistant-text">{item.answer.text}</div>

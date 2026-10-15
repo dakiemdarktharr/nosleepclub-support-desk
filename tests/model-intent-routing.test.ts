@@ -15,12 +15,13 @@ const input = (rawText: string): SupportInput => ({
   idempotencyKey: crypto.randomUUID(),
 });
 
-it("keeps extraction authentication failure visible in preview sentiment without another model call", async () => {
+it("keeps authentication failure visible while using vetted printer guidance without another model call", async () => {
   vi.stubEnv("AI_MODEL", "gpt-6-luna");
   const run = vi.fn(async () => { throw new ModelFailure("MODEL_UNAVAILABLE", "AUTHENTICATION"); });
   const preview = await previewSupport(input("Máy in không hoạt động"), { run });
   expect(preview.sentiment).toMatchObject({ source: "rule-based", model: "gpt-6-luna", fallbackReason: "AUTHENTICATION" });
-  expect(preview.decision.action).toBe("ESCALATE");
+  expect(preview.decision.action).toBe("AUTO_APPROVE");
+  expect(preview.assistance).toMatchObject({ source: "deterministic", fallbackReason: "AUTHENTICATION" });
   expect(run).toHaveBeenCalledOnce();
 });
 
@@ -90,7 +91,8 @@ it.each([
   expect(run).toHaveBeenCalledOnce();
   expect(canonical.intentLabel).toBe("DEVICE_PRINTER");
   expect(canonical.model.source).toBe("openai");
-  expect(decision.action).toBe(rawText.includes("nhưng") ? "ESCALATE" : "AUTO_APPROVE");
+  expect(decision.action).toBe("AUTO_APPROVE");
+  if (rawText.includes("nhưng")) expect(canonical.subrequests).toHaveLength(0);
 });
 
 it("routes a statement to conversation only after the model identifies it", async () => {
@@ -153,17 +155,24 @@ it("does not infer away missing facts, ambiguity or multiple intentions", async 
   const ambiguous = await analyze(request, [], {
     run: async () => ({ ...printerIntent(request.rawText), ambiguities: ["Không rõ thiết bị nào"] }),
   });
-  expect(ambiguous.decision.action).toBe("ESCALATE");
+  expect(ambiguous.decision.action).toBe("NEEDS_INFORMATION");
   expect(ambiguous.canonical.ambiguities).toEqual(["Không rõ thiết bị nào"]);
-  expect(ambiguous.canonical.riskSignals).toContain("CONFLICT");
+  expect(ambiguous.canonical.riskSignals).not.toContain("CONFLICT");
   const multi = input("Máy in bị kẹt; VPN cũng không kết nối");
   const combined = await analyze(multi, [], { run: async () => printerIntent(multi.rawText) });
-  expect(combined.decision.action).toBe("ESCALATE");
+  expect(combined.decision.action).toBe("NEEDS_INFORMATION");
+  expect(combined.decision.ruleIds).toContain("INFO-SINGLE-REQUEST-001");
+  expect(combined.canonical.riskSignals).not.toContain("CONFLICT");
   expect(combined.canonical.subrequests.length).toBeGreaterThan(1);
 });
 
-it("fails closed on timeout, malformed output and invented intent evidence", async () => {
+it("uses vetted guidance for a known paper jam but fails closed on vague input, malformed output and invented evidence", async () => {
   const request = input("Máy in có vấn đề");
+  const timedOut = await analyze(input("Máy in bị kẹt giấy"), [], {
+    run: async () => new Promise<never>(() => {}), timeoutMs: 5,
+  });
+  expect(timedOut.decision.action).toBe("AUTO_APPROVE");
+  expect(timedOut.canonical.model).toMatchObject({ source: "deterministic", fallbackReason: "TIMEOUT" });
   for (const run of [
     async () => new Promise<never>(() => {}),
     async () => ({ ...printerIntent(request.rawText), decision: "AUTO_APPROVE" }),
