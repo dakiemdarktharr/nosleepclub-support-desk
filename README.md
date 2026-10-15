@@ -20,6 +20,18 @@ Dự án thuộc **MLAI Hackathon 2026 — The Escalation Referee**. Phiên bả
 3. Xác nhận gửi để lưu yêu cầu, hỏi tiếp và phản hồi kết quả.
 4. Giữ liên kết hoặc mã đầy đủ để theo dõi. Mã ngắn `HT-…` giúp nhân viên tìm hồ sơ.
 
+## ID demo
+
+ID dưới đây đã được kiểm tra đăng nhập trên Production ngày 15/10/2026:
+
+| ID | Vai trò | Màn hình sau khi đăng nhập |
+| --- | --- | --- |
+| `itnvgl` | IT — quản lý cấp ID nhân viên (`identity-admin`) | Cấp ID nhân viên (`/identity/review`) |
+
+**Cách dùng:** mở [Đăng nhập](https://vng-support.vercel.app/login), nhập `itnvgl` vào ô **ID nhân viên** rồi bấm **Đăng nhập**. Bản demo không yêu cầu mật khẩu hoặc OTP. Chỉ dùng tài khoản này với dữ liệu giả lập.
+
+Hiện chưa có ID demo riêng cho nhân viên thông thường. ID mới chỉ đăng nhập được sau khi đơn cấp ID được IT duyệt. Để thử gửi hỗ trợ ngay, chọn [Đăng nhập không cần tài khoản](https://vng-support.vercel.app/guest).
+
 ## Chức năng
 
 ### Dành cho người gửi
