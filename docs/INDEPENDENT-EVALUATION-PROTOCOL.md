@@ -1,12 +1,9 @@
 # Protocol thu thập bằng chứng độc lập
 
-Trạng thái: **PARTIAL**. Ngày 2026-10-14, chủ repo cung cấp một báo cáo ngày
-2026-10-13 về ba người kiểm thử (UT-01/02/03) và xác nhận họ đồng ý công bố
-họ tên cùng phản hồi nguyên văn. Tệp nguồn không đính kèm hồ sơ consent. Báo cáo
-chi tiết, cách tái hiện, sửa lỗi và kiểm tra hồi quy được ghi tại
-[USER-TEST-FINDINGS.md](USER-TEST-FINDINGS.md). SHA và cấu hình
-triển khai, thời lượng, cùng bằng chứng quy trình/chức danh thực tế chưa có
-trong hồ sơ nguồn nên chưa được xác minh độc lập. Chưa có held-out độc lập.
+Trạng thái: **PARTIAL**. Báo cáo feedback của ba người kiểm thử đã được gỡ khỏi cây mã
+nguồn công khai theo yêu cầu chủ repo. Protocol này không lưu tên, trích dẫn nguyên văn
+hoặc chi tiết nhận dạng. Việc gỡ báo cáo khỏi repository không phủ nhận việc feedback
+đã được thu thập. Chưa có held-out độc lập.
 AI assistance: Codex.
 
 ## 1. Người phụ trách và quyền sử dụng
@@ -21,13 +18,13 @@ nêu mục đích, dữ liệu thu, thời gian giữ, quyền dừng/rút trư�
 người được truy cập, có quay màn hình hay không và quyền trích dẫn. Không tạo
 tên, chức danh hoặc chữ ký thay họ. Mỗi người tự viết phản hồi.
 
-Danh tính, chức danh thật, consent và văn bản gốc giữ trong kho riêng có kiểm
-soát truy cập. Bản công khai mặc định dùng mã người tham gia. Chỉ công bố tên
-hoặc trích dẫn nguyên văn khi consent nêu rõ phạm vi đó; không suy ra quyền
-công bố chức danh hay thông tin cá nhân khác từ consent trích dẫn. Với báo cáo
-này, chủ repo xác nhận ngày 2026-10-14 rằng ba người đồng ý công bố tên và
-feedback nguyên văn; tệp consent không được đính kèm vào repo. Chỉ dùng ticket
-synthetic hoặc dữ liệu tổ chức được phép và đã ẩn danh trước khi nhập app.
+Danh tính, chức danh thật, consent và văn bản gốc giữ trong kho riêng có kiểm soát truy
+cập. Bản công khai mặc định dùng mã người tham gia. Chỉ công bố tên hoặc trích dẫn
+nguyên văn khi consent nêu rõ phạm vi đó; không suy ra quyền công bố chức danh hay
+thông tin cá nhân khác từ consent trích dẫn. Hồ sơ consent không được lưu trong
+repository này; nhóm phụ trách cần xác minh và quản lý riêng phạm vi công bố trước
+khi đưa thông tin định danh vào tài liệu. Chỉ dùng ticket synthetic hoặc dữ liệu tổ
+chức được phép và đã ẩn danh trước khi nhập app.
 
 ## 2. Đóng băng tập held-out trước khi chạy
 
@@ -82,33 +79,29 @@ Với tối thiểu ba người, trình bày từng người và median/range; k
 đến nhân viên VNG hoặc toàn bộ ngành. Báo cả thất bại, không hoàn tất và bất cập.
 Giữ verbatim feedback; AI có thể hỗ trợ phân loại nhưng không viết thay lời họ.
 
-## 5. Những gì báo cáo hiện có chưa xác nhận
+## 5. Phạm vi báo cáo feedback trong repository
 
-Tài liệu được chủ repo cung cấp mô tả ba người và ba lỗi cụ thể; mỗi người được
-ghi vai trò chung là “Tester”. Chủ repo xác nhận ba người đồng ý công bố tên và
-phản hồi nguyên văn; hồ sơ consent không nằm trong repo. Nguồn không ghi
-SHA/policy/provider của bản chạy, thời lượng hay dữ liệu quan sát thô. Ba
-regression test mới kiểm tra sửa đổi trên mã nguồn, không phải lượt thử lại do
-người tham gia thực hiện. Vì vậy không dùng báo cáo này để tuyên bố đã đủ điều
-kiện đánh giá độc lập, xác minh vai trò nhân viên nghiệp vụ, hoặc chứng minh
-hiệu quả sau sửa.
+Báo cáo ghi nhận feedback của ba người đã được gỡ khỏi cây mã nguồn công khai theo
+yêu cầu chủ repo. Protocol này không sao chép tên, trích dẫn nguyên văn hoặc chi tiết
+từng trường hợp. Thông tin này mô tả trạng thái repository; không phủ nhận việc
+feedback đã được thu thập. Feedback người dùng cũng không tự thay thế held-out độc
+lập, phép đo tác động trước/sau hoặc retest trên đúng SHA.
 
-## 6. Biểu mẫu cho phần còn thiếu
+## 6. Biểu mẫu cho lượt đánh giá tiếp theo
 
-| Mục | Giá trị |
+| Mục cần ghi nhận | Cách ghi nhận |
 | --- | --- |
-| Participant code / task code / thứ tự thử | NOT COLLECTED |
-| Consent công bố tên và feedback nguyên văn | Chủ repo xác nhận; hồ sơ consent không đính kèm |
-| Chức danh/quy trình nghiệp vụ đã xác minh | NOT COLLECTED; nguồn ghi vai trò chung “Tester” |
-| SHA / policy / provider / model / storage | NOT COLLECTED |
-| Onboarding / thao tác / chờ / tổng thời gian | NOT COLLECTED |
-| Kết quả đúng, lỗi, trợ giúp, bỏ cuộc | NOT COLLECTED |
-| Rule/evidence tìm được và giải thích của người dùng | NOT COLLECTED |
-| Gánh nặng mới / ỷ lại / giảm phối hợp | NOT COLLECTED |
-| Phản hồi nguyên văn do chính người dùng viết | NOT COLLECTED |
-| Đồng ý trích dẫn và phạm vi công bố | NOT COLLECTED |
-| Cải tiến từ phản hồi → issue/commit → thử lại | NOT COLLECTED |
+| Participant code / task code / thứ tự thử | Dùng mã người tham gia; ghi rõ nhiệm vụ và thứ tự |
+| Consent và phạm vi công bố | Xác minh trước khi thử; không suy rộng quyền công bố |
+| Chức danh và quy trình nghiệp vụ | Ghi theo xác nhận của người tham gia; không tự gán vai trò |
+| SHA / policy / provider / model / storage | Ghi phiên bản và cấu hình trước mỗi lượt |
+| Onboarding / thao tác / chờ / tổng thời gian | Đo riêng thời gian làm quen, thao tác và chờ |
+| Kết quả đúng, lỗi, trợ giúp, bỏ cuộc | Ghi cho từng nhiệm vụ, kể cả lỗi và trường hợp không hoàn thành |
+| Rule/evidence tìm được và giải thích của người dùng | Ghi nội dung người dùng tìm thấy và cách họ hiểu |
+| Gánh nặng mới / ỷ lại / giảm phối hợp | Hỏi mở, không gợi ý câu trả lời |
+| Phản hồi nguyên văn do chính người dùng viết | Lưu riêng; chỉ trích dẫn khi consent cho phép |
+| Cải tiến từ phản hồi → issue/commit → thử lại | Liên kết feedback, thay đổi cụ thể và lượt retest |
 
-Một cải tiến chỉ được tính là từ người dùng sau khi nối được feedback gốc,
-quyết định thay đổi, diff và kết quả thử lại. Regression do AI đề xuất trong
-lượt này không thay thế yêu cầu đó.
+Một cải tiến chỉ được tính là từ người dùng sau khi nối được feedback gốc, quyết định
+thay đổi, diff và kết quả thử lại. Regression do AI đề xuất trong lượt này không thay
+thế yêu cầu đó.
