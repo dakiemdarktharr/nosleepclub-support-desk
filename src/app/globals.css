@@ -624,11 +624,10 @@ fieldset {
   }
 }
 
-/* Separate opacity reveal and scale pop so text remains readable and wraps on small screens. */
+/* Validated text is readable immediately; a brief movement confirms the new response. */
 .assistant-reveal {
   min-width: 0;
   max-width: 100%;
-  animation: assistant-reveal 0.4s ease-out both;
 }
 .assistant-bubble {
   min-width: 0;
@@ -644,7 +643,7 @@ fieldset {
   overflow-wrap: anywhere;
   word-break: normal;
   transform-origin: bottom left;
-  animation: assistant-pop 0.2s ease-out 0.4s both;
+  animation: assistant-pop 0.16s ease-out both;
 }
 .assistant-byline {
   font-size: 0.8rem;
@@ -690,14 +689,6 @@ fieldset {
 }
 .followup-card {
   border: 2px solid color-mix(in srgb, var(--orange) 35%, var(--line));
-}
-@keyframes assistant-reveal {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 @keyframes assistant-pop {
   0% {

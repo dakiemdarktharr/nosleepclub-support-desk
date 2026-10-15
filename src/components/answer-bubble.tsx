@@ -3,9 +3,11 @@ import type { Assistance } from "@/domain/contracts";
 export function AnswerBubble({
   item,
   children,
+  audience = "employee",
 }: {
   item: Assistance;
   children?: ReactNode;
+  audience?: "employee" | "reviewer";
 }) {
   // Older saved answers may have cacheHit but predate the distinct cache source.
   const cached = item.source === "cache" || item.answer?.cacheHit === true;
@@ -14,28 +16,32 @@ export function AnswerBubble({
       <article className="assistant-bubble" aria-label="Câu trả lời của trợ lý">
         <p className="assistant-byline">
           ✦{" "}
-          {cached
-            ? "VNG Support · Câu trả lời từ bộ nhớ đệm"
-            : item.source === "openai"
-            ? "VNG Support · AI trả lời"
-            : item.source === "mock"
-              ? "VNG Support · Câu trả lời mẫu"
-              : "VNG Support · Hướng dẫn đã kiểm duyệt"}
+          {audience === "employee" && item.source !== "mock"
+            ? "VNG Support"
+            : cached
+              ? "VNG Support · Câu trả lời từ bộ nhớ đệm"
+              : item.source === "openai"
+                ? "VNG Support · AI trả lời"
+                : item.source === "mock"
+                  ? "VNG Support · Câu trả lời mẫu"
+                  : "VNG Support · Hướng dẫn đã kiểm duyệt"}
         </p>
         {item.fallbackReason && !item.answer && (
           <p className="assistant-note" role="status">
             Đang dùng hướng dẫn đã kiểm duyệt vì AI chưa trả về kết quả hợp lệ.
             Bạn vẫn có thể làm theo các bước an toàn hoặc nhờ nhân viên hỗ trợ.
-            <span className="block">Mã lý do: {item.fallbackReason}</span>
+            {audience === "reviewer" && (
+              <span className="block">Mã lý do: {item.fallbackReason}</span>
+            )}
           </p>
         )}
         {item.answer ? (
           <>
             <div className="assistant-text">{item.answer.text}</div>
-            {cached && (
+            {cached && audience === "reviewer" && (
               <p className="assistant-note">
-                Câu trả lời đã lưu được kiểm tra lại trước khi dùng.
-                Không gọi AI để tạo lại nội dung này trong lượt hiện tại.
+                Câu trả lời đã lưu được kiểm tra lại trước khi dùng. Không gọi
+                AI để tạo lại nội dung này trong lượt hiện tại.
               </p>
             )}
             {item.answer.scopeNotice && (

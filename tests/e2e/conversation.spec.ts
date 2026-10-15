@@ -38,7 +38,8 @@ test("conversation answers before confirmation, wraps and continues without a re
     pop: getComputedStyle(element).animationDuration,
     reveal: getComputedStyle(element.parentElement!).animationDuration,
   }));
-  expect(timings).toEqual({ pop: "0.2s", reveal: "0.4s" });
+  expect(timings).toEqual({ pop: "0.16s", reveal: "0s" });
+  await expect(page.locator(".assistant-bubble")).toHaveCSS("animation-delay", "0s");
   await bubble.locator("summary").click();
   await expect(bubble.getByRole("link", { name: /Google:/ })).toHaveAttribute(
     "href",

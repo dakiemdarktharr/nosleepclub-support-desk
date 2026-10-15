@@ -443,6 +443,7 @@ function applyAnalysis(
 ) {
   const before = draft.status;
   draft.canonical = result.canonical;
+  if (result.sentiment && !draft.intakeSentiment) draft.intakeSentiment = result.sentiment;
   draft.decision = result.decision;
   if (result.assistance) draft.assistance.push(result.assistance);
   draft.status =

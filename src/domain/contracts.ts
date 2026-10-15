@@ -275,6 +275,7 @@ export type SupportRequest = {
   status: RequestStatus;
   input: SupportInput;
   originalQuestion?: string;
+  intakeSentiment?: SentimentAssessment;
   stepExplanations?: Array<{ step: number; text: string; timestamp: string }>;
   canonical: CanonicalRequest | null;
   decision: Decision | null;

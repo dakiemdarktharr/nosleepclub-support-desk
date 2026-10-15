@@ -13,25 +13,27 @@ export function SentimentPreview({
 }: {
   assessment: SentimentAssessment;
 }) {
-  const tone = assessment.sentiment === "positive"
-    ? "success"
-    : assessment.sentiment === "negative"
-      ? "danger"
-      : "neutral";
-  const source = assessment.source === "model"
-    ? `Model${assessment.model ? `: ${assessment.model}` : ""}`
-    : assessment.source === "rule-based"
-      ? "Dự phòng theo luật (rule-based)"
-      : "Chưa có mô tả để phân tích";
+  const tone =
+    assessment.sentiment === "positive"
+      ? "success"
+      : assessment.sentiment === "negative"
+        ? "danger"
+        : "neutral";
+  const source =
+    assessment.source === "model"
+      ? `Model${assessment.model ? `: ${assessment.model}` : ""}`
+      : assessment.source === "rule-based"
+        ? "Dự phòng theo luật (rule-based)"
+        : "Chưa có mô tả để phân tích";
 
   return (
     <Card
       className="space-y-3"
       role="region"
-      aria-label="Sentiment nhận diện trước khi gửi"
+      aria-label="Phân tích cảm xúc nội bộ"
     >
       <div className="flex flex-wrap items-center gap-3">
-        <h3 className="font-semibold">Sentiment dự đoán</h3>
+        <h3 className="font-semibold">Cảm xúc người gửi</h3>
         <Badge tone={tone}>{sentimentLabels[assessment.sentiment]}</Badge>
         <span className="text-sm text-slate-600">Nguồn: {source}</span>
       </div>
@@ -45,12 +47,14 @@ export function SentimentPreview({
       </p>
       {assessment.source === "rule-based" && assessment.fallbackReason && (
         <p className="text-sm">
-          <strong>Vì sao dùng dự phòng:</strong> {sentimentFallbackMessages[assessment.fallbackReason]}
+          <strong>Vì sao dùng dự phòng:</strong>{" "}
+          {sentimentFallbackMessages[assessment.fallbackReason]}
           {assessment.model && <> Model đã cấu hình: {assessment.model}.</>}
         </p>
       )}
       <p className="text-xs text-slate-600">
-        Nhãn này để bạn kiểm tra trước khi gửi; policy và quyết định xử lý vẫn do hệ thống kiểm tra riêng.
+        Thông tin tham khảo cho nhân viên hỗ trợ; không quyết định quyền, ưu
+        tiên hoặc trạng thái xử lý.
       </p>
     </Card>
   );

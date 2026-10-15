@@ -9,7 +9,7 @@ import { browserApi } from "@/lib/browser-api";
 import { Alert, Button, Card, Textarea } from "./ui";
 import { SupportResult } from "./support-result";
 import { SupportField } from "./support-field";
-import { AssistanceHistory, AuditTimeline } from "./support-history";
+import { AssistanceHistory, RequestProgress } from "./support-history";
 export function RequestDetail({ id }: { id: string }) {
   const [request, setRequest] = useState<SupportRequest | null>(null),
     [error, setError] = useState("");
@@ -30,12 +30,22 @@ export function RequestDetail({ id }: { id: string }) {
     }
   }
   useEffect(() => {
+    let current = true;
+    setRequest(null);
+    setError("");
     void browserApi<SupportRequest>(`/api/support/requests/${id}`)
-      .then(setRequest)
-      .catch(() => setError("Không thể tải yêu cầu. Thử tải lại."));
+      .then((result) => {
+        if (current) setRequest(result);
+      })
+      .catch(() => {
+        if (current) setError("Không thể tải yêu cầu. Thử tải lại.");
+      });
+    return () => {
+      current = false;
+    };
   }, [id]);
   async function update(path: string, body: object) {
-    if (!request) return;
+    if (!request || pending) return;
     setPending(true);
     setError("");
     try {
@@ -76,13 +86,23 @@ export function RequestDetail({ id }: { id: string }) {
             ? "Nhân viên đã duyệt; đang chờ hoàn tất xử lý mô phỏng."
             : "";
   return (
-    <main className="page page-narrow space-y-6" data-guide-stage={request?.input.requesterMode === "guest" ? undefined : "sender-result"}>
+    <main
+      className="page page-narrow space-y-6"
+      data-guide-stage={
+        request?.input.requesterMode === "guest" ? undefined : "sender-result"
+      }
+    >
       <div>
         <p className="eyebrow">THEO DÕI HỖ TRỢ</p>
         <h1>Yêu cầu {displayId(id)}</h1>
       </div>
       {error && <Alert tone="error">{error}</Alert>}
-      {!request && !error && <p role="status">Đang tải…</p>}
+      {!request && !error && <p role="status">Đang tải yêu cầu…</p>}
+      {pending && (
+        <p role="status" className="text-sm text-slate-600">
+          Đang cập nhật yêu cầu, vui lòng chờ…
+        </p>
+      )}
       {request && (
         <>
           <Card className="request-status" data-guide="sender-result">
@@ -186,13 +206,12 @@ export function RequestDetail({ id }: { id: string }) {
                   <div>
                     <h2>Hỏi tiếp về phản hồi này</h2>
                     <p className="text-sm text-slate-600">
-                      Hệ thống nhận diện câu đã giải quyết, câu hỏi cần hỗ trợ
-                      tiếp hoặc yêu cầu gặp nhân viên. Câu hỏi tiếp theo vẫn
-                      được kiểm tra lại trước khi trả lời.
+                      Cho biết bước bạn đang vướng hoặc hỏi thêm về hướng dẫn.
+                      Bạn có thể yêu cầu nhân viên hỗ trợ bất cứ lúc nào.
                     </p>
                   </div>
                   <label>
-                      Phản hồi về hướng dẫn
+                    Phản hồi về hướng dẫn
                     <Textarea
                       aria-label="Hỏi tiếp"
                       data-guide="sender-followup"
@@ -204,22 +223,32 @@ export function RequestDetail({ id }: { id: string }) {
                       maxLength={2000}
                     />
                   </label>
-                  <Button type="submit" data-guide="sender-followup-send">Gửi câu hỏi</Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() =>
-                      void update("feedback", { choice: "RESOLVED" })
-                    }
-                  >
-                    Tôi đã hiểu
+                  <Button type="submit" data-guide="sender-followup-send">
+                    Gửi câu hỏi
                   </Button>
+                  {latest?.answer && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() =>
+                        void update("feedback", { choice: "RESOLVED" })
+                      }
+                    >
+                      Tôi đã hiểu
+                    </Button>
+                  )}
                 </fieldset>
               </form>
             </Card>
           )}
           {active && (
-            <fieldset disabled={pending} className="space-y-4" data-guide={canGuide && !latest?.answer ? "sender-feedback" : undefined}>
+            <fieldset
+              disabled={pending}
+              className="space-y-4"
+              data-guide={
+                canGuide && !latest?.answer ? "sender-feedback" : undefined
+              }
+            >
               {canGuide && !latest?.answer && (
                 <>
                   <div className="support-actions">
@@ -332,13 +361,17 @@ export function RequestDetail({ id }: { id: string }) {
                       maxLength={4000}
                     />
                   </label>
-                  <Button type="submit" data-guide="sender-followup-send">Gửi bổ sung</Button>
+                  <Button type="submit" data-guide="sender-followup-send">
+                    Gửi bổ sung
+                  </Button>
                 </fieldset>
               </form>
             </Card>
           )}
           <details className="panel">
-            <summary data-guide="sender-history">Lịch sử yêu cầu và hướng dẫn</summary>
+            <summary data-guide="sender-history">
+              Lịch sử yêu cầu và hướng dẫn
+            </summary>
             {request.decision && request.canonical && currentNote && (
               <SupportResult
                 decision={request.decision}
@@ -350,10 +383,17 @@ export function RequestDetail({ id }: { id: string }) {
                 active ? request.assistance.slice(0, -1) : request.assistance
               }
             />
-            <AuditTimeline events={request.events} />
+            <RequestProgress events={request.events} />
           </details>
           {!active && (
-            <Link className="button primary" href={request.input.requesterMode === "guest" ? "/guest" : "/send-help"}>
+            <Link
+              className="button primary"
+              href={
+                request.input.requesterMode === "guest"
+                  ? "/guest"
+                  : "/send-help"
+              }
+            >
               Gửi yêu cầu mới
             </Link>
           )}

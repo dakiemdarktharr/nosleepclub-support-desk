@@ -79,7 +79,7 @@ test("medium assistance passes to admin with history intact", async ({
   page,
 }, info) => {
   await submit(page, "VPN không kết nối");
-  await expect(page.getByText(/VNG Support · Hướng dẫn đã kiểm duyệt$/)).toBeVisible();
+  await expect(page.getByRole("article", { name: "Câu trả lời của trợ lý" })).toContainText("VNG Support");
   const detailUrl = `/api/support${new URL(page.url()).pathname}`;
   const before = (await (await page.request.get(detailUrl)).json()).data;
   expect(before.assistance[0]).toMatchObject({ source: "deterministic", generationReason: "REVIEWED_TEMPLATE_SUFFICIENT" });

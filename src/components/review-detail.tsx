@@ -23,6 +23,7 @@ import {
 } from "@/domain/presentation";
 import { catalog, labelForField } from "@/domain/catalog";
 import { Badge, Button, Textarea } from "./ui";
+import { SentimentPreview } from "./sentiment-preview";
 import { SupportResult } from "./support-result";
 import { AssistanceHistory, AuditTimeline } from "./support-history";
 
@@ -425,6 +426,27 @@ export function ReviewDetail({
                 Chưa có kết quả đánh giá. Tải lại hồ sơ để kiểm tra cập nhật.
               </p>
             )}
+            <section className="space-y-4" aria-label="Chẩn đoán nội bộ">
+              <h3>Phân tích dành cho nhân viên hỗ trợ</h3>
+              {request.intakeSentiment ? (
+                <SentimentPreview assessment={request.intakeSentiment} />
+              ) : (
+                <p className="text-sm text-slate-600">
+                  Hồ sơ này chưa lưu phân tích cảm xúc khi tiếp nhận.
+                </p>
+              )}
+              {request.feedback
+                .filter((item) => item.sentimentAssessment)
+                .map((item, index) => (
+                  <div key={`${item.timestamp}-${index}`}>
+                    <p className="text-sm text-slate-600">
+                      Phản hồi lúc{" "}
+                      {new Date(item.timestamp).toLocaleString("vi-VN")}
+                    </p>
+                    <SentimentPreview assessment={item.sentimentAssessment!} />
+                  </div>
+                ))}
+            </section>
             <details className="it-reference">
               <summary>Mã đối chiếu kỹ thuật</summary>
               <p>
@@ -444,7 +466,7 @@ export function ReviewDetail({
             {!request.assistance.length && (
               <p>Chưa gửi hướng dẫn tự thực hiện cho yêu cầu này.</p>
             )}
-            <AssistanceHistory items={request.assistance} />
+            <AssistanceHistory items={request.assistance} audience="reviewer" />
             {request.stepExplanations?.map((item, index) => (
               <div className="it-step-explanation" key={index}>
                 <h3>Giải thích bước {item.step + 1}</h3>
