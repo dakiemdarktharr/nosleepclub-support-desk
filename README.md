@@ -53,39 +53,25 @@ Màn hình người gửi tập trung vào vấn đề và bước tiếp theo. 
 
 ## Workflow hỗ trợ
 
-Các sơ đồ được tách theo mục đích, dùng nhãn ngắn để đọc rõ trên GitHub và màn hình nhỏ.
+Các sơ đồ dưới đây được dựng từ Mermaid thành SVG để giữ đầy đủ dấu tiếng Việt và nhãn nhiều dòng trên GitHub. Bấm vào sơ đồ để mở bản đầy đủ; nguồn Mermaid được liên kết ngay bên dưới mỗi sơ đồ.
 
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false, "nodeSpacing": 35, "rankSpacing": 45, "padding": 18}}}%%
-flowchart TD
-  A["Mô tả vấn đề"] --> B["Kiểm tra và hiểu yêu cầu"]
-  B --> C{"Hướng xử lý"}
-  C --> D["Hướng dẫn an toàn"]
-  C --> E["Hỏi thêm thông tin"]
-  C --> F["Chuyển nhân viên"]
-  D --> G["Xem trước và xác nhận"]
-  E --> G
-  F --> G
-  G --> H["Lưu và theo dõi"]
-  H --> I["Hỏi tiếp hoặc phản hồi"]
-  I --> B
-```
+### 1. Tiếp nhận, xem trước và lưu yêu cầu
 
-### AI và kiểm tra an toàn
+[![Workflow tiếp nhận: nhập vấn đề, áp policy, xem trước, xác nhận và lưu hồ sơ](docs/diagrams/support-intake.svg)](docs/diagrams/support-intake.svg)
 
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false, "nodeSpacing": 35, "rankSpacing": 45, "padding": 18}}}%%
-flowchart TD
-  A["Input đã kiểm tra"] --> B["Nhận diện ý định và dữ kiện"]
-  B --> C["Kiểm chứng schema và evidence"]
-  C --> D["Áp dụng policy của server"]
-  D --> E{"Đủ căn cứ hỗ trợ?"}
-  E -->|"Có"| F["Hướng dẫn hoặc tra cứu nguồn"]
-  F --> G["Kiểm tra câu trả lời"]
-  G --> H["Trả kết quả phù hợp"]
-  E -->|"Thiếu thông tin"| I["Hỏi bổ sung"]
-  E -->|"Rủi ro hoặc vượt quyền"| J["Chuyển người phụ trách"]
-```
+[Nguồn Mermaid](docs/diagrams/support-intake.mmd). Xem trước chỉ lưu kết quả tạm có hạn dùng. Khi xác nhận, server đối chiếu fingerprint, thời hạn và phiên bản policy; preview không còn phù hợp phải được phân tích lại trước khi lưu ticket.
+
+### 2. Hỏi tiếp, phản hồi và bàn giao nhân viên
+
+[![Workflow tiếp nối: hỏi bổ sung, xác nhận kết quả, chuyển người và cập nhật hồ sơ](docs/diagrams/support-followup.svg)](docs/diagrams/support-followup.svg)
+
+[Nguồn Mermaid](docs/diagrams/support-followup.mmd). Lượt hỏi mới vẫn đi qua kiểm tra policy. Giải thích một bước và phản hồi cảm xúc không tự xác nhận đã giải quyết. Nhân viên có thể hỏi bổ sung, duyệt, từ chối, dừng hoặc ghi nhận hoàn tất theo trạng thái được phép; mọi quyết định cần lý do và đúng version. Nhánh Security risk không được approve/fulfill trong demo.
+
+### 3. AI, bằng chứng và quyết định an toàn
+
+[![Workflow phân tích: kiểm tra input, định tuyến server hoặc LLM, kiểm chứng bằng chứng và áp policy](docs/diagrams/ai-policy.svg)](docs/diagrams/ai-policy.svg)
+
+[Nguồn Mermaid](docs/diagrams/ai-policy.mmd). Schema hoặc evidence sai không tạo ra phê duyệt. Dự phòng chỉ được dùng khi server tự xác định đủ căn cứ an toàn; không dùng fallback để vượt policy. [Workflow tạo câu trả lời, retrieval và cache](docs/ARCHITECTURE.md#câu-trả-lời-và-độ-trễ).
 
 Model hỗ trợ hiểu ngôn ngữ và soạn câu trả lời; **server quyết định policy, quyền và giới hạn an toàn**. Cảm xúc không cấp quyền, thay đổi ưu tiên hoặc tự xác nhận đã giải quyết. Khi AI không sẵn sàng, app chỉ dùng hướng dẫn dự phòng đã được duyệt cho tình huống đủ căn cứ; trường hợp còn lại hỏi rõ hoặc chuyển hỗ trợ.
 

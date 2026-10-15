@@ -35,6 +35,24 @@ Playwright tự khởi động server riêng tại `127.0.0.1:3227` với model 
 
 Báo cáo, ảnh chụp và video do test sinh ra cần được kiểm tra riêng trước khi đưa vào Git. Kết quả local không thay thế kiểm tra dịch vụ đang triển khai.
 
+## Cập nhật sơ đồ workflow
+
+Nguồn Mermaid nằm trong `docs/diagrams/*.mmd`; README và tài liệu kiến trúc dùng SVG dựng sẵn để nhãn không bị renderer của GitHub cắt. Giữ `look: classic`, font Arial và ngắt dòng chủ động. Không sửa chữ trực tiếp trong SVG.
+
+Cài Mermaid được ghim phiên bản ở thư mục công cụ tạm, ngoài repository; Playwright dùng dependency đã có của dự án:
+
+```powershell
+$diagramTools = Join-Path $env:TEMP 'vng-support-diagram-tools'
+npm install --prefix $diagramTools --no-save --package-lock=false --ignore-scripts mermaid@12.2.0
+$diagramBundle = Join-Path $diagramTools 'node_modules/mermaid/dist/mermaid.min.js'
+$diagramPreview = Join-Path $env:TEMP 'vng-support-diagram-preview'
+node scripts/render-diagrams.mjs --bundle $diagramBundle --screenshots $diagramPreview
+npm run check:docs
+git diff --check
+```
+
+Renderer dừng nếu thiếu nhãn, chữ vượt khung, node chồng nhau hoặc SVG còn HTML nhúng. Trước commit, xem ảnh ở kích thước README và thử ảnh SVG qua thẻ `img` trên nền sáng/tối; kiểm tra link mở ảnh đầy đủ trên mobile. Commit cả nguồn `.mmd` lẫn `.svg`; ảnh kiểm tra để ngoài repo.
+
 ## Đối chiếu bản triển khai
 
 Website: [vng-support.vercel.app](https://vng-support.vercel.app). Dùng project Vercel hiện có `acne-a6cd/vng-support`.

@@ -1,0 +1,50 @@
+---
+config:
+  look: classic
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial, sans-serif
+  themeVariables:
+    fontSize: 18px
+  flowchart:
+    htmlLabels: false
+    nodeSpacing: 24
+    rankSpacing: 32
+    padding: 18
+    wrappingWidth: 255
+    diagramPadding: 20
+    useMaxWidth: false
+    curve: linear
+---
+flowchart TD
+  policy["Policy cho phép hỗ trợ<br/>Chưa thực thi tài nguyên"]:::entry
+  kind{"Loại câu trả lời"}:::choice
+  template["Hướng dẫn đã duyệt<br/>Theo tình huống và bước"]:::safe
+  retrieve["Tra cứu BM25<br/>Nguồn có revision"]:::action
+  cache{"Cache còn hợp lệ?"}:::choice
+  cached["Đọc câu trả lời đã lưu<br/>Đúng nguồn và phiên bản"]:::action
+  generate["Model soạn trả lời<br/>Theo ngữ cảnh và nguồn"]:::action
+  validate["Kiểm tra câu trả lời<br/>Safety, quote và nguồn"]:::action
+  valid{"Đạt kiểm tra?"}:::choice
+  answer["Trả hướng dẫn / đáp án<br/>Kèm nguồn khi có"]:::safe
+  fail["Dự phòng đủ căn cứ<br/>Hoặc chuyển hỗ trợ"]:::review
+  policy --> kind
+  kind -->|Tình huống đã có mẫu| template
+  kind -->|Hội thoại có nguồn| retrieve
+  retrieve --> cache
+  cache -->|Có| cached
+  cache -->|Chưa có| generate
+  cached --> validate
+  generate --> validate
+  validate --> valid
+  valid -->|Có| answer
+  valid -->|Không| fail
+  template --> answer
+
+classDef entry fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
+classDef action fill:#ffffff,stroke:#64748b,color:#0f172a;
+classDef choice fill:#eff6ff,stroke:#2563eb,color:#1e3a8a;
+classDef safe fill:#ecfdf5,stroke:#059669,color:#064e3b;
+classDef review fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
+classDef stop fill:#fef2f2,stroke:#dc2626,color:#7f1d1d;
+classDef storage fill:#f1f5f9,stroke:#475569,color:#0f172a;

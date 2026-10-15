@@ -4,17 +4,9 @@
 
 ## Tiếp nhận và quyết định
 
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false, "nodeSpacing": 35, "rankSpacing": 45, "padding": 18}}}%%
-flowchart TD
-  A["HTTP guards và Zod"] --> B["Redaction và dữ kiện nền"]
-  B --> C["Model hoặc nhận diện server"]
-  C --> D["Schema, quote và intent contract"]
-  D --> E["Policy và authority checks"]
-  E --> F["Hướng dẫn đủ căn cứ"]
-  E --> G["Hỏi bổ sung"]
-  E --> H["Chuyển nhân viên"]
-```
+[![Phân tích input, kiểm chứng bằng chứng và áp policy tại server](diagrams/ai-policy.svg)](diagrams/ai-policy.svg)
+
+[Nguồn Mermaid](diagrams/ai-policy.mmd).
 
 - API kiểm tra origin, kích thước JSON, rate limit và ngữ cảnh identity/Verify phù hợp.
 - Baseline giữ dữ kiện và rủi ro đã xác định; model không được xóa risk hoặc tự xác minh approval.
@@ -25,19 +17,9 @@ flowchart TD
 
 ## Câu trả lời và độ trễ
 
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false, "nodeSpacing": 35, "rankSpacing": 45, "padding": 18}}}%%
-flowchart TD
-  A{"Loại hỗ trợ"} --> B["Hướng dẫn server đã duyệt"]
-  A --> C["Hội thoại có nguồn"]
-  C --> D["BM25 và nguồn được phép"]
-  D --> E{"Cache hợp lệ?"}
-  E -->|"Có"| F["Kiểm tra lại câu trả lời"]
-  E -->|"Chưa có"| G["Model tạo câu trả lời"]
-  G --> F
-  B --> H["Kết quả an toàn"]
-  F --> H
-```
+[![Tạo câu trả lời: hướng dẫn đã duyệt, retrieval, cache và kiểm tra safety](diagrams/answer-generation.svg)](diagrams/answer-generation.svg)
+
+[Nguồn Mermaid](diagrams/answer-generation.mmd).
 
 `createConversationAnswer` truy xuất corpus bằng BM25, alias Việt–Anh và chuẩn hóa typo. Web search chỉ dùng khi được bật và đúng chủ đề/nguồn cho phép; URL trong ticket không cấp quyền đọc tài liệu riêng. Quote phải khớp bài nguồn; chỉ nguồn thực sự sử dụng mới được hiển thị. Nhãn conversation do server sở hữu, không bị model đổi quyền hay route.
 
@@ -49,19 +31,9 @@ Model có deadline/retry giới hạn; không retry vô hạn hoặc bỏ eviden
 
 ## Lưu và hiển thị theo vai trò
 
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false, "nodeSpacing": 35, "rankSpacing": 45, "padding": 18}}}%%
-flowchart TD
-  A["Preview có hạn dùng"] --> B["Người gửi xác nhận"]
-  B --> C["Lưu hồ sơ và events"]
-  C --> D["Người gửi: tiến trình hỗ trợ"]
-  C --> E["Nhân viên: audit và chẩn đoán"]
-  D --> F["Bổ sung hoặc phản hồi"]
-  E --> G["Review có lý do"]
-  F --> H["Kiểm tra và ghi version mới"]
-  G --> H
-  H --> C
-```
+[![Theo dõi, bàn giao và cập nhật hồ sơ theo version](diagrams/support-followup.svg)](diagrams/support-followup.svg)
+
+[Nguồn Mermaid](diagrams/support-followup.mmd).
 
 Preview chưa tạo ticket; kiểm tra TTL, fingerprint và policy trước xác nhận. Request, assistance, feedback và events được ghi trong document `v3_support_requests`; cập nhật dùng version để chống ghi đè giữa các tab. Intake sentiment được lưu khi có phân tích, không chạy lại AI chỉ để hiển thị cho nhân viên. Hồ sơ cũ thiếu trường này vẫn đọc được và không được bịa dữ liệu bổ sung.
 

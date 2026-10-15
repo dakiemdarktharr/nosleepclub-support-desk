@@ -1,0 +1,50 @@
+---
+config:
+  look: classic
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial, sans-serif
+  themeVariables:
+    fontSize: 18px
+  flowchart:
+    htmlLabels: false
+    nodeSpacing: 24
+    rankSpacing: 32
+    padding: 18
+    wrappingWidth: 255
+    diagramPadding: 20
+    useMaxWidth: false
+    curve: linear
+---
+flowchart TD
+  acc["Mở hỗ trợ<br/>Khách hoặc ID demo"]:::entry
+  input["Mô tả vấn đề<br/>Tự do hoặc danh mục"]:::action
+  analyze["Kiểm tra và phân tích<br/>Áp dụng policy"]:::action
+  route{"Hướng xử lý?"}:::choice
+  guide["Hướng dẫn an toàn<br/>Hoặc trả lời có nguồn"]:::safe
+  clarify["Câu hỏi làm rõ<br/>Chỉ hỏi điều còn thiếu"]:::action
+  handoff["Chuyển nhân viên<br/>Kèm lý do và dữ kiện"]:::review
+  preview["Xem trước kết quả<br/>Chưa tạo ticket"]:::action
+  valid{"Preview còn hợp lệ?"}:::choice
+  saved[("Lưu hồ sơ và events<br/>MongoDB")]:::storage
+  track["Giữ liên kết theo dõi<br/>Hỏi tiếp hoặc phản hồi"]:::entry
+  acc --> input --> analyze --> route
+  route -->|Đủ căn cứ| guide
+  route -->|Thiếu dữ kiện| clarify
+  route -->|Cần người duyệt| handoff
+  guide --> preview
+  clarify --> preview
+  handoff --> preview
+  preview -->|Sửa| input
+  preview -->|Xác nhận gửi| valid
+  valid -->|Phân tích lại| analyze
+  valid -->|Còn hợp lệ| saved
+  saved --> track
+
+classDef entry fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
+classDef action fill:#ffffff,stroke:#64748b,color:#0f172a;
+classDef choice fill:#eff6ff,stroke:#2563eb,color:#1e3a8a;
+classDef safe fill:#ecfdf5,stroke:#059669,color:#064e3b;
+classDef review fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
+classDef stop fill:#fef2f2,stroke:#dc2626,color:#7f1d1d;
+classDef storage fill:#f1f5f9,stroke:#475569,color:#0f172a;

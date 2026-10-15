@@ -1,0 +1,59 @@
+---
+config:
+  look: classic
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial, sans-serif
+  themeVariables:
+    fontSize: 18px
+  flowchart:
+    htmlLabels: false
+    nodeSpacing: 24
+    rankSpacing: 32
+    padding: 18
+    wrappingWidth: 255
+    diagramPadding: 20
+    useMaxWidth: false
+    curve: linear
+---
+flowchart TD
+  guards["HTTP và input guards<br/>Schema, rate limit, identity"]:::entry
+  baseline["Redact và baseline<br/>Giữ dữ kiện và rủi ro"]:::action
+  route{"Cách hiểu yêu cầu"}:::choice
+  model["LLM trích xuất<br/>Ý định, dữ kiện, quote"]:::action
+  server["Nhận diện bằng server<br/>Structured, reset, risk"]:::action
+  validate["Kiểm chứng đầu ra<br/>Schema, quote, intent"]:::action
+  valid{"Đầu ra hợp lệ?"}:::choice
+  fail["Giữ lỗi phân tích<br/>Không suy diễn phê duyệt"]:::stop
+  fallback["Chỉ dùng dự phòng an toàn<br/>Không đủ căn cứ: giữ lỗi"]:::review
+  policy["Policy của server<br/>Bảo mật → quyền hạn<br/>Thiếu dữ kiện → thông thường"]:::action
+  decide{"Quyết định cuối"}:::choice
+  answer["Tạo và kiểm tra trả lời<br/>Hướng dẫn hoặc tra cứu"]:::safe
+  ask["Hỏi đúng dữ kiện thiếu<br/>NEEDS_INFORMATION"]:::action
+  human["Chuyển người phụ trách<br/>ESCALATE"]:::review
+  result["Kết quả và metadata<br/>Hiển thị theo màn hình"]:::entry
+  guards --> baseline --> route
+  route -->|Cần mô hình| model
+  route -->|Nhánh xác định| server
+  model --> validate --> valid
+  valid -->|Có| policy
+  valid -->|Sai output / evidence| fail
+  model -. Lỗi kết nối .-> fallback
+  fallback --> policy
+  fail --> policy
+  server --> policy
+  policy --> decide
+  decide -->|Đủ căn cứ| answer
+  decide -->|Thiếu dữ kiện| ask
+  decide -->|Rủi ro / vượt quyền| human
+  answer --> result
+  ask --> result
+  human --> result
+
+classDef entry fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
+classDef action fill:#ffffff,stroke:#64748b,color:#0f172a;
+classDef choice fill:#eff6ff,stroke:#2563eb,color:#1e3a8a;
+classDef safe fill:#ecfdf5,stroke:#059669,color:#064e3b;
+classDef review fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
+classDef stop fill:#fef2f2,stroke:#dc2626,color:#7f1d1d;
+classDef storage fill:#f1f5f9,stroke:#475569,color:#0f172a;

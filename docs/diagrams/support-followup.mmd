@@ -1,0 +1,53 @@
+---
+config:
+  look: classic
+  theme: base
+  htmlLabels: false
+  fontFamily: Arial, sans-serif
+  themeVariables:
+    fontSize: 18px
+  flowchart:
+    htmlLabels: false
+    nodeSpacing: 24
+    rankSpacing: 32
+    padding: 18
+    wrappingWidth: 255
+    diagramPadding: 20
+    useMaxWidth: false
+    curve: linear
+---
+flowchart TD
+  open["Mở hồ sơ đã lưu<br/>Giữ nguyên lịch sử"]:::entry
+  next{"Bước tiếp theo?"}:::choice
+  turn["Hỏi tiếp hoặc bổ sung<br/>Kiểm tra lại theo policy"]:::action
+  resolved["Xác nhận đã giải quyết<br/>Ghi nhận hoàn tất"]:::safe
+  transfer["Chuyển nhân viên<br/>Bàn giao đủ ngữ cảnh"]:::review
+  answer["Thêm hướng dẫn<br/>Hoặc câu hỏi làm rõ"]:::action
+  inspect["Nhân viên đối chiếu<br/>Rule, evidence, sentiment"]:::review
+  decision["Chọn thao tác và lý do<br/>Kiểm tra version và guard"]:::action
+  allowed{"Cho phép cập nhật?"}:::choice
+  denied["Giữ hồ sơ hiện tại<br/>Tải lại hoặc bổ sung"]:::stop
+  review["Ghi quyết định reviewer<br/>Trong giới hạn workflow"]:::review
+  saved[("Lưu version và events<br/>MongoDB")]:::storage
+  progress["Người gửi xem tiến trình<br/>Nhân viên xem audit"]:::entry
+  open --> next
+  next -->|Hỏi / bổ sung| turn
+  next -->|Đã giải quyết| resolved
+  next -->|Gặp nhân viên| transfer
+  turn -->|Hỗ trợ tiếp| answer
+  turn -->|Cần chuyển| transfer
+  transfer --> inspect --> decision --> allowed
+  allowed -->|Không| denied
+  allowed -->|Có| review
+  answer --> saved
+  resolved --> saved
+  review --> saved
+  saved --> progress
+
+classDef entry fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
+classDef action fill:#ffffff,stroke:#64748b,color:#0f172a;
+classDef choice fill:#eff6ff,stroke:#2563eb,color:#1e3a8a;
+classDef safe fill:#ecfdf5,stroke:#059669,color:#064e3b;
+classDef review fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
+classDef stop fill:#fef2f2,stroke:#dc2626,color:#7f1d1d;
+classDef storage fill:#f1f5f9,stroke:#475569,color:#0f172a;
