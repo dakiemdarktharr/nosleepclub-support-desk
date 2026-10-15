@@ -16,10 +16,10 @@ const account = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/),
   fullName: z.string().trim().min(2).max(120),
   jobPosition: z.string().trim().min(2).max(90),
-  profileId: z.string().uuid(), scopes: z.array(scope).length(1),
+  profileId: z.string().uuid(), profileVersion: z.number().int().positive().optional(), scopes: z.array(scope).length(1),
   expectedAccess: z.enum(['IN_SCOPE', 'BEYOND_AUTHORITY', 'SECURITY_RISK']),
 }).strict();
-const schema = z.object({ version: z.literal(1), batchId: z.literal('demo-identities-2026-10-v1'), synthetic: z.literal(true), accounts: z.array(account).length(40) }).strict();
+const schema = z.object({ version: z.union([z.literal(1), z.literal(2)]), batchId: z.literal('demo-identities-2026-10-v1'), synthetic: z.literal(true), accounts: z.array(account).length(40) }).strict();
 function employeeId(name) {
   const parts = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().split(/\s+/);
   if (parts.some(part => !/^[a-z]+$/.test(part))) throw new Error('INVALID_NAME');
@@ -30,6 +30,8 @@ export function validateRoster(value) {
   for (const field of ['id', 'fullName', 'jobPosition', 'profileId'])
     if (new Set(roster.accounts.map(row => row[field])).size !== 40) throw new Error('DUPLICATE_' + field);
   for (const row of roster.accounts) {
+    if ((row.profileVersion ?? 1) !== roster.version) throw new Error("PROFILE_VERSION_MISMATCH");
+    if (roster.version === 2 && ![3, 4, 5].includes(row.fullName.split(/\s+/).length)) throw new Error("NAME_LENGTH_REQUIRED");
     if (employeeId(row.fullName) !== row.id || row.scopes[0].target !== `demo/${row.id}`) throw new Error('ID_OR_TARGET_MISMATCH');
     const s = row.scopes[0];
     const expected = ['secrets', 'keys', 'administration'].includes(s.resource) ? 'SECURITY_RISK'
@@ -58,21 +60,23 @@ export async function importDemoRoster(client, database, value, actor) {
       for (const row of roster.accounts) {
         const applicationId = `${roster.batchId}:${row.id}`;
         const profileName = `${row.jobPosition} — demo`;
+        const profileVersion = row.profileVersion ?? 1;
         const existing = await db.collection('identity_employees').findOne({ id: row.id }, { session });
-        const profile = await db.collection('identity_profiles').findOne({ id: row.profileId }, { session });
+        const profile = await db.collection('identity_profiles').findOne({ id: row.profileId, version: profileVersion }, { session });
+        if (!profile && await db.collection('identity_profiles').findOne({ id: row.profileId }, { session })) throw new Error('EXISTING_RECORD_CONFLICT');
         if (existing || profile) {
           if (!existing || !profile || existing.fullName !== row.fullName || existing.status !== 'ACTIVE'
-            || existing.applicationId !== applicationId || existing.profileId !== row.profileId || existing.profileVersion !== 1
-            || existing.roles.length !== 0 || profile.version !== 1 || !profile.active || profile.name !== profileName
+            || existing.applicationId !== applicationId || existing.profileId !== row.profileId || existing.profileVersion !== profileVersion
+            || existing.roles.length !== 0 || profile.version !== profileVersion || !profile.active || profile.name !== profileName
             || profile.createdBy !== roster.batchId || JSON.stringify(profile.scopes) !== JSON.stringify(row.scopes))
             throw new Error('EXISTING_RECORD_CONFLICT');
           receipt.unchanged.push(row.id); continue;
         }
         const now = new Date().toISOString();
-        await db.collection('identity_profiles').insertOne({ id: row.profileId, version: 1, name: profileName, scopes: row.scopes, active: true, createdAt: now, createdBy: roster.batchId }, { session });
-        await db.collection('identity_employees').insertOne({ id: row.id, fullName: row.fullName, status: 'ACTIVE', profileId: row.profileId, profileVersion: 1, roles: [], createdAt: now, applicationId }, { session });
+        await db.collection('identity_profiles').insertOne({ id: row.profileId, version: profileVersion, name: profileName, scopes: row.scopes, active: true, createdAt: now, createdBy: roster.batchId }, { session });
+        await db.collection('identity_employees').insertOne({ id: row.id, fullName: row.fullName, status: 'ACTIVE', profileId: row.profileId, profileVersion, roles: [], createdAt: now, applicationId }, { session });
         await db.collection('identity_audit').insertOne({ id: randomUUID(), at: now, actor, action: 'OPERATOR_DEMO_ROSTER_CREATED', subject: row.id,
-          reason: `User-authorized synthetic account; batch ${roster.batchId}; manifest ${digest}. Job scopes remain subject to runtime policy; no identity-admin role.`, version: 1 }, { session });
+          reason: `User-authorized synthetic account; batch ${roster.batchId}; manifest ${digest}. Job scopes remain subject to runtime policy; no identity-admin role.`, version: profileVersion }, { session });
         receipt.created.push(row.id);
       }
       return receipt;

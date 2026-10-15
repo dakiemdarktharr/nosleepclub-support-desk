@@ -283,6 +283,31 @@ node --env-file=.env.local scripts/identity-demo-roster.mjs --file data/demo-ide
 
 Phạm vi trong profile chưa cho phép thực thi thao tác nhạy cảm: Production hoặc quyền vượt thẩm quyền cần duyệt riêng; secrets/keys vẫn bị chặn. API access trả `executed: false`.
 
+### Đổi tên và ID bộ demo v1 → v2
+
+Bộ hiện hành là `data/demo-identities.json` (version 2): 24 tên 3 chữ, 12 tên 4 chữ, 4 tên 5 chữ. `data/migrations/demo-identities-v1.json` là snapshot giả lập phục vụ đối chiếu migration, không phải danh sách ID đăng nhập hiện hành. Mỗi account pin profileVersion 2; không sửa scopes của profile version 1 để che lịch sử.
+
+Kiểm tra mapping trước, chưa ghi Mongo:
+
+```powershell
+node scripts/identity-demo-rename.mjs --from data/migrations/demo-identities-v1.json --file data/demo-identities.json
+node --test scripts/identity-demo-roster.test.mjs scripts/identity-demo-rename.test.mjs
+```
+
+Chỉ operator được phép thay 40 tài khoản giả lập trên database đích mới chạy:
+
+```powershell
+node --env-file=.env.local scripts/identity-demo-rename.mjs --from data/migrations/demo-identities-v1.json --file data/demo-identities.json --database vng_main --actor dakiemdarktharr --demo-id-only --apply
+```
+
+Migration ghép bằng profile UUID cố định, giữ Mongo `_id`, ngày tạo, job, role và policy; cập nhật tên, ID, liên kết batch và phiên đăng nhập. Tạo profile version 2 cho đúng đích mới; giữ scopes cũ ở version 1 và ngừng đưa version cũ vào danh sách chọn. ID cũ không còn đăng nhập được. Phiên đã có tiếp tục đọc ra ID mới; trang đang mở cần tải lại để đồng bộ ID đang hiển thị. Người chưa có tài khoản vẫn dùng `/guest`.
+
+Mọi thay đổi và 40 audit đối chiếu ID cũ/mới, actor, SHA-256 hai manifest nằm trong một transaction. Trùng ID, profile bị chia sẻ/sửa hoặc tài khoản có liên kết ticket/đơn/quota phát sinh sẽ dừng toàn bộ để operator xem xét. Không tự sửa input/audit nghiệp vụ. Chạy lại đúng mapping không tạo thêm tài khoản/audit. Import thông thường từ chối khi gặp profile phiên bản cũ; dùng migration thay vì nhập thêm 40 tài khoản.
+
+Nếu lỗi trước commit transaction, Mongo tự rollback toàn bộ và bộ v1 vẫn nguyên. Sau thành công, revert Git không hoàn tác database: giữ receipt ngoài repo; chỉ rollback bằng migration có audit sau khi kiểm tra các liên kết mới phát sinh. Không drop database/collection hay xóa tài khoản để quay lại demo.
+
+Kiểm chứng: 40 ID mới đăng nhập/đăng xuất; session trả đúng tên; access dùng profile version 2; chặn đích cũ, đích người khác và môi trường khác; chặn quyền IT; 40 ID cũ trả 401. Kiểm tra trình duyệt với tên 3/4/5 chữ, reload, logout, IT cũ và guest.
+
 ### Giới hạn và thu hồi quyền
 
 Mọi phiên là `demo`, kể cả session cũ có nhãn verified. Người biết ID IT có thể mạo danh; không dùng với nhân sự/dữ liệu production thật. Role IT, ACTIVE và expiry được đọc lại từ Mongo ở mỗi request. Operator có thẩm quyền thu hồi role/vô hiệu hóa account qua quy trình có audit; chưa có UI quản trị các thao tác này. Không xóa dữ liệu hoặc thay đổi account có sẵn chỉ để làm bài demo đạt.

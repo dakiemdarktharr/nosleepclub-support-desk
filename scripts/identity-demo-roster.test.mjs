@@ -6,6 +6,8 @@ const input = () => JSON.parse(readFileSync(new URL('../data/demo-identities.jso
 test('validates exactly 40 explicitly synthetic demo accounts', () => assert.equal(validateRoster(input()).accounts.length, 40));
 for (const [name, mutate] of [
   ['real-person label', r => { r.synthetic = false; }],
+  ['two-word name', r => { r.accounts[0].fullName = 'Phạm Bình'; r.accounts[0].id = 'binhp'; r.accounts[0].scopes[0].target = 'demo/binhp'; }],
+  ['profile version drift', r => { r.accounts[0].profileVersion = 1; }],
   ['partial roster', r => { r.accounts.pop(); }],
   ['duplicate ID', r => { r.accounts[1].id = r.accounts[0].id; }],
   ['duplicate profile', r => { r.accounts[1].profileId = r.accounts[0].profileId; }],

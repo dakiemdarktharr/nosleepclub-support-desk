@@ -50,50 +50,52 @@ Có **41 ID đang hoạt động**: 1 tài khoản IT và 40 tài khoản nhân 
 
 ### 40 tài khoản nhân viên
 
+Tên gồm **24 tên 3 chữ, 12 tên 4 chữ và 4 tên 5 chữ**. ID được tạo bằng tên cuối không dấu + chữ cái đầu của các phần đứng trước. Danh sách dưới đây thay thế 40 ID cũ; dùng ID mới để đăng nhập.
+
 Bộ tài khoản đã được kiểm tra trên Production ngày 15/10/2026: đăng nhập, phiên, phạm vi job, chặn đích/môi trường khác, chặn quyền quản lý ID và đăng xuất.
 
 | ID | Họ tên giả lập | Vị trí công việc | Môi trường | Phạm vi job |
 | --- | --- | --- | --- | --- |
-| `binhpqt` | Phạm Quốc Thiên Bình | Kỹ sư Frontend | Sandbox | Sửa repository · `demo/binhpqt` |
-| `tuannha` | Nguyễn Hoàng Anh Tuấn | Kỹ sư Backend | Staging | Đọc repository · `demo/tuannha` |
-| `khangtmd` | Trần Minh Đức Khang | Kỹ sư DevOps | Sandbox | Tạo cloud · `demo/khangtmd` |
-| `namlth` | Lê Thanh Hải Nam | Kỹ sư độ tin cậy SRE | Production | Đọc log · `demo/namlth` |
-| `anvnm` | Võ Nhật Minh An | Chuyên viên kiểm thử thủ công | Staging | Sửa task / dự án · `demo/anvnm` |
-| `longdgb` | Đặng Gia Bảo Long | Kỹ sư kiểm thử tự động | Sandbox | Sửa repository · `demo/longdgb` |
-| `phucbqt` | Bùi Quốc Thiên Phúc | Kỹ sư dữ liệu | Staging | Đọc database · `demo/phucbqt` |
-| `tridhm` | Đỗ Hoàng Minh Trí | Quản trị cơ sở dữ liệu | Production | Sửa database · `demo/tridhm` |
-| `linhhtn` | Hồ Thanh Ngọc Linh | Thiết kế UI UX | Sandbox | Sửa task / dự án · `demo/linhhtn` |
-| `anhntm` | Ngô Thị Mai Anh | Product Owner | Staging | Tạo task / dự án · `demo/anhntm` |
-| `chaudhb` | Dương Hải Bảo Châu | Chuyên viên phân tích nghiệp vụ | Sandbox | Đọc task / dự án · `demo/chaudhb` |
-| `ngocvtm` | Vũ Trần Minh Ngọc | Chuyên viên phân tích bảo mật | Production | Đọc log · `demo/ngocvtm` |
-| `vyptk` | Phan Thị Khánh Vy | Nhân viên hỗ trợ IT | Sandbox | Đọc cấu hình · `demo/vyptk` |
-| `huymqb` | Mai Quốc Bảo Huy | Trưởng nhóm Helpdesk | Staging | Sửa task / dự án · `demo/huymqb` |
-| `quancmn` | Cao Minh Nhật Quân | Kỹ sư mạng | Sandbox | Sửa cấu hình · `demo/quancmn` |
-| `datlgm` | Lý Gia Minh Đạt | Quản trị cấu hình mạng | Production | Điều chỉnh cấu hình · `demo/datlgm` |
-| `baothg` | Tạ Hoàng Gia Bảo | Kỹ sư Android | Staging | Sửa repository · `demo/baothg` |
-| `thaodtp` | Đinh Thanh Phương Thảo | Kỹ sư iOS | Sandbox | Sửa repository · `demo/thaodtp` |
-| `tamcnm` | Chu Ngọc Minh Tâm | Kỹ sư ứng dụng web | Staging | Đọc repository · `demo/tamcnm` |
-| `dunghqa` | Hà Quốc Anh Dũng | Điều phối phát hành | Production | Tạo repository · `demo/dunghqa` |
-| `diepltn` | Lâm Thị Ngọc Diệp | Nhà khoa học dữ liệu | Sandbox | Đọc database · `demo/diepltn` |
-| `sontmt` | Tô Minh Thanh Sơn | Kỹ sư Machine Learning | Staging | Tạo cloud · `demo/sontmt` |
-| `nguyentgk` | Trịnh Gia Khánh Nguyên | Kỹ sư MLOps | Sandbox | Sửa cloud · `demo/nguyentgk` |
-| `hanhntm` | Nguyễn Trúc Minh Hạnh | Chuyên viên rà soát AI | Production | Phê duyệt task / dự án · `demo/hanhntm` |
-| `hanthg` | Trần Hoàng Gia Hân | Chuyên viên tài liệu kỹ thuật | Staging | Sửa task / dự án · `demo/hanthg` |
-| `khoilqm` | Lê Quốc Minh Khôi | Kỹ sư tích hợp hệ thống | Sandbox | Sửa repository · `demo/khoilqm` |
-| `nganptb` | Phạm Thị Bảo Ngân | Chuyên viên phân tích vận hành | Staging | Đọc log · `demo/nganptb` |
-| `chauvtm` | Võ Thanh Minh Châu | Chuyên viên phân tích tài chính | Production | Đọc database · `demo/chauvtm` |
-| `uyendnp` | Đặng Ngọc Phương Uyên | Chuyên viên hệ thống nhân sự | Sandbox | Đọc task / dự án · `demo/uyendnp` |
-| `vinhbmq` | Bùi Minh Quang Vinh | Điều phối tài sản IT | Staging | Tạo task / dự án · `demo/vinhbmq` |
-| `hadtt` | Đỗ Thị Thanh Hà | Chuyên viên mua sắm thiết bị | Sandbox | Sửa task / dự án · `demo/hadtt` |
-| `minhhgn` | Hồ Gia Nhật Minh | Điều phối sự cố | Production | Sửa task / dự án · `demo/minhhgn` |
-| `lamnhp` | Ngô Hoàng Phúc Lâm | Kỹ sư dữ liệu kiểm thử | Staging | Tạo database · `demo/lamnhp` |
-| `quyendtt` | Dương Thị Tú Quyên | Chuyên viên kiểm thử accessibility | Sandbox | Đọc task / dự án · `demo/quyendtt` |
-| `hieuvqm` | Vũ Quốc Minh Hiếu | Kỹ sư kiểm thử hiệu năng | Staging | Đọc log · `demo/hieuvqm` |
-| `trucpnt` | Phan Ngọc Thanh Trúc | Chuyên viên tuân thủ | Staging | Đọc task / dự án · `demo/trucpnt` |
-| `thanhmhd` | Mai Hoàng Đức Thành | Nhân viên sao lưu dữ liệu | Sandbox | Xuất dữ liệu database · `demo/thanhmhd` |
-| `nhungcth` | Cao Thị Hồng Nhung | Chuyên viên quản lý secrets | Staging | Đọc secrets · `demo/nhungcth` |
-| `kietlmq` | Lý Minh Quang Kiệt | Chuyên viên quản lý khóa mã hóa | Sandbox | Luân chuyển khóa mã hóa · `demo/kietlmq` |
-| `trangtnd` | Tạ Ngọc Diệu Trang | Chuyên viên kiểm toán hệ thống | Staging | Đọc log · `demo/trangtnd` |
+| `binhpt` | Phạm Thiên Bình | Kỹ sư Frontend | Sandbox | Sửa repository · `demo/binhpt` |
+| `tuanna` | Nguyễn Anh Tuấn | Kỹ sư Backend | Staging | Đọc repository · `demo/tuanna` |
+| `khangtd` | Trần Đức Khang | Kỹ sư DevOps | Sandbox | Tạo cloud · `demo/khangtd` |
+| `namlh` | Lê Hải Nam | Kỹ sư độ tin cậy SRE | Production | Đọc log · `demo/namlh` |
+| `anvm` | Võ Minh An | Chuyên viên kiểm thử thủ công | Staging | Sửa task / dự án · `demo/anvm` |
+| `longdb` | Đặng Bảo Long | Kỹ sư kiểm thử tự động | Sandbox | Sửa repository · `demo/longdb` |
+| `phucbt` | Bùi Thiên Phúc | Kỹ sư dữ liệu | Staging | Đọc database · `demo/phucbt` |
+| `tridm` | Đỗ Minh Trí | Quản trị cơ sở dữ liệu | Production | Sửa database · `demo/tridm` |
+| `linhhn` | Hồ Ngọc Linh | Thiết kế UI UX | Sandbox | Sửa task / dự án · `demo/linhhn` |
+| `anhnm` | Ngô Mai Anh | Product Owner | Staging | Tạo task / dự án · `demo/anhnm` |
+| `chaudb` | Dương Bảo Châu | Chuyên viên phân tích nghiệp vụ | Sandbox | Đọc task / dự án · `demo/chaudb` |
+| `ngocvm` | Vũ Minh Ngọc | Chuyên viên phân tích bảo mật | Production | Đọc log · `demo/ngocvm` |
+| `vypk` | Phan Khánh Vy | Nhân viên hỗ trợ IT | Sandbox | Đọc cấu hình · `demo/vypk` |
+| `huymb` | Mai Bảo Huy | Trưởng nhóm Helpdesk | Staging | Sửa task / dự án · `demo/huymb` |
+| `quancn` | Cao Nhật Quân | Kỹ sư mạng | Sandbox | Sửa cấu hình · `demo/quancn` |
+| `datlm` | Lý Minh Đạt | Quản trị cấu hình mạng | Production | Điều chỉnh cấu hình · `demo/datlm` |
+| `baotg` | Tạ Gia Bảo | Kỹ sư Android | Staging | Sửa repository · `demo/baotg` |
+| `thaodp` | Đinh Phương Thảo | Kỹ sư iOS | Sandbox | Sửa repository · `demo/thaodp` |
+| `tamcm` | Chu Minh Tâm | Kỹ sư ứng dụng web | Staging | Đọc repository · `demo/tamcm` |
+| `dungha` | Hà Anh Dũng | Điều phối phát hành | Production | Tạo repository · `demo/dungha` |
+| `diepln` | Lâm Ngọc Diệp | Nhà khoa học dữ liệu | Sandbox | Đọc database · `demo/diepln` |
+| `sontt` | Tô Thanh Sơn | Kỹ sư Machine Learning | Staging | Tạo cloud · `demo/sontt` |
+| `nguyentk` | Trịnh Khánh Nguyên | Kỹ sư MLOps | Sandbox | Sửa cloud · `demo/nguyentk` |
+| `hanhnm` | Nguyễn Minh Hạnh | Chuyên viên rà soát AI | Production | Phê duyệt task / dự án · `demo/hanhnm` |
+| `hantng` | Trần Ngọc Gia Hân | Chuyên viên tài liệu kỹ thuật | Staging | Sửa task / dự án · `demo/hantng` |
+| `khoilam` | Lê Anh Minh Khôi | Kỹ sư tích hợp hệ thống | Sandbox | Sửa repository · `demo/khoilam` |
+| `nganpnb` | Phạm Ngọc Bảo Ngân | Chuyên viên phân tích vận hành | Staging | Đọc log · `demo/nganpnb` |
+| `chauvnm` | Võ Ngọc Minh Châu | Chuyên viên phân tích tài chính | Production | Đọc database · `demo/chauvnm` |
+| `uyendtp` | Đặng Thanh Phương Uyên | Chuyên viên hệ thống nhân sự | Sandbox | Đọc task / dự án · `demo/uyendtp` |
+| `vinhbdq` | Bùi Đức Quang Vinh | Điều phối tài sản IT | Staging | Tạo task / dự án · `demo/vinhbdq` |
+| `hadnt` | Đỗ Ngọc Thanh Hà | Chuyên viên mua sắm thiết bị | Sandbox | Sửa task / dự án · `demo/hadnt` |
+| `minhhmn` | Hồ Minh Nhật Minh | Điều phối sự cố | Production | Sửa task / dự án · `demo/minhhmn` |
+| `lamndp` | Ngô Đức Phúc Lâm | Kỹ sư dữ liệu kiểm thử | Staging | Tạo database · `demo/lamndp` |
+| `quyendnt` | Dương Ngọc Tú Quyên | Chuyên viên kiểm thử accessibility | Sandbox | Đọc task / dự án · `demo/quyendnt` |
+| `hieuvdm` | Vũ Đức Minh Hiếu | Kỹ sư kiểm thử hiệu năng | Staging | Đọc log · `demo/hieuvdm` |
+| `trucpht` | Phan Hoài Thanh Trúc | Chuyên viên tuân thủ | Staging | Đọc task / dự án · `demo/trucpht` |
+| `thanhmthd` | Mai Trần Hoàng Đức Thành | Nhân viên sao lưu dữ liệu | Sandbox | Xuất dữ liệu database · `demo/thanhmthd` |
+| `nhungcnth` | Cao Nguyễn Thị Hồng Nhung | Chuyên viên quản lý secrets | Staging | Đọc secrets · `demo/nhungcnth` |
+| `kietltmq` | Lý Trần Minh Quang Kiệt | Chuyên viên quản lý khóa mã hóa | Sandbox | Luân chuyển khóa mã hóa · `demo/kietltmq` |
+| `trangtlnd` | Tạ Lê Ngọc Diệu Trang | Chuyên viên kiểm toán hệ thống | Staging | Đọc log · `demo/trangtlnd` |
 
 Mỗi ID có profile riêng và chỉ đúng đích `demo/<id>`. Phạm vi job vẫn phải qua policy: **29** trường hợp ít rủi ro được phép trong phạm vi; **9** trường hợp cần thẩm quyền riêng; **2** trường hợp secrets/khóa mã hóa bị chặn do rủi ro bảo mật. Nhãn môi trường Production dùng để thử chính sách; app không thực thi IAM, cloud hoặc database bên ngoài. Các tài khoản nhân viên không có role `identity-admin`.
 
