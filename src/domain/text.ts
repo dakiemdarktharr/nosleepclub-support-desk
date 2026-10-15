@@ -1324,7 +1324,7 @@ export function extractIntake(
           .some((field) => normalize(field) === normalize(label));
       // These complete, bounded questions add no operation or scope. Do not
       // discard arbitrary unknown fragments, or extra actions hidden in prose.
-      const guidanceFollowup = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) (?:tu dau|gi truoc)|ban huong dan(?: giup toi)? duoc khong|(?:huong dan|chi) (?:toi|minh) (?:kiem tra|xu ly)(?: an toan)?|(?:what should i check first|where should i start|please guide me through safe checks))[?.!]*$/.test(normalize(fragment));
+      const guidanceFollowup = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) (?:tu dau|gi truoc)|ban huong dan(?: giup toi)? duoc khong|(?:huong dan|chi) (?:toi|minh) (?:kiem tra|xu ly)(?: an toan)?|(?:(?:hay|vui long) )?giai thich(?: chi tiet cach kiem tra| tung buoc)|(?:what should i check first|where should i start|please guide me through safe checks))[?.!]*$/.test(normalize(fragment));
       // Approval claims add provenance, not a task or verified authority.
       const previous = requests.at(-1);
       const approvalContext = isApprovalContext(fragment, previous);

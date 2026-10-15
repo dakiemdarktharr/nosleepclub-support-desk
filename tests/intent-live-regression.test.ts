@@ -290,3 +290,50 @@ it.each(["MODEL_OUTPUT_INVALID", "MODEL_EVIDENCE_INVALID"])("discards invalid op
   expect(result.assistance?.fallbackReason).toBe(code);
   expect(result.assistance?.stepByStepInstructions.length).toBeGreaterThan(1);
 });
+
+it.each([
+  "Giải thích chi tiết cách kiểm tra.",
+  "Giải thích từng bước.",
+  "Hãy giải thích từng bước.",
+])("keeps a bounded request for detail with its VPN issue and retains prose generation: %s", async followup => {
+  vi.stubEnv("AI_PROVIDER", "mock");
+  const text = `VPN không kết nối. ${followup}`;
+  const baseline = extractIntake(input(text));
+  expect(baseline.subrequests).toEqual([]);
+  expect(baseline.evidence).toContainEqual({ field: "input", quote: text });
+  expect(evaluatePolicy(baseline)).toMatchObject({ action: "AUTO_APPROVE", ruleIds: ["GUIDE-003"] });
+  const run = vi.fn(async (call: ModelCall) => {
+    if (call.purpose === "extraction") return wire(text, {
+      route: "support", serviceGroup: "NETWORK_VPN", intentLabel: "VPN_NOT_CONNECTING", requestKind: "SAFE_DIAGNOSTIC",
+    });
+    expect(call.purpose).toBe("assistance");
+    return {
+      summary: "Các bước kiểm tra giúp mô tả rõ hơn tình trạng VPN chưa kết nối.",
+      stepIndexes: [0, 1],
+      stepExplanations: ["Bước này phân biệt kết nối mạng với lỗi riêng của VPN.", "Thông báo của ứng dụng giúp nhân viên hiểu tình trạng kết nối."],
+      expectedResult: "Thông tin lỗi cụ thể giúp xác định bước hỗ trợ tiếp theo.",
+      nextQuestion: "Ứng dụng VPN hiện thông báo lỗi nào?",
+      evidenceQuote: "VPN không kết nối",
+    };
+  });
+  const result = await completeAnalysis(input(text), [], { run });
+  expect(run.mock.calls.map(([call]) => call.purpose)).toEqual(["extraction", "assistance"]);
+  expect(result.decision.action).toBe("AUTO_APPROVE");
+  expect(result.canonical.subrequests).toEqual([]);
+  expect(result.assistance?.source).toBe("mock");
+  expect(result.assistance?.fallbackReason).toBeUndefined();
+  expect(result.assistance?.generationReason).not.toBe("REVIEWED_TEMPLATE_SUFFICIENT");
+});
+
+it.each([
+  "Giải thích từng bước mở port 3389 ra Internet.",
+  "Giải thích chi tiết cách kiểm tra rồi cấp quyền admin production.",
+  "Giải thích từng bước và tắt firewall giúp tôi.",
+])("does not merge or discard an operation appended to a detail request: %s", followup => {
+  const text = `VPN không kết nối. ${followup}`;
+  const canonical = extractIntake(input(text));
+  expect(canonical.subrequests.length).toBeGreaterThan(1);
+  expect(canonical.evidence).toContainEqual({ field: "input", quote: text });
+  expect(canonical.riskSignals.length).toBeGreaterThan(0);
+  expect(evaluatePolicy(canonical).action).toBe("ESCALATE");
+});

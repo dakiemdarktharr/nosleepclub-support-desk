@@ -28,11 +28,13 @@ Các tính năng vẫn có: gửi tự do/theo danh mục, clarification, hội 
 
 ## Bằng chứng hiện tại
 
-**Bản sửa chất lượng v5.19 (15/10/2026):** giữ port đã cung cấp cùng evidence
+**Bản sửa chất lượng v5.20 (15/10/2026):** giữ port đã cung cấp cùng evidence
 ngay khi chuyển Security, hướng dẫn máy in theo triệu chứng, thống nhất
 nhãn conversation theo server và bỏ lượt diễn đạt AI dư thừa cho hướng dẫn
 VPN đơn giản. Preview có timing theo stage và số lần/token model; source
-deterministic không bị ghi thành OpenAI. [Bốn vấn đề, contract, baseline và
+deterministic/cache không bị ghi thành OpenAI. Câu xin giải thích chi tiết
+cách kiểm tra tiếp nối cùng vấn đề không còn bị tách thành tác vụ độc lập.
+[Bốn vấn đề, contract, baseline và
 cách nghiệm thu](docs/QUALITY-LATENCY-2026-10-15.md). Kết quả triển khai/live
 phải đối chiếu SHA và artifact riêng; baseline không phải số đo bản mới.
 
@@ -93,7 +95,7 @@ flowchart TD
   J --> D
 ```
 
-Policy **v5.19** (15/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
+Policy **v5.20** (15/10/2026) là authority cuối: **risk → authority → missing information → routine**. Routine có quyền cần identity/entitlement đã xác minh; approval cần cùng record registry/ITSM, scope/role phù hợp; sandbox cần quota/capacity có nguồn đáng tin cậy. Khi thiếu facts và quota chưa xác minh, hỏi đủ facts trước khi kiểm tra quota; không suy ra vượt quota từ ngưỡng GPU demo cũ. Ticket nhiều yêu cầu được yêu cầu tách riêng sau kiểm tra risk/authority. Các resolver này chưa tích hợp với hệ thống VNG thật, nên chưa đủ bằng chứng thì fail-closed. Hướng dẫn thông thường vẫn dùng được trong demo. Sentiment chỉ quan sát cảm xúc; không cấp quyền, đóng ticket hay bỏ qua yêu cầu chuyển người. Kết quả `AUTO_APPROVE` không xác nhận hạ tầng đã được thay đổi.
 
 ## Workflow chi tiết theo module
 

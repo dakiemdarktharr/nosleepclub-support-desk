@@ -1,7 +1,7 @@
 # Chất lượng câu trả lời và thời gian phản hồi — 15/10/2026
 
 Base: `8b1c3f9dd294a309b40d5ca4767cd801e734827a`, Production/main cùng
-policy v5.18 trước sửa. Candidate v5.19 giữ business policy, Ground Truth,
+policy v5.18 trước sửa. Candidate v5.20 giữ business policy, Ground Truth,
 model `gpt-6-luna`, authority và evidence checks. AI assistance: Codex cùng
 các agent viết/rà soát code và kiểm thử; không phải phản hồi người dùng thật.
 
@@ -38,8 +38,8 @@ category cho model; response dùng lại category đó sau schema/evidence/safet
 validation. Không thay toàn bộ enum hoặc cho label model thay routing.
 
 Audit ANSWER sử dụng answer.label đã thống nhất. Cache key có context.label,
-model, policy version và reviewed corpus; hit vẫn revalidate. Policy v5.19
-không dùng cache/preview v5.18. Không mở rộng cache sang input riêng tư.
+model, policy version và reviewed corpus; hit vẫn revalidate. Policy v5.20
+không dùng cache/preview của version cũ. Không mở rộng cache sang input riêng tư.
 Cache hit trả `Assistance.source=cache`, giữ `generatedAt` và evidence đã
 lưu, không gắn trace inference mới. API, audit và UI cùng phân biệt cache
 với OpenAI vừa trả lời; UI cũng nhận `cacheHit` của hồ sơ cũ.
@@ -81,6 +81,13 @@ vẫn là model nếu đã gọi model; lỗi extraction không bị tối ưu n
 `handlingMode=LLM_ASSIST` vẫn là loại quy trình do policy chọn, không phải
 bằng chứng có inference trong bước trả lời. Dùng source/model trace và
 generationReason để xác định cách câu trả lời thực sự được tạo.
+
+V5.20 bổ sung nhận diện câu “Giải thích chi tiết cách kiểm tra.” là yêu cầu
+diễn giải cùng vấn đề, thay vì một tác vụ độc lập gây AUTH-005. Lỗi đã tái
+hiện tại cả base v5.18 và bản giữa v5.19. Chỉ nhận câu bổ sung có cấu trúc
+giới hạn; không bỏ phần yêu cầu thao tác mới, quyền hoặc nội dung rủi ro.
+Câu chi tiết này vẫn dùng diễn giải AI có validation, không lấy đường rút
+gọn dành cho VPN cơ bản.
 
 ## Baseline Production mới trước sửa
 
@@ -135,7 +142,7 @@ Chạy `npm test`, lint/typecheck/build, guard/report/docs checks. E2E chạy
 production build local tại 127.0.0.1:3227 mock/memory, sau build và tuần tự.
 Các test mới: network-port-extraction, guidance-quality,
 conversation-label-contract, preview-performance và acceptance E2E.
-Kiểm tra local candidate ngày 15/10: `npm test` 1234 pass, 1 optional
+Kiểm tra local bản giữa v5.19/f19c55c ngày 15/10: `npm test` 1234 pass, 1 optional
 intent benchmark skip; lint, typecheck, build đạt. Node guard/report/docs
 tests 18 pass, `check:docs` 62 Markdown đạt. Production-build E2E local:
 Chromium 83 pass; mobile 82 pass, 1 bài quay video desktop skip.
@@ -153,6 +160,16 @@ contract mới có chủ đích; thêm đối chứng VPN có platform vẫn g�
 diễn giải. Các bài fault injection prose dùng vòng hỏi tiếp để vẫn thực sự
 đi qua model và kiểm tra loại bỏ output sai. Không đổi input/expected của
 bộ 128 development, Đề A hoặc các tình huống nghiệm thu Production.
+CI f19c55c phát hiện bài token telemetry giả lập HTTP vẫn bị guard 0-live-call
+chặn; v5.20 cô lập thêm reservation trong đúng unit test đó. Không sửa cap,
+guard runtime hoặc kỳ vọng token. Kết quả CI lỗi được giữ trong evidence.
+V5.20 chạy local với cùng env mock/memory và `AI_TEST_MAX_ATTEMPTS=0` như CI:
+1240 unit/integration pass, 1 optional benchmark skip; lint/typecheck/build
+và docs check đạt. Hai spec acceptance/support liên quan chạy lại trên
+server riêng theo mỗi project: desktop 17/17, mobile 17/17 pass. Lần thử
+gộp hai project chung server dừng Verify tại 1/4 ở lượt mobile, phù hợp
+với việc dùng chung cửa sổ intake 30/phút; giữ lỗi trong log và không nâng
+hoặc reset cap. Workflow CI vốn chạy hai project riêng, như lần rerun.
 
 Production UI/API cần xác minh lại 11 tình huống, known/missing/conflict
 port, metadata DNS và cleanup exact ID. Kết quả local không phải live.

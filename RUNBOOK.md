@@ -226,7 +226,7 @@ xử lý; không tự sửa/xóa dữ liệu lịch sử.
 
 ## Chẩn đoán API và sentiment
 
-Preview v5.19 trả `data.diagnostics` và `Server-Timing`: stage, model attempts,
+Preview từ v5.19 trả `data.diagnostics` và `Server-Timing`: stage, model attempts,
 usage khi provider trả, cache state và process invocation. Đo client từ trước
 fetch đến sau đọc JSON; không gọi thời gian ký tự đầu là phản hồi sử dụng
 được. Giữ request tuần tự, một warm-up tách riêng và tối thiểu 20 mẫu để

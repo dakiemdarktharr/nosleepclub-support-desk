@@ -6,11 +6,12 @@ import { callModel, type ModelCall } from "@/lib/support-model";
 import { withSupportMeasurements, supportMeasurements, measureSupportStage } from "@/lib/support-telemetry";
 import { POST } from "@/app/api/support/preview/route";
 import { resetSupportTestStore } from "@/lib/support-repository";
+import * as repository from "@/lib/support-repository";
 
 const vpn = "VPN liên tục ngắt kết nối. Hướng dẫn tôi kiểm tra an toàn.";
 const input = (rawText: string) => prepareInput({ requesterMode: "guest", rawText, idempotencyKey: crypto.randomUUID() }).input;
 beforeEach(() => { vi.stubEnv("AI_PROVIDER", "mock"); vi.stubEnv("MONGODB_URI", ""); resetSupportTestStore(); });
-afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 it("uses the complete reviewed VPN guide after validated extraction without a paraphrase call", async () => {
   const data = input(vpn);
@@ -76,6 +77,9 @@ it("isolates concurrent measurements and never includes prompts or keys", async 
   expect(supportMeasurements()).toBeUndefined();
 });
 it("records actual token counts and usage on a provider response", async () => {
+  // HTTP is fully stubbed below. Do not depend on or lift CI's zero-live-call
+  // guard to exercise provider response parsing and token accounting.
+  const reserve = vi.spyOn(repository, "reserveModelAttemptForModel").mockResolvedValue(true);
   vi.stubEnv("AI_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-telemetry-key");
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
@@ -86,5 +90,6 @@ it("records actual token counts and usage on a provider response", async () => {
     await callModel({ purpose: "extraction", instructions: "test", data: "test", model: "gpt-6-luna" }, {});
     expect(supportMeasurements()?.modelCalls[0]).toMatchObject({ attempts: 1,
       usage: { inputTokens: 234, outputTokens: 23, cachedInputTokens: 128 } });
+    expect(reserve).toHaveBeenCalledOnce();
   });
 });
