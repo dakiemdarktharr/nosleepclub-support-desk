@@ -1,0 +1,607 @@
+{
+  "version": 1,
+  "batchId": "demo-identities-2026-10-v1",
+  "synthetic": true,
+  "accounts": [
+    {
+      "id": "binhpqt",
+      "fullName": "Phạm Quốc Thiên Bình",
+      "jobPosition": "Kỹ sư Frontend",
+      "profileId": "6602ebdf-e259-40ae-9d29-ed603acb3730",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "repository",
+          "operation": "update",
+          "target": "demo/binhpqt"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "tuannha",
+      "fullName": "Nguyễn Hoàng Anh Tuấn",
+      "jobPosition": "Kỹ sư Backend",
+      "profileId": "3df0c1dd-b4a1-4a76-bfba-8ee19e0e5642",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "repository",
+          "operation": "read",
+          "target": "demo/tuannha"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "khangtmd",
+      "fullName": "Trần Minh Đức Khang",
+      "jobPosition": "Kỹ sư DevOps",
+      "profileId": "76134c5a-4861-448c-b15a-5d390a6dc90d",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "cloud",
+          "operation": "create",
+          "target": "demo/khangtmd"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "namlth",
+      "fullName": "Lê Thanh Hải Nam",
+      "jobPosition": "Kỹ sư độ tin cậy SRE",
+      "profileId": "2b9a005e-6af8-444d-9ff8-ddc8fee09181",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "logs",
+          "operation": "read",
+          "target": "demo/namlth"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "anvnm",
+      "fullName": "Võ Nhật Minh An",
+      "jobPosition": "Chuyên viên kiểm thử thủ công",
+      "profileId": "36dfaa5e-9c6c-4227-8f21-0c0fab81965f",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "project",
+          "operation": "update",
+          "target": "demo/anvnm"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "longdgb",
+      "fullName": "Đặng Gia Bảo Long",
+      "jobPosition": "Kỹ sư kiểm thử tự động",
+      "profileId": "2db6eb7f-5f19-4e10-a501-c4f3fb332eb2",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "repository",
+          "operation": "update",
+          "target": "demo/longdgb"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "phucbqt",
+      "fullName": "Bùi Quốc Thiên Phúc",
+      "jobPosition": "Kỹ sư dữ liệu",
+      "profileId": "4a22a382-003f-495c-ab72-fe524fe37069",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "database",
+          "operation": "read",
+          "target": "demo/phucbqt"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "tridhm",
+      "fullName": "Đỗ Hoàng Minh Trí",
+      "jobPosition": "Quản trị cơ sở dữ liệu",
+      "profileId": "865ea547-b8e3-4108-9580-c6d958bd9552",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "database",
+          "operation": "update",
+          "target": "demo/tridhm"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "linhhtn",
+      "fullName": "Hồ Thanh Ngọc Linh",
+      "jobPosition": "Thiết kế UI UX",
+      "profileId": "9f98f7b1-9833-4113-bfd8-ca335bed8bfc",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "project",
+          "operation": "update",
+          "target": "demo/linhhtn"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "anhntm",
+      "fullName": "Ngô Thị Mai Anh",
+      "jobPosition": "Product Owner",
+      "profileId": "c9230d9a-caf3-4034-b6a1-293c61e85a23",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "project",
+          "operation": "create",
+          "target": "demo/anhntm"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "chaudhb",
+      "fullName": "Dương Hải Bảo Châu",
+      "jobPosition": "Chuyên viên phân tích nghiệp vụ",
+      "profileId": "8d272bd8-09a0-4e37-944c-1589a35c32ec",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "project",
+          "operation": "read",
+          "target": "demo/chaudhb"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "ngocvtm",
+      "fullName": "Vũ Trần Minh Ngọc",
+      "jobPosition": "Chuyên viên phân tích bảo mật",
+      "profileId": "923e3a94-d308-4eb4-abed-d241260a622c",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "logs",
+          "operation": "read",
+          "target": "demo/ngocvtm"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "vyptk",
+      "fullName": "Phan Thị Khánh Vy",
+      "jobPosition": "Nhân viên hỗ trợ IT",
+      "profileId": "9e639c2a-4cad-4a61-a50a-d7280867fa5d",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "configuration",
+          "operation": "read",
+          "target": "demo/vyptk"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "huymqb",
+      "fullName": "Mai Quốc Bảo Huy",
+      "jobPosition": "Trưởng nhóm Helpdesk",
+      "profileId": "e799f73b-8e16-402b-962c-4c6042fbb596",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "project",
+          "operation": "update",
+          "target": "demo/huymqb"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "quancmn",
+      "fullName": "Cao Minh Nhật Quân",
+      "jobPosition": "Kỹ sư mạng",
+      "profileId": "625774b3-88fd-4f92-88e9-f6c3ad539f2f",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "configuration",
+          "operation": "update",
+          "target": "demo/quancmn"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "datlgm",
+      "fullName": "Lý Gia Minh Đạt",
+      "jobPosition": "Quản trị cấu hình mạng",
+      "profileId": "8d0d737d-71ca-4052-8f22-2206f807d577",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "configuration",
+          "operation": "configure",
+          "target": "demo/datlgm"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "baothg",
+      "fullName": "Tạ Hoàng Gia Bảo",
+      "jobPosition": "Kỹ sư Android",
+      "profileId": "182abaf4-9627-4031-a173-aeaa1dd5891d",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "repository",
+          "operation": "update",
+          "target": "demo/baothg"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "thaodtp",
+      "fullName": "Đinh Thanh Phương Thảo",
+      "jobPosition": "Kỹ sư iOS",
+      "profileId": "0e8e0ad3-d224-4bac-9fcf-a8700d37aad7",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "repository",
+          "operation": "update",
+          "target": "demo/thaodtp"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "tamcnm",
+      "fullName": "Chu Ngọc Minh Tâm",
+      "jobPosition": "Kỹ sư ứng dụng web",
+      "profileId": "de9971e1-321e-4e86-a102-f2ef4cbdfd8d",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "repository",
+          "operation": "read",
+          "target": "demo/tamcnm"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "dunghqa",
+      "fullName": "Hà Quốc Anh Dũng",
+      "jobPosition": "Điều phối phát hành",
+      "profileId": "87a60ea1-cab1-449e-8945-5feac5476746",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "repository",
+          "operation": "create",
+          "target": "demo/dunghqa"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "diepltn",
+      "fullName": "Lâm Thị Ngọc Diệp",
+      "jobPosition": "Nhà khoa học dữ liệu",
+      "profileId": "6e636a05-5d4e-4da2-a536-8b0d5fd38ba8",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "database",
+          "operation": "read",
+          "target": "demo/diepltn"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "sontmt",
+      "fullName": "Tô Minh Thanh Sơn",
+      "jobPosition": "Kỹ sư Machine Learning",
+      "profileId": "85025d46-6e1c-459a-9f3a-e8733e84df5f",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "cloud",
+          "operation": "create",
+          "target": "demo/sontmt"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "nguyentgk",
+      "fullName": "Trịnh Gia Khánh Nguyên",
+      "jobPosition": "Kỹ sư MLOps",
+      "profileId": "068b8938-3a3b-4310-a791-49c5070238ed",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "cloud",
+          "operation": "update",
+          "target": "demo/nguyentgk"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "hanhntm",
+      "fullName": "Nguyễn Trúc Minh Hạnh",
+      "jobPosition": "Chuyên viên rà soát AI",
+      "profileId": "50411993-b78b-4177-9a4b-0b5cc19eb9d6",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "project",
+          "operation": "approve",
+          "target": "demo/hanhntm"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "hanthg",
+      "fullName": "Trần Hoàng Gia Hân",
+      "jobPosition": "Chuyên viên tài liệu kỹ thuật",
+      "profileId": "3a4de43d-f0f7-467b-920d-323328da69e1",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "project",
+          "operation": "update",
+          "target": "demo/hanthg"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "khoilqm",
+      "fullName": "Lê Quốc Minh Khôi",
+      "jobPosition": "Kỹ sư tích hợp hệ thống",
+      "profileId": "fd39f0b9-6d32-4f1b-81ca-c58ca875d819",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "repository",
+          "operation": "update",
+          "target": "demo/khoilqm"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "nganptb",
+      "fullName": "Phạm Thị Bảo Ngân",
+      "jobPosition": "Chuyên viên phân tích vận hành",
+      "profileId": "41ea8d2c-a670-4364-bb8c-d40a2d4c78f9",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "logs",
+          "operation": "read",
+          "target": "demo/nganptb"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "chauvtm",
+      "fullName": "Võ Thanh Minh Châu",
+      "jobPosition": "Chuyên viên phân tích tài chính",
+      "profileId": "61aa9130-b8ad-43e8-8cf7-5287f5ef37ad",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "database",
+          "operation": "read",
+          "target": "demo/chauvtm"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "uyendnp",
+      "fullName": "Đặng Ngọc Phương Uyên",
+      "jobPosition": "Chuyên viên hệ thống nhân sự",
+      "profileId": "d44d2231-e917-4c54-8f91-917f5ff381bc",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "project",
+          "operation": "read",
+          "target": "demo/uyendnp"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "vinhbmq",
+      "fullName": "Bùi Minh Quang Vinh",
+      "jobPosition": "Điều phối tài sản IT",
+      "profileId": "6803d693-4b43-4867-be62-62dab57a0092",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "project",
+          "operation": "create",
+          "target": "demo/vinhbmq"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "hadtt",
+      "fullName": "Đỗ Thị Thanh Hà",
+      "jobPosition": "Chuyên viên mua sắm thiết bị",
+      "profileId": "61a35a8f-fd98-4fec-8c16-8ca2a6c4f775",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "project",
+          "operation": "update",
+          "target": "demo/hadtt"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "minhhgn",
+      "fullName": "Hồ Gia Nhật Minh",
+      "jobPosition": "Điều phối sự cố",
+      "profileId": "756421aa-8210-48a3-93bd-3497780ea06c",
+      "scopes": [
+        {
+          "environment": "production",
+          "resource": "project",
+          "operation": "update",
+          "target": "demo/minhhgn"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "lamnhp",
+      "fullName": "Ngô Hoàng Phúc Lâm",
+      "jobPosition": "Kỹ sư dữ liệu kiểm thử",
+      "profileId": "65fed142-6845-479e-8135-e53795a4e688",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "database",
+          "operation": "create",
+          "target": "demo/lamnhp"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "quyendtt",
+      "fullName": "Dương Thị Tú Quyên",
+      "jobPosition": "Chuyên viên kiểm thử accessibility",
+      "profileId": "3b087325-0fc2-4fe8-a565-fd602d638604",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "project",
+          "operation": "read",
+          "target": "demo/quyendtt"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "hieuvqm",
+      "fullName": "Vũ Quốc Minh Hiếu",
+      "jobPosition": "Kỹ sư kiểm thử hiệu năng",
+      "profileId": "6500efe7-94a4-42ec-834b-696c8efc0550",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "logs",
+          "operation": "read",
+          "target": "demo/hieuvqm"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "trucpnt",
+      "fullName": "Phan Ngọc Thanh Trúc",
+      "jobPosition": "Chuyên viên tuân thủ",
+      "profileId": "aa114f87-62dc-4a15-a6f1-d16680f3b444",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "project",
+          "operation": "read",
+          "target": "demo/trucpnt"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    },
+    {
+      "id": "thanhmhd",
+      "fullName": "Mai Hoàng Đức Thành",
+      "jobPosition": "Nhân viên sao lưu dữ liệu",
+      "profileId": "dffb212a-32dd-4b4a-9e6b-b07458a74aad",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "database",
+          "operation": "export",
+          "target": "demo/thanhmhd"
+        }
+      ],
+      "expectedAccess": "BEYOND_AUTHORITY"
+    },
+    {
+      "id": "nhungcth",
+      "fullName": "Cao Thị Hồng Nhung",
+      "jobPosition": "Chuyên viên quản lý secrets",
+      "profileId": "bea4c0a8-46cb-4141-96b5-eff9c15e01fa",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "secrets",
+          "operation": "read",
+          "target": "demo/nhungcth"
+        }
+      ],
+      "expectedAccess": "SECURITY_RISK"
+    },
+    {
+      "id": "kietlmq",
+      "fullName": "Lý Minh Quang Kiệt",
+      "jobPosition": "Chuyên viên quản lý khóa mã hóa",
+      "profileId": "27d695d3-0897-416d-8a27-1e153e14e64c",
+      "scopes": [
+        {
+          "environment": "sandbox",
+          "resource": "keys",
+          "operation": "rotate",
+          "target": "demo/kietlmq"
+        }
+      ],
+      "expectedAccess": "SECURITY_RISK"
+    },
+    {
+      "id": "trangtnd",
+      "fullName": "Tạ Ngọc Diệu Trang",
+      "jobPosition": "Chuyên viên kiểm toán hệ thống",
+      "profileId": "3936a0c0-afdf-477e-a58d-373d4bdeabb8",
+      "scopes": [
+        {
+          "environment": "staging",
+          "resource": "logs",
+          "operation": "read",
+          "target": "demo/trangtnd"
+        }
+      ],
+      "expectedAccess": "IN_SCOPE"
+    }
+  ]
+}

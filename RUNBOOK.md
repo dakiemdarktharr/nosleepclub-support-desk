@@ -239,7 +239,7 @@ Hệ thống ID dùng collection riêng, có thể chung database `vng_main` v�
 ### Cấu hình
 
 - `IDENTITY_MONGODB_URI`: URI riêng; nếu bỏ trống dùng `MONGODB_URI`. Không đưa URI vào Git/log.
-- `IDENTITY_MONGODB_DB=vng_support_identity`: database riêng của hệ thống ID, không thay `MONGODB_DB` của Support.
+- `IDENTITY_MONGODB_DB=vng_main`: dùng chung database với Support; dữ liệu identity nằm trong các collection `identity_*`.
 - MongoDB cần replica set/sharded cluster để dùng transaction. User cần đọc/ghi các collection `identity_*`, tạo collection/index và `collMod` để cài validator. Không cần quyền quản trị toàn cluster.
 - Bản demo hiện đăng nhập chỉ bằng ID cho cả người gửi và IT. Không cần OTP relay/signing key. Biến OTP cũ không được đọc; collection challenge và metadata kênh cũ được giữ nguyên, không sử dụng để đăng nhập.
 
@@ -260,6 +260,28 @@ node scripts/identity-bootstrap.mjs --file C:\private\identity-operator.json --d
 Script từ chối database khác cấu hình, thiếu cờ chấp nhận ID-only demo, schema/index chưa cài hoặc ID đã tồn tại. Tạo profile sandbox/read, account `identity-admin` và audit `OPERATOR_BOOTSTRAP_DEMO` trong cùng transaction. Không sửa account cũ. Job tên IT không tự tạo role trong luồng đăng ký công khai.
 
 4. Vào `/login`, nhập ID vừa cấp; server trả vai trò phù hợp và mở `/identity/review`. Chỉ xử lý đơn giả lập. Mọi cấp ID/từ chối/trùng ID vẫn qua validation, unique index, version, transaction và audit. Không thực thi IAM/cloud/database bên ngoài.
+
+### Bộ 40 ID demo
+
+Nguồn dữ liệu giả lập được ghim tại `data/demo-identities.json`: 40 tên và ID duy nhất, mỗi ID có profile/job, scope và đích `demo/<id>` riêng. Các tài khoản này không được cấp role quản lý ID. Công cụ không tự chạy khi app khởi động.
+
+Kiểm tra manifest mà không kết nối hoặc ghi MongoDB:
+
+```powershell
+node scripts/identity-demo-roster.mjs --file data/demo-identities.json
+node --test scripts/identity-demo-roster.test.mjs
+npm test -- tests/demo-identity-roster.test.ts
+```
+
+Sau khi operator xác nhận môi trường demo và database đích, gọi `GET /api/identity/profiles` để cài validator/index nếu chưa có, rồi chạy với URI trong `.env.local`:
+
+```powershell
+node --env-file=.env.local scripts/identity-demo-roster.mjs --file data/demo-identities.json --database vng_main --actor dakiemdarktharr --demo-id-only --apply
+```
+
+`--database` phải trùng `IDENTITY_MONGODB_DB`. Import dùng một Mongo transaction cho account, profile và audit. Nếu một ID/profile đã tồn tại khác manifest, toàn bộ lượt nhập rollback; không ghi đè account cũ. Chạy lại cùng manifest chỉ xác nhận dữ liệu đã có, không tạo trùng hoặc thêm audit cấp tài khoản. Mỗi lượt tạo ghi actor và SHA-256 của manifest.
+
+Phạm vi trong profile chưa cho phép thực thi thao tác nhạy cảm: Production hoặc quyền vượt thẩm quyền cần duyệt riêng; secrets/keys vẫn bị chặn. API access trả `executed: false`.
 
 ### Giới hạn và thu hồi quyền
 

@@ -38,15 +38,66 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 
 ## ID demo
 
-ID dưới đây đã được kiểm tra đăng nhập trên Production ngày 15/10/2026:
+Có **41 ID đang hoạt động**: 1 tài khoản IT và 40 tài khoản nhân viên bên dưới. Tất cả tên, vị trí và đích tài nguyên trong bộ này là **dữ liệu giả lập**, không phải danh sách nhân sự VNG.
+
+**Đăng nhập:** mở [Đăng nhập](https://vng-support.vercel.app/login), nhập ID rồi bấm **Đăng nhập**; bản demo không yêu cầu mật khẩu hoặc OTP. IT mở màn hình cấp ID; tài khoản nhân viên mở màn hình gửi hỗ trợ và tự điền ID từ phiên.
+
+### Tài khoản IT
 
 | ID | Vai trò | Màn hình sau khi đăng nhập |
 | --- | --- | --- |
-| `itnvgl` | IT — quản lý cấp ID nhân viên (`identity-admin`) | Cấp ID nhân viên (`/identity/review`) |
+| `itnvgl` | IT — quản lý cấp ID (`identity-admin`) | Cấp ID nhân viên (`/identity/review`) |
 
-**Cách dùng:** mở [Đăng nhập](https://vng-support.vercel.app/login), nhập `itnvgl` vào ô **ID nhân viên** rồi bấm **Đăng nhập**. Bản demo không yêu cầu mật khẩu hoặc OTP. Chỉ dùng tài khoản này với dữ liệu giả lập.
+### 40 tài khoản nhân viên
 
-Hiện chưa có ID demo riêng cho nhân viên thông thường. ID mới chỉ đăng nhập được sau khi đơn cấp ID được IT duyệt. Để thử gửi hỗ trợ ngay, chọn [Đăng nhập không cần tài khoản](https://vng-support.vercel.app/guest).
+Bộ tài khoản đã được kiểm tra trên Production ngày 15/10/2026: đăng nhập, phiên, phạm vi job, chặn đích/môi trường khác, chặn quyền quản lý ID và đăng xuất.
+
+| ID | Họ tên giả lập | Vị trí công việc | Môi trường | Phạm vi job |
+| --- | --- | --- | --- | --- |
+| `binhpqt` | Phạm Quốc Thiên Bình | Kỹ sư Frontend | Sandbox | Sửa repository · `demo/binhpqt` |
+| `tuannha` | Nguyễn Hoàng Anh Tuấn | Kỹ sư Backend | Staging | Đọc repository · `demo/tuannha` |
+| `khangtmd` | Trần Minh Đức Khang | Kỹ sư DevOps | Sandbox | Tạo cloud · `demo/khangtmd` |
+| `namlth` | Lê Thanh Hải Nam | Kỹ sư độ tin cậy SRE | Production | Đọc log · `demo/namlth` |
+| `anvnm` | Võ Nhật Minh An | Chuyên viên kiểm thử thủ công | Staging | Sửa task / dự án · `demo/anvnm` |
+| `longdgb` | Đặng Gia Bảo Long | Kỹ sư kiểm thử tự động | Sandbox | Sửa repository · `demo/longdgb` |
+| `phucbqt` | Bùi Quốc Thiên Phúc | Kỹ sư dữ liệu | Staging | Đọc database · `demo/phucbqt` |
+| `tridhm` | Đỗ Hoàng Minh Trí | Quản trị cơ sở dữ liệu | Production | Sửa database · `demo/tridhm` |
+| `linhhtn` | Hồ Thanh Ngọc Linh | Thiết kế UI UX | Sandbox | Sửa task / dự án · `demo/linhhtn` |
+| `anhntm` | Ngô Thị Mai Anh | Product Owner | Staging | Tạo task / dự án · `demo/anhntm` |
+| `chaudhb` | Dương Hải Bảo Châu | Chuyên viên phân tích nghiệp vụ | Sandbox | Đọc task / dự án · `demo/chaudhb` |
+| `ngocvtm` | Vũ Trần Minh Ngọc | Chuyên viên phân tích bảo mật | Production | Đọc log · `demo/ngocvtm` |
+| `vyptk` | Phan Thị Khánh Vy | Nhân viên hỗ trợ IT | Sandbox | Đọc cấu hình · `demo/vyptk` |
+| `huymqb` | Mai Quốc Bảo Huy | Trưởng nhóm Helpdesk | Staging | Sửa task / dự án · `demo/huymqb` |
+| `quancmn` | Cao Minh Nhật Quân | Kỹ sư mạng | Sandbox | Sửa cấu hình · `demo/quancmn` |
+| `datlgm` | Lý Gia Minh Đạt | Quản trị cấu hình mạng | Production | Điều chỉnh cấu hình · `demo/datlgm` |
+| `baothg` | Tạ Hoàng Gia Bảo | Kỹ sư Android | Staging | Sửa repository · `demo/baothg` |
+| `thaodtp` | Đinh Thanh Phương Thảo | Kỹ sư iOS | Sandbox | Sửa repository · `demo/thaodtp` |
+| `tamcnm` | Chu Ngọc Minh Tâm | Kỹ sư ứng dụng web | Staging | Đọc repository · `demo/tamcnm` |
+| `dunghqa` | Hà Quốc Anh Dũng | Điều phối phát hành | Production | Tạo repository · `demo/dunghqa` |
+| `diepltn` | Lâm Thị Ngọc Diệp | Nhà khoa học dữ liệu | Sandbox | Đọc database · `demo/diepltn` |
+| `sontmt` | Tô Minh Thanh Sơn | Kỹ sư Machine Learning | Staging | Tạo cloud · `demo/sontmt` |
+| `nguyentgk` | Trịnh Gia Khánh Nguyên | Kỹ sư MLOps | Sandbox | Sửa cloud · `demo/nguyentgk` |
+| `hanhntm` | Nguyễn Trúc Minh Hạnh | Chuyên viên rà soát AI | Production | Phê duyệt task / dự án · `demo/hanhntm` |
+| `hanthg` | Trần Hoàng Gia Hân | Chuyên viên tài liệu kỹ thuật | Staging | Sửa task / dự án · `demo/hanthg` |
+| `khoilqm` | Lê Quốc Minh Khôi | Kỹ sư tích hợp hệ thống | Sandbox | Sửa repository · `demo/khoilqm` |
+| `nganptb` | Phạm Thị Bảo Ngân | Chuyên viên phân tích vận hành | Staging | Đọc log · `demo/nganptb` |
+| `chauvtm` | Võ Thanh Minh Châu | Chuyên viên phân tích tài chính | Production | Đọc database · `demo/chauvtm` |
+| `uyendnp` | Đặng Ngọc Phương Uyên | Chuyên viên hệ thống nhân sự | Sandbox | Đọc task / dự án · `demo/uyendnp` |
+| `vinhbmq` | Bùi Minh Quang Vinh | Điều phối tài sản IT | Staging | Tạo task / dự án · `demo/vinhbmq` |
+| `hadtt` | Đỗ Thị Thanh Hà | Chuyên viên mua sắm thiết bị | Sandbox | Sửa task / dự án · `demo/hadtt` |
+| `minhhgn` | Hồ Gia Nhật Minh | Điều phối sự cố | Production | Sửa task / dự án · `demo/minhhgn` |
+| `lamnhp` | Ngô Hoàng Phúc Lâm | Kỹ sư dữ liệu kiểm thử | Staging | Tạo database · `demo/lamnhp` |
+| `quyendtt` | Dương Thị Tú Quyên | Chuyên viên kiểm thử accessibility | Sandbox | Đọc task / dự án · `demo/quyendtt` |
+| `hieuvqm` | Vũ Quốc Minh Hiếu | Kỹ sư kiểm thử hiệu năng | Staging | Đọc log · `demo/hieuvqm` |
+| `trucpnt` | Phan Ngọc Thanh Trúc | Chuyên viên tuân thủ | Staging | Đọc task / dự án · `demo/trucpnt` |
+| `thanhmhd` | Mai Hoàng Đức Thành | Nhân viên sao lưu dữ liệu | Sandbox | Xuất dữ liệu database · `demo/thanhmhd` |
+| `nhungcth` | Cao Thị Hồng Nhung | Chuyên viên quản lý secrets | Staging | Đọc secrets · `demo/nhungcth` |
+| `kietlmq` | Lý Minh Quang Kiệt | Chuyên viên quản lý khóa mã hóa | Sandbox | Luân chuyển khóa mã hóa · `demo/kietlmq` |
+| `trangtnd` | Tạ Ngọc Diệu Trang | Chuyên viên kiểm toán hệ thống | Staging | Đọc log · `demo/trangtnd` |
+
+Mỗi ID có profile riêng và chỉ đúng đích `demo/<id>`. Phạm vi job vẫn phải qua policy: **29** trường hợp ít rủi ro được phép trong phạm vi; **9** trường hợp cần thẩm quyền riêng; **2** trường hợp secrets/khóa mã hóa bị chặn do rủi ro bảo mật. Nhãn môi trường Production dùng để thử chính sách; app không thực thi IAM, cloud hoặc database bên ngoài. Các tài khoản nhân viên không có role `identity-admin`.
+
+[Manifest JSON của 40 ID](data/demo-identities.json) · [Hướng dẫn nhập có kiểm soát](RUNBOOK.md#bộ-40-id-demo). Người chưa có ID vẫn dùng được [chế độ khách](https://vng-support.vercel.app/guest).
 
 ## Chức năng
 
