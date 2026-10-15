@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { recordModelMeasurement, startSupportStage, type ModelMeasurement } from "./support-telemetry";
 import { decodeIntentOutput, intentInstructions, intentResponseSchema } from "./intent-contract";
 import { z } from "zod";
 import { evidenceWorkflowPrompt } from "@/domain/workflow-prompt";
@@ -34,6 +35,7 @@ import {
   normalize,
 } from "@/domain/text";
 import { redact } from "@/domain/redaction";
+import { isSingleNetworkPort, isSingleNetworkProtocol, sameNetworkFact } from "@/domain/network-facts";
 import { reserveModelAttemptForModel } from "./support-repository";
 
 export class ModelFailure extends Error {
@@ -151,7 +153,17 @@ function transientFailure(error: unknown): boolean {
     (error.status === 429 || (error.status !== undefined && error.status >= 500));
 }
 
-async function modelAttempt(call: ModelCall, timeoutMs: number, options: ModelOptions, started: () => void): Promise<unknown> {
+let sharedClient: { configuration: string; transport: typeof fetch; client: OpenAI } | undefined;
+function configuredClient() {
+  const key = process.env.OPENAI_API_KEY ?? "";
+  const configuration = JSON.stringify([key, process.env.OPENAI_BASE_URL, process.env.OPENAI_ORG_ID, process.env.OPENAI_PROJECT_ID]);
+  if (!sharedClient || sharedClient.configuration !== configuration || sharedClient.transport !== globalThis.fetch)
+    sharedClient = { configuration, transport: globalThis.fetch,
+      client: new OpenAI({ apiKey: key, maxRetries: 0, timeout: 12000 }) };
+  return sharedClient.client;
+}
+async function modelAttempt(call: ModelCall, timeoutMs: number, options: ModelOptions, started: () => void,
+  usage: (value: NonNullable<ModelMeasurement["usage"]>) => void): Promise<unknown> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -159,7 +171,7 @@ async function modelAttempt(call: ModelCall, timeoutMs: number, options: ModelOp
       throw new ModelFailure("MODEL_UNAVAILABLE", "BUDGET_EXHAUSTED");
     started();
     const work = options.run ? options.run(call) : (async () => {
-      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, maxRetries: 0, timeout: timeoutMs });
+      const client = configuredClient();
       const body: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
         model: call.model, store: false,
         max_completion_tokens: call.maxCompletionTokens ?? 1000,
@@ -171,9 +183,12 @@ async function modelAttempt(call: ModelCall, timeoutMs: number, options: ModelOp
       // SDK 5's effort enum predates "none". Keep the bounded, non-reasoning Luna request.
       const response = call.model === "gpt-6-luna"
         ? await client.post<OpenAI.Chat.Completions.ChatCompletion>("/chat/completions", {
-            body: { ...body, reasoning_effort: "none" }, signal: controller.signal,
+            body: { ...body, reasoning_effort: "none" }, signal: controller.signal, timeout: timeoutMs,
           })
-        : await client.chat.completions.create(body, { signal: controller.signal });
+        : await client.chat.completions.create(body, { signal: controller.signal, timeout: timeoutMs });
+      if (response.usage) usage({ inputTokens: response.usage.prompt_tokens,
+        outputTokens: response.usage.completion_tokens,
+        cachedInputTokens: response.usage.prompt_tokens_details?.cached_tokens ?? 0 });
       const choice = response.choices[0];
       if (choice?.finish_reason === "length") throw new ModelFailure("MODEL_OUTPUT_INVALID", "TRUNCATED");
       if (choice?.message.refusal) throw new ModelFailure("MODEL_UNAVAILABLE", "REFUSAL");
@@ -212,6 +227,9 @@ export async function callModel(
   const maxAttempts = call.purpose === "sentiment" || totalMs < 1000 ? 1 : 2;
   let attempts = 0;
   let retryReason: string | undefined;
+  let failureReason: string | undefined;
+  let usage: ModelMeasurement["usage"];
+  const finishStage = startSupportStage(call.purpose === "assistance" ? "generation" : call.purpose);
   try {
     while (attempts < maxAttempts) {
       const remainingMs = totalMs - (Date.now() - startedAt);
@@ -219,7 +237,11 @@ export async function callModel(
       try {
         // Let the first inference use the original full deadline. Retry only
         // early transient failures; a timed-out full attempt goes to fallback.
-        return await modelAttempt(call, remainingMs, options, () => { attempts++; });
+        return await modelAttempt(call, remainingMs, options, () => { attempts++; }, value => {
+          usage = { inputTokens: (usage?.inputTokens ?? 0) + value.inputTokens,
+            outputTokens: (usage?.outputTokens ?? 0) + value.outputTokens,
+            cachedInputTokens: (usage?.cachedInputTokens ?? 0) + value.cachedInputTokens };
+        });
       } catch (error) {
         const failure = sanitizedFailure(error);
         // Never retry rejected credentials, refusals, schema/evidence failures or 4xx other than 429.
@@ -230,7 +252,13 @@ export async function callModel(
       }
     }
     throw new ModelFailure("MODEL_UNAVAILABLE", "TIMEOUT");
+  } catch (error) {
+    failureReason = sanitizedFailure(error).reason;
+    throw error;
   } finally {
+    finishStage();
+    recordModelMeasurement({ purpose: call.purpose, model: call.model, attempts,
+      latencyMs: Date.now() - startedAt, retryReason, failureReason, usage });
     options.onModelCall?.({ model: call.model, attempts, latencyMs: Date.now() - startedAt,
       ...(retryReason ? { fallbackReason: retryReason } : {}) });
   }
@@ -246,7 +274,9 @@ function jsonValue(value: unknown) {
 function comparableFact(field: string, value: string): string {
   // normalizeFact intentionally folds hyphens in ordinary words. A duration's
   // leading minus is semantic and must not disappear when comparing a quote.
-  const sign = field === "duration" && /^\s*[-−–]/.test(value.normalize("NFKC")) ? "negative:" : "";
+  if (field === "port" && isSingleNetworkPort(value)) return String(Number(value));
+  if (["source", "target"].includes(field)) return value.trim();
+  const sign = ["duration", "port"].includes(field) && /^\s*[-−–]/.test(value.normalize("NFKC")) ? "negative:" : "";
   return sign + normalizeFact(value);
 }
 export function modelFailure(
@@ -299,6 +329,7 @@ export async function extractWithModel(
   void _model;
   let output: unknown;
   let trace: ModelCallTrace | undefined;
+  let finishValidation: (() => void) | undefined;
   try {
     const value = await callModel(
       {
@@ -314,6 +345,7 @@ export async function extractWithModel(
         options.onModelCall?.(value);
       } },
     );
+    finishValidation = startSupportStage("outputValidation");
     output = jsonValue(value);
     // Legacy objects are a test injection seam only. Production must satisfy the wire contract.
     if (!options.run && (!output || typeof output !== "object" || !("routing" in output)))
@@ -396,6 +428,17 @@ export async function extractWithModel(
     const entities = Object.fromEntries(Object.entries(model.entities).map(([field, quote]) =>
       [field, normalizeQuotedFact(field, quote, baseline)],
     ));
+    if (model.serviceGroup === "NETWORK_VPN") {
+      for (const field of ["port", "protocol", "source", "target"]) {
+        if (!entities[field]) continue;
+        // A literal token elsewhere in the input does not prove its role (a
+        // source port is not the connection port). Never guess from a number.
+        const explicitScope = [baseline.entities[field], input.fields[field]]
+          .some(value => value && sameNetworkFact(field, value, entities[field])) ||
+          baseline.ambiguities.some(value => value.startsWith(`${field}:`));
+        if (!explicitScope) throw new ModelFailure("MODEL_EVIDENCE_INVALID", "EVIDENCE_MISMATCH");
+      }
+    }
     const conflicts =
       (baseline.environment !== "unknown" &&
         model.environment !== "unknown" &&
@@ -409,6 +452,10 @@ export async function extractWithModel(
         "accessType",
         "requestedAction",
         "operation",
+        "port",
+        "protocol",
+        "source",
+        "target",
       ].some(
         (key) =>
           baseline.entities[key] &&
@@ -476,6 +523,32 @@ export async function extractWithModel(
         ...trace,
       },
     };
+    if (canonical.serviceGroup === "NETWORK_VPN") {
+      const networkFields = ["port", "protocol", "source", "target"];
+      // The structured-only check cannot see conflicting prose or a model
+      // selecting one port from a range. Reconcile the full original input.
+      const network = extractIntake({
+        ...input,
+        fields: {
+          ...Object.fromEntries(Object.entries(entities).filter(([field]) => networkFields.includes(field))),
+          ...input.fields,
+        },
+      });
+      for (const field of networkFields) {
+        if (network.entities[field]) canonical.entities[field] = network.entities[field];
+        else delete canonical.entities[field];
+      }
+      canonical.ambiguities = [...new Set([...canonical.ambiguities, ...baseline.ambiguities, ...network.ambiguities])];
+      canonical.riskSignals = [...new Set([...canonical.riskSignals, ...network.riskSignals])];
+      canonical.missingFields = [...new Set([...model.missingFields, ...baseline.missingFields, ...network.missingFields])]
+        .filter(field => {
+          if (!networkFields.includes(field) || !canonical.entities[field]) return true;
+          if (canonical.ambiguities.some(value => value.startsWith(`${field}:`))) return true;
+          if (field === "port") return !isSingleNetworkPort(canonical.entities[field]);
+          if (field === "protocol") return !isSingleNetworkProtocol(canonical.entities[field]);
+          return false;
+        });
+    }
     if (!modelRouting || !route) return withSentiment(canonical);
     if (baseline.subrequests.length > 1) {
       // Independent asks are not contradictory facts. Policy evaluates every
@@ -513,6 +586,8 @@ export async function extractWithModel(
     return output && typeof output === "object" && "sentiment" in output
       ? withSentimentAssessment(failed, output.sentiment, input.rawText)
       : failed;
+  } finally {
+    finishValidation?.();
   }
 }
 
@@ -592,6 +667,8 @@ export async function createAssistance(
       options.onModelCall?.(value);
     } },
   );
+  const finishValidation = startSupportStage("outputValidation");
+  try {
   const decoded = jsonValue(value);
   const contextual = z
     .object({
@@ -712,6 +789,7 @@ export async function createAssistance(
     model: { source: process.env.AI_PROVIDER === "openai" ? "openai" : "mock", ...trace },
     timestamp: new Date().toISOString(),
   };
+  } finally { finishValidation(); }
 }
 
 /** Optional enrichment cannot revoke an independently approved, vetted guidance template. */

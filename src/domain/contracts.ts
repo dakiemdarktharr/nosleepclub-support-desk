@@ -218,6 +218,7 @@ export type ConversationAnswer = {
   ignoredOverride: boolean;
 };
 export type Assistance = {
+  generationReason?: "REVIEWED_TEMPLATE_SUFFICIENT";
   model?: CanonicalRequest["model"];
   fallbackReason?: string;
   answer?: ConversationAnswer;
@@ -232,10 +233,11 @@ export type Assistance = {
   warning: string;
   nextQuestion: string;
   canPassToAdmin: true;
-  source: "deterministic" | "mock" | "openai";
+  source: "deterministic" | "mock" | "openai" | "cache";
   timestamp: string;
 };
 export type AuditEvent = {
+  generationReason?: Assistance["generationReason"];
   model?: CanonicalRequest["model"];
   assistanceModel?: CanonicalRequest["model"];
   assistanceSource?: Assistance["source"];

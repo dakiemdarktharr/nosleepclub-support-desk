@@ -30,11 +30,19 @@ const input = (rawText: string): SupportInput => ({
   idempotencyKey: crypto.randomUUID(),
 });
 
-it("medium VPN support returns steps and four next options with explicit mock attribution", async () => {
+it("basic VPN support returns reviewed steps and four options with truthful attribution", async () => {
   const request = await submitSupport(input("VPN không kết nối"));
   expect(request.decision?.handlingMode).toBe("LLM_ASSIST");
   expect(request.assistance[0].options).toHaveLength(4);
+  expect(request.assistance[0].source).toBe("deterministic");
+  expect(request.assistance[0].generationReason).toBe("REVIEWED_TEMPLATE_SUFFICIENT");
+});
+it("VPN support with additional platform context retains model enrichment with explicit mock attribution", async () => {
+  const request = await submitSupport(input("VPN không kết nối trên Windows"));
+  expect(request.decision?.handlingMode).toBe("LLM_ASSIST");
+  expect(request.assistance[0].options).toHaveLength(4);
   expect(request.assistance[0].source).toBe("mock");
+  expect(request.assistance[0].generationReason).toBeUndefined();
 });
 it("model unavailable and invalid output fail safe through the production submission API", async () => {
   for (const fault of ["unavailable", "invalid"]) {

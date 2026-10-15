@@ -74,11 +74,6 @@ const specificSteps: Record<string, string[]> = {
     "Thử xác minh lại một lần trên cổng công ty đã xác minh; không chấp thuận thông báo đăng nhập do người khác khởi tạo.",
     "Nếu mất thiết bị hoặc vẫn không xác minh được, chuyển cho nhân viên để xác nhận danh tính; không tắt xác thực hai bước.",
   ],
-  DEVICE_PRINTER: [
-    "Kiểm tra máy in đã bật nguồn, có giấy và không báo kẹt giấy. Không mở phần máy có cảnh báo điện hoặc nhiệt.",
-    "Trong hộp thoại In, kiểm tra tên máy in và xem trước tài liệu; chỉ thử in một trang không chứa dữ liệu nhạy cảm.",
-    "Nếu vẫn không in được, ghi lại tên máy in và thông báo lỗi, rồi chuyển cho nhân viên hỗ trợ.",
-  ],
   DEVICE_AUDIO: [
     "Kiểm tra âm lượng và biểu tượng tắt tiếng trong ứng dụng đang dùng.",
     "Trong cài đặt âm thanh của người dùng, chọn đúng loa hoặc tai nghe đang kết nối; thử bằng âm thanh không chứa dữ liệu công việc.",
@@ -113,6 +108,48 @@ const diagnosis: Partial<Record<GuidanceTopic, string>> = {
   wifi:
     "Có thể là Wi-Fi đang tắt, chọn sai mạng hoặc lỗi chỉ xảy ra trên kết nối hiện tại. Cần so sánh an toàn trước khi kết luận.",
 };
+
+function printerGuidance(context: string) {
+  // Evidence may mention a ruled-out or cleared jam while describing another fault.
+  const activeSymptoms = context.replace(
+    /\b(?:khong|chua|da het|het|no|not|without)\s+(?:(?:bi|bao|co|con|a|any|longer)\s+)*(?:ket giay|paper jams?|jammed)\b|\b(?:paper jams?|jam)\s+(?:is\s+)?(?:cleared|resolved)\b/g,
+    "",
+  );
+  const jam = /\b(?:ket giay|paper jams?|jammed)\b/.test(activeSymptoms);
+  const outOfPaper = /\b(?:het giay|out of paper|no paper|paper empty)\b/.test(activeSymptoms);
+  const offline = /\boffline\b|ngoai tuyen/.test(context);
+  const wrongPrinter = /chon nham|sai may in|wrong printer/.test(context);
+  const readyToPrint = "Chỉ khi máy báo sẵn sàng và không còn cảnh báo kẹt giấy, chọn đúng máy in rồi thử một trang không chứa dữ liệu nhạy cảm. Nếu lỗi quay lại, dừng gửi lệnh in và nhờ nhân viên hỗ trợ.";
+  const followUp = "Máy in thuộc hãng/model nào, đang hiển thị mã lỗi hoặc thông báo gì? Không gửi ảnh có tài liệu hay dữ liệu cá nhân.";
+  if (jam) return {
+    summary: "Máy in đang báo kẹt giấy. Hãy dừng gửi lệnh in mới và kiểm tra theo hướng dẫn đúng model trước khi thử in lại.",
+    steps: [
+      "Dừng gửi thêm lệnh in. Xem màn hình máy in và ghi lại vị trí kẹt giấy hoặc mã lỗi đang hiển thị.",
+      "Xem hướng dẫn xử lý kẹt giấy trên màn hình hoặc tài liệu chính thức đúng hãng/model; chỉ tiếp cận phần dành cho người dùng khi hướng dẫn cho phép. Nếu chưa xác định được model hoặc vị trí kẹt, nhờ nhân viên hỗ trợ trước khi mở khay hay nắp.",
+      "Không cố kéo giấy, dùng vật nhọn, tháo vỏ hoặc chạm phần có cảnh báo điện/nhiệt. Nếu giấy bị rách, nằm sâu hoặc không lấy ra dễ dàng theo hướng dẫn đúng model, dừng lại và nhờ nhân viên hỗ trợ.",
+      readyToPrint,
+    ],
+    expectedResult: "Cảnh báo kẹt giấy hết và máy báo sẵn sàng trước khi thử in; nếu còn lỗi, nhân viên có hãng/model, vị trí kẹt và mã lỗi để tiếp tục.",
+    nextQuestion: followUp,
+  };
+  return {
+    summary: outOfPaper ? "Máy in báo hết giấy. Kiểm tra khay và loại giấy theo hướng dẫn đúng model."
+      : offline ? "Máy in đang offline. Kiểm tra nguồn, kết nối bên ngoài và máy in đang chọn."
+        : wrongPrinter ? "Kiểm tra lại máy in đang chọn trước khi gửi tài liệu."
+          : "Kiểm tra trạng thái máy in và thông báo lỗi trước khi thử in.",
+    steps: [
+      outOfPaper
+        ? "Xem màn hình để xác định khay hết giấy; nạp đúng loại và khổ giấy theo hướng dẫn của khay, không vượt vạch giới hạn. Không mở phần có cảnh báo điện hoặc nhiệt."
+        : offline
+          ? "Kiểm tra máy in có nguồn và kết nối bên ngoài có chắc không. Xem trạng thái trên màn hình; không đổi cấu hình mạng hoặc tự cài driver."
+          : "Kiểm tra nguồn, giấy và thông báo trên màn hình. Nếu báo kẹt giấy, dừng gửi lệnh in và làm theo hướng dẫn đúng model trước.",
+      "Trong hộp thoại In, đối chiếu tên máy in với nhãn thiết bị bạn định dùng và xem trước tài liệu. Không gửi lại tài liệu đến máy in không rõ vị trí.",
+      readyToPrint,
+    ],
+    expectedResult: "Xác định được trạng thái máy in hoặc có thông báo lỗi cụ thể để nhân viên hỗ trợ tiếp tục kiểm tra.",
+    nextQuestion: followUp,
+  };
+}
 export function guidanceTemplate(
   request: CanonicalRequest,
   round = 0,
@@ -131,15 +168,20 @@ export function guidanceTemplate(
       : "";
   const vpnTimeout =
     topic === "vpn" && /timeout|timed out|het thoi gian/.test(context);
-  const summary = vpnTimeout
+  const vpnDisconnect = topic === "vpn" && /ngat ket noi|rot ket noi|disconnect|drops? connection/.test(context);
+  const printer = request.intentLabel === "DEVICE_PRINTER" ? printerGuidance(context) : undefined;
+  const guideSteps = printer?.steps ?? specificSteps[request.intentLabel] ?? steps[topic];
+  const summary = printer?.summary ?? (vpnTimeout
     ? "VPN hết thời gian chờ kết nối. Hãy kiểm tra đường truyền trước, rồi thử lại một lần."
+    : vpnDisconnect
+      ? "VPN liên tục ngắt kết nối. Hãy kiểm tra Internet và ghi lại thời điểm mất kết nối; giữ nguyên các cài đặt bảo mật."
     : topic === "vpn"
       ? `Hãy kiểm tra kết nối VPN${platform ? ` trên ${platform}` : ""} từ Internet đến ứng dụng, không thay cài đặt bảo mật.`
       : request.intentLabel === "DEVICE_SHUTDOWN_GUIDANCE"
         ? "Bạn có thể tắt máy sau khi lưu công việc và chờ các cập nhật đang chạy hoàn tất."
         : request.intentLabel === "DEVICE_RESTART_GUIDANCE"
           ? "Khởi động lại có thể giúp máy hoạt động bình thường; lưu công việc trước để tránh mất phần chưa lưu."
-          : intentName(request.intentLabel);
+          : intentName(request.intentLabel));
   return {
     summary,
     ...(diagnosis[topic] ? { diagnosis: diagnosis[topic] } : {}),
@@ -152,7 +194,7 @@ export function guidanceTemplate(
                   "Ghi lại bước đã thử, thông báo lỗi và thời điểm xảy ra; loại bỏ mật khẩu và mã xác minh.",
                   "Nếu không thể tiếp tục an toàn, chuyển cho nhân viên hỗ trợ cùng lịch sử này.",
                 ]
-              : [...(specificSteps[request.intentLabel] ?? steps[topic])],
+              : [...guideSteps],
         }
       : {}),
     stepByStepInstructions:
@@ -162,19 +204,21 @@ export function guidanceTemplate(
             "Ghi lại bước đã thử, thông báo lỗi và thời điểm xảy ra; loại bỏ mật khẩu và mã xác minh.",
             "Nếu không rõ thông báo hoặc không thể tiếp tục an toàn, chọn chuyển cho nhân viên hỗ trợ cùng lịch sử này.",
           ]
-        : [...(specificSteps[request.intentLabel] ?? steps[topic])],
+        : [...guideSteps],
     options: [...assistanceOptions],
     expectedResult:
-      expected[topic] ??
+      printer?.expectedResult ?? expected[topic] ??
       "Có thể xác định bước tiếp theo phù hợp với nhu cầu; nếu chưa, chuyển cho nhân viên hỗ trợ.",
     warning:
       "Không gửi mật khẩu hoặc mã xác minh. Dừng lại nếu thấy yêu cầu xóa dữ liệu hoặc tắt bảo vệ thiết bị.",
     nextQuestion:
-      topic === "vpn"
-        ? "VPN đã kết nối được chưa? Nếu chưa, thông báo hoặc mã lỗi hiện tại là gì?"
+      printer?.nextQuestion ?? (topic === "vpn"
+        ? vpnDisconnect
+          ? "VPN ngắt sau khoảng bao lâu, trên hệ điều hành nào và có mã lỗi gì? Internet có mất kết nối cùng lúc không?"
+          : "VPN đã kết nối được chưa? Nếu chưa, thông báo hoặc mã lỗi hiện tại là gì?"
         : topic === "account"
           ? "Bạn thấy thông báo sai mật khẩu, tài khoản bị khóa hay lỗi xác minh?"
-          : "Sau bước vừa thử, hiện tượng đã thay đổi như thế nào?",
+          : "Sau bước vừa thử, hiện tượng đã thay đổi như thế nào?"),
     canPassToAdmin: true,
   };
 }

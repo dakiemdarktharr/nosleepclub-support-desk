@@ -11,6 +11,7 @@ import {
 } from "@/lib/answer-cache";
 import { analyze, submitSupport } from "@/services/support";
 import { resetSupportTestStore } from "@/lib/support-repository";
+import { withSupportMeasurements, supportMeasurements } from "@/lib/support-telemetry";
 import { knowledgeSeed } from "@/domain/knowledge";
 import type { SupportInput } from "@/domain/contracts";
 const input = (rawText: string): SupportInput => ({
@@ -213,7 +214,8 @@ it("serves a repeated public identity question without spending another model ca
   vi.stubEnv("OPENAI_API_KEY", "synthetic-unused");
   const article = knowledgeSeed.find((row) => row.label === "IDENTITY")!;
   const run = vi.fn(async () => ({
-    label: "IDENTITY",
+    // Keep the server label after validation, including on a later cache hit.
+    label: "EVERYDAY",
     text: "Mình là VNG Support, trợ lý giúp bạn tìm câu trả lời và hướng dẫn kỹ thuật.",
     knowledgeIds: [article._id],
     evidence: [
@@ -221,12 +223,24 @@ it("serves a repeated public identity question without spending another model ca
     ],
   }));
   const first = await createConversationAnswer(canonical, { run });
-  const second = await createConversationAnswer(canonical, { run });
+  const onModelCall = vi.fn();
+  const { second, diagnostics } = await withSupportMeasurements(async () => ({
+    second: await createConversationAnswer(canonical, { run, onModelCall }),
+    diagnostics: supportMeasurements(),
+  }));
   expect(first.answer?.fallbackReason).toBeUndefined();
   expect(run).toHaveBeenCalledOnce();
   expect(first.answer?.cacheHit).toBe(false);
+  expect(first.source).toBe("openai");
+  expect(first.answer?.label).toBe("IDENTITY");
   expect(second.answer?.cacheHit).toBe(true);
-  expect(second.source).toBe("openai");
+  expect(second.source).toBe("cache");
+  expect(second.answer?.label).toBe("IDENTITY");
+  expect(second.model).toBeUndefined();
+  expect(onModelCall).not.toHaveBeenCalled();
+  expect(diagnostics?.modelCalls).toEqual([]);
+  expect(diagnostics?.answerCache).toBe("hit");
+  expect(second.answer?.evidence).toEqual(first.answer?.evidence);
   expect(second.answer?.generatedAt).toBe(first.answer?.generatedAt);
 });
 it("never shares personalized, follow-up, or override questions in the public answer cache", () => {

@@ -10,6 +10,7 @@ import type { SentimentAssessment } from "@/domain/contracts";
 import { sentimentFallbackReason } from "@/domain/sentiment-diagnostics";
 import { callModel, ModelFailure } from "@/lib/support-model";
 import type { ModelOptions } from "@/lib/support-model";
+import { startSupportStage } from "./support-telemetry";
 
 const resultSchema = z
   .object({
@@ -51,6 +52,8 @@ function parseResult(
   value: unknown,
   text: string,
 ): z.infer<typeof resultSchema> | null {
+  const finish = startSupportStage("outputValidation");
+  try {
   let candidate = value;
   if (typeof candidate === "string") {
     try {
@@ -63,6 +66,7 @@ function parseResult(
   if (!parsed.success || !text.includes(parsed.data.evidence) ||
       redact(JSON.stringify(parsed.data)).markers.length) return null;
   return parsed.data;
+  } finally { finish(); }
 }
 
 function ruleBasedAssessment(

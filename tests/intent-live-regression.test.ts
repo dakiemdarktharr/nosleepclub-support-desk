@@ -278,7 +278,9 @@ it("treats an incident label for the same safe printer diagnostic as a clarifica
 it.each(["MODEL_OUTPUT_INVALID", "MODEL_EVIDENCE_INVALID"])("discards invalid optional prose and returns only vetted guidance: %s", async code => {
   const { ModelFailure } = await import("@/lib/support-model");
   const text = "VPN liên tục ngắt kết nối. Hướng dẫn tôi kiểm tra an toàn.";
-  const result = await completeAnalysis(input(text), [], { run: async call => {
+  // The initial bounded question now needs no paraphrase; verify invalid prose
+  // on the retained enrichment path for a later troubleshooting round.
+  const result = await completeAnalysis(input(text), [], { assistanceRound: 1, run: async call => {
     if (call.purpose === "assistance") throw new ModelFailure(code as "MODEL_OUTPUT_INVALID" | "MODEL_EVIDENCE_INVALID");
     return wire(text, { route: "support", serviceGroup: "NETWORK_VPN", intentLabel: "VPN_NOT_CONNECTING", requestKind: "SAFE_DIAGNOSTIC" });
   } });

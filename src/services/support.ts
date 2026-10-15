@@ -46,6 +46,8 @@ import {
   supportRequestSentimentFallback,
 } from "@/lib/feedback-model";
 import { sentimentFallbackReason } from "@/domain/sentiment-diagnostics";
+import { measureSupportStage, measureSupportSync } from "@/lib/support-telemetry";
+import { reviewedGuideAnswers } from "@/lib/reviewed-guidance";
 
 export function auditEvent(
   request: SupportRequest,
@@ -58,6 +60,7 @@ export function auditEvent(
     ...(request.canonical ? { model: request.canonical.model } : {}),
     ...(request.assistance.length ? {
       assistanceSource: request.assistance.at(-1)!.source,
+      generationReason: request.assistance.at(-1)!.generationReason,
       assistanceModel: request.assistance.at(-1)!.model,
       fallbackReason: request.assistance.at(-1)!.fallbackReason ?? request.assistance.at(-1)!.answer?.fallbackReason,
     } : {}),
@@ -95,8 +98,10 @@ export function auditEvent(
   };
 }
 export function prepareInput(value: unknown) {
-  const parsed = supportInputSchema.parse(value);
-  return safeInput(parsed);
+  return measureSupportSync("inputValidation", () => {
+    const parsed = supportInputSchema.parse(value);
+    return safeInput(parsed);
+  });
 }
 function requireIntakeIdentity(input: SupportInput) {
   if (input.requesterMode === "guest") return;
@@ -163,7 +168,7 @@ export async function analyze(
       ),
     ),
   };
-  const baseline = extractIntake(analysisInput, markers);
+  const baseline = measureSupportSync("extraction", () => extractIntake(analysisInput, markers));
   const mockRouting = (process.env.AI_PROVIDER || "mock") === "mock";
   const intentModelSkipped = baseline.riskSignals.length > 0 ||
     baseline.subrequests.length > 1 ||
@@ -185,7 +190,7 @@ export async function analyze(
   if (workEvidence) {
     const canonical = { ...baseline, workEvidence };
     await checkWorkSources(canonical, input.rawText);
-    return { canonical, decision: evaluatePolicy(canonical, verifyApproval) };
+    return { canonical, decision: measureSupportSync("policy", () => evaluatePolicy(canonical, verifyApproval)) };
   }
   const conversation = mockRouting
     ? conversationRoute(analysisInput, baseline)
@@ -214,7 +219,7 @@ export async function analyze(
   if (canonical.workEvidence) await checkWorkSources(canonical, input.rawText);
   return {
     canonical,
-    decision: evaluatePolicy(canonical, verifyApproval),
+    decision: measureSupportSync("policy", () => evaluatePolicy(canonical, verifyApproval)),
     sentiment,
   };
 }
@@ -263,13 +268,16 @@ export async function completeAnalysis(
     ["GUIDE", "LLM_ASSIST"].includes(result.decision.handlingMode)
   ) {
     try {
+      const reviewedGuide = reviewedGuideAnswers(input, result.canonical, options.assistanceRound ?? 0);
       assistance = result.canonical.conversation
         ? await createConversationAnswer(result.canonical, options)
         : await createAssistance(
             result.canonical,
-            result.decision.handlingMode === "LLM_ASSIST",
+            result.decision.handlingMode === "LLM_ASSIST" && !reviewedGuide,
             options,
           );
+      if (reviewedGuide && !assistance.fallbackReason)
+        assistance.generationReason = "REVIEWED_TEMPLATE_SUFFICIENT";
     } catch (error) {
       result.canonical = modelFailure(result.canonical, error);
       result.decision = evaluatePolicy(result.canonical, verifyApproval);
@@ -300,7 +308,7 @@ export async function previewSupport(value: unknown, options: ModelOptions = {})
     ...analysis,
     sentiment,
   };
-  await saveSupportPreview(preview);
+  await measureSupportStage("persistence", () => saveSupportPreview(preview));
   return {
     input: { ...safe.input, previewId: preview.id },
     canonical: preview.canonical,

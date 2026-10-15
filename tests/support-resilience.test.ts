@@ -41,7 +41,9 @@ it.each(["REFUSAL", "EMPTY_RESPONSE"] as const)("does not turn rejected extracti
 
 it("discards every invalid prose field after valid extraction and records fallback in audit", async () => {
   const run = async (call: ModelCall) => call.purpose === "extraction" ? facts(vpn) : { summary: "UNTRUSTED_PROSE", stepIndexes: [99] };
-  const row = await submitSupport(input(vpn), { run });
+  // Initial bounded VPN help now uses the complete server guide without prose.
+  // Exercise the retained enrichment branch used for detailed follow-up instead.
+  const row = await submitSupport(input(vpn), { run, assistanceRound: 1 });
   expect(row.decision?.action).toBe("AUTO_APPROVE");
   expect(row.assistance[0]).toMatchObject({ source: "deterministic", fallbackReason: expect.stringContaining("MODEL_OUTPUT_INVALID") });
   expect(JSON.stringify(row.assistance)).not.toContain("UNTRUSTED_PROSE");

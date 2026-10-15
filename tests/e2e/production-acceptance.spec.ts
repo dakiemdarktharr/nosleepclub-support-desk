@@ -17,6 +17,20 @@ for (const [name, text, action, intent] of [
     expect(preview.decision.action).toBe(action);
     expect(preview.canonical.intentLabel).toBe(intent);
     expect(preview.canonical.riskSignals).not.toContain("CONFLICT");
+    if (name === "public-rdp") {
+      expect(preview.canonical.entities.port).toBe("3389");
+      expect(preview.canonical.entities.protocol).toBeUndefined();
+      expect(preview.decision.missingFields).not.toContain("port");
+      expect(preview.decision.missingFields).toContain("protocol");
+      expect(preview.decision.ruleIds).toContain("SEC-002");
+    }
+    if (name === "printer") {
+      expect(preview.assistance.summary).toContain("đang báo kẹt giấy");
+      expect(preview.assistance.nextQuestion).toContain("hãng/model");
+      expect(preview.assistance.stepByStepInstructions.at(-1)).toMatch(/Chỉ khi.*sẵn sàng/);
+    }
+    if (name === "dns") expect(preview.assistance.answer.label).toBe(preview.canonical.conversation.label);
+    if (name === "vpn") expect(preview.assistance).toMatchObject({ source: "deterministic", generationReason: "REVIEWED_TEMPLATE_SUFFICIENT" });
     const savedResponse = page.waitForResponse(r => r.url().endsWith("/api/support/requests") && r.request().method() === "POST");
     await page.locator('[data-guide="sender-confirm"]').click();
     const saved = (await (await savedResponse).json()).data;

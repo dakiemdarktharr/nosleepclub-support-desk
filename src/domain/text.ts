@@ -11,6 +11,7 @@ import type {
 import { redact } from "./redaction";
 import { isEmployeeIdentityField } from "./employee-identity";
 import { guidanceRules, permissionMappings } from "./policy-source";
+import { extractNetworkFacts, isSingleNetworkPort, isSingleNetworkProtocol, networkFactLabels, sameNetworkFact } from "./network-facts";
 
 // One vocabulary for extracting a labelled fact and keeping it with its request.
 const factLabels: Record<string, string> = {
@@ -515,6 +516,9 @@ export function detectedRisks(raw: string): RiskSignal[] {
       /\bpublic\s+(?:github|gitlab|docs?|documentation|tai lieu|open source)\b/g,
       "reference documentation",
     )
+    // A port list is one scope, not independent actions separated by "and".
+    .replace(/\b(?:ports?|cong)(?: dich| nguon)?\s*[:=]?\s*\d+(?:\s*(?:,|\/|and|va)\s*\d+)+/g,
+      value => value.replace(/\b(?:and|va)\b/g, ","))
     .split(/[;\n]|\b(?:but|nhung|however|and|va)\b/);
   if (
     clauses.some(
@@ -523,7 +527,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
           clause,
           /\bpublic\b|\binternet\b|0\.0\.0\.0(?:\/0)?|\b0\/0\b|allow all|ra ngoai/,
         ) &&
-        /\b(?:port|inbound|rdp|vnc|ssh|expose|exposed|exposure|accessible|internet facing|remote|bucket|service|server|database|db|postgresql|postgres|mysql|public ip)\b|(?:open|mo)\s+\d+/.test(
+        /\b(?:ports?|inbound|rdp|vnc|ssh|expose|exposed|exposure|accessible|internet facing|remote|bucket|service|server|database|db|postgresql|postgres|mysql|public ip)\b|\bcong(?: dich| nguon)?\s*[:=]?\s*[-+\d]|(?:open|mo)\s+\d+/.test(
           clause,
         ),
     )
@@ -767,7 +771,7 @@ function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
     return ["ACCOUNT_ACCESS", "ACCOUNT_LOGIN", "SAFE_DIAGNOSTIC"];
   if (/phishing|malware|security incident|data breach/.test(text))
     return ["SECURITY", "SECURITY_INCIDENT", "INCIDENT"];
-  if (asserted(text, /\b(?:port|firewall|rdp|dns|public ip|vpn|proxy)\b/))
+  if (asserted(text, /\b(?:ports?|firewall|rdp|dns|public ip|vpn|proxy)\b|\bcong\s+(?:(?:dich|nguon)\s+)?\d/))
     return ["NETWORK_VPN", "PORT_OPEN_REQUEST", "CONFIGURATION_CHANGE"];
   if (/github|gitlab|\bgit\b|repository|\brepo\b/.test(text))
     return ["GIT_PERMISSION", "GIT_READ_ACCESS", "ACCESS_REQUEST"];
@@ -902,6 +906,14 @@ export function extractText(rawText: string): Extraction {
   const [serviceGroup, intentLabel, requestKind] = classify(text);
   const riskSignals = detectedRisks(rawText);
   const entities: Record<string, string> = {};
+  const network = serviceGroup === "NETWORK_VPN"
+    ? extractNetworkFacts(rawText, (quote, index) => {
+        const literal = normalize(quote).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return asserted(normalize(rawText.slice(0, index + quote.length)), new RegExp(`${literal}$`));
+      })
+    : { entities: {}, evidence: [], missingFields: [], ambiguities: [], conflict: false };
+  Object.assign(entities, network.entities);
+  if (network.conflict) riskSignals.push("CONFLICT");
   const system = text.match(
     /\b(mysql|postgresql|postgres|redis|mongodb|clickhouse|jira|confluence|github|gitlab)\b/,
   );
@@ -959,6 +971,7 @@ export function extractText(rawText: string): Extraction {
   }
   // Explicit labelled facts are extracted without an LLM; preserve original resource spelling.
   for (const [key, label] of Object.entries(factLabels)) {
+    if (serviceGroup === "NETWORK_VPN" && ["source", "target"].includes(key)) continue;
     const match = rawText.match(
       new RegExp(`(?:^|[;\\n,]|\\s)(?:${label})\\s*[:=]\\s*([^;\\n,]+)`, "i"),
     );
@@ -1020,9 +1033,9 @@ export function extractText(rawText: string): Extraction {
     environment,
     requestedAction: semanticAction,
     riskSignals,
-    missingFields: [],
-    evidence: [{ field: "input", quote: rawText || "Structured intake" }],
-    ambiguities: [],
+    missingFields: network.missingFields,
+    evidence: [{ field: "input", quote: rawText || "Structured intake" }, ...network.evidence],
+    ambiguities: network.ambiguities,
   };
 }
 
@@ -1068,6 +1081,10 @@ export function extractIntake(
     "operation",
     "dataSensitivity",
     "resourceLifecycle",
+    "port",
+    "protocol",
+    "source",
+    "target",
   ]) {
     if (
       fields[key] &&
@@ -1075,7 +1092,9 @@ export function extractIntake(
       // A bounded answer can resolve an unresolved relative deadline. A
       // contrary concrete interval still raises CONFLICT; no TTL is inferred.
       !(key === "duration" && relativeDuration.test(normalize(extracted.entities[key]))) &&
-      normalizeFact(fields[key]) !== normalizeFact(extracted.entities[key])
+      (["port", "protocol", "source", "target"].includes(key)
+        ? !sameNetworkFact(key, fields[key], extracted.entities[key])
+        : normalizeFact(fields[key]) !== normalizeFact(extracted.entities[key]))
     )
       risks.add("CONFLICT");
   }
@@ -1124,6 +1143,30 @@ export function extractIntake(
     risks.add("DESTRUCTIVE");
   }
   const entities = { ...extracted.entities, ...fields };
+  const missingFields = [...extracted.missingFields];
+  const ambiguities = [...extracted.ambiguities];
+  // A form field cannot silently replace conflicting prose, select one member
+  // of a range/list, or make an invalid port look complete at the hazard gate.
+  if (serviceGroup === "NETWORK_VPN") {
+    for (const key of ["port", "protocol", "source", "target"]) {
+      const invalid = key === "port" ? fields[key] && !isSingleNetworkPort(fields[key])
+        : key === "protocol" ? fields[key] && !isSingleNetworkProtocol(fields[key]) : false;
+      const mismatch = fields[key] && extracted.entities[key] &&
+        !sameNetworkFact(key, fields[key], extracted.entities[key]);
+      const unresolvedScope = extracted.ambiguities.some(value => value.startsWith(`${key}:`));
+      if (invalid || mismatch || unresolvedScope) {
+        delete entities[key];
+        if (!missingFields.includes(key)) missingFields.push(key);
+        if (fields[key]) {
+          ambiguities.push(`${key}: giá trị trong biểu mẫu cần được đối chiếu với nội dung yêu cầu.`);
+          if (mismatch || unresolvedScope) risks.add("CONFLICT");
+        }
+      } else if (entities[key]) {
+        const index = missingFields.indexOf(key);
+        if (index >= 0) missingFields.splice(index, 1);
+      }
+    }
+  }
   const env = fields.environment as Environment | undefined;
   const environment = env ?? extracted.environment;
   let requestedAction =
@@ -1276,7 +1319,8 @@ export function extractIntake(
       // Risk detection still evaluates the full original input and every value.
       const factLabel =
         label &&
-        [...allFields, ...Object.values(factLabels).flatMap((value) => value.split("|"))]
+        [...allFields, ...Object.values(factLabels).flatMap((value) => value.split("|")),
+          ...Object.values(networkFactLabels).flatMap((value) => value.split("|"))]
           .some((field) => normalize(field) === normalize(label));
       // These complete, bounded questions add no operation or scope. Do not
       // discard arbitrary unknown fragments, or extra actions hidden in prose.
@@ -1367,6 +1411,8 @@ export function extractIntake(
     intentLabel,
     requestKind,
     entities,
+    missingFields,
+    ambiguities,
     environment,
     requestedAction,
     riskSignals: [...risks],

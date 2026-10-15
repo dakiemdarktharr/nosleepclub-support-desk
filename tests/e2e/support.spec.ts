@@ -79,7 +79,10 @@ test("medium assistance passes to admin with history intact", async ({
   page,
 }, info) => {
   await submit(page, "VPN không kết nối");
-  await expect(page.getByText("Hướng dẫn mẫu", { exact: false })).toBeVisible();
+  await expect(page.getByText(/VNG Support · Hướng dẫn đã kiểm duyệt$/)).toBeVisible();
+  const detailUrl = `/api/support${new URL(page.url()).pathname}`;
+  const before = (await (await page.request.get(detailUrl)).json()).data;
+  expect(before.assistance[0]).toMatchObject({ source: "deterministic", generationReason: "REVIEWED_TEMPLATE_SUFFICIENT" });
   await page
     .getByRole("button", {
       name: "D. Chuyển cho nhân viên hỗ trợ",
@@ -94,6 +97,9 @@ test("medium assistance passes to admin with history intact", async ({
       "Mở ứng dụng VPN chính thức đã được IT cung cấp và kiểm tra tên profile công ty.",
     ),
   ).toBeVisible();
+  const after = (await (await page.request.get(detailUrl)).json()).data;
+  expect(after.assistance).toEqual(before.assistance);
+  expect(after.events.at(-1).action).toBe("HANDOFF");
   await page.screenshot({
     path: `artifacts/assistance-${info.project.name}.png`,
     fullPage: true,

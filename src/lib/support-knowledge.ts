@@ -7,6 +7,7 @@ import { conversationLabels, type ConversationLabel } from "@/domain/conversatio
 import { z } from "zod";
 import { searchKnowledge } from "@/domain/knowledge-search";
 import { supportDatabase } from "./support-repository";
+import { startSupportStage } from "./support-telemetry";
 
 // Mongo's generic type does not validate stored documents at runtime.
 // Strip unused fields, then require exact content equality with a reviewed revision.
@@ -74,6 +75,8 @@ export async function retrieveKnowledge(
   question: string,
   label: ConversationLabel,
 ) {
+  const finish = startSupportStage("retrieval");
+  try {
   const db = supportDatabase();
   if (!db)
     return {
@@ -109,4 +112,5 @@ export async function retrieveKnowledge(
     articles: rankKnowledge(rows, question, label),
     storage: "mongodb" as const,
   };
+  } finally { finish(); }
 }

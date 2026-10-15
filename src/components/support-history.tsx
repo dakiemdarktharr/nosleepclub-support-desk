@@ -14,7 +14,9 @@ export function AssistanceHistory({
         <AnswerBubble item={item} key={`${item.timestamp}-${index}`}>
           <h2 className="text-lg font-bold">{item.summary}</h2>
           <p className="my-2 text-xs text-slate-500">
-            {item.source === "mock"
+            {item.source === "cache" || item.answer?.cacheHit
+              ? "Câu trả lời từ bộ nhớ đệm, đã kiểm tra lại"
+              : item.source === "mock"
               ? "Hướng dẫn mẫu"
               : item.source === "openai"
                 ? "Trợ lý giải thích theo tình huống; bước thao tác đã kiểm duyệt"

@@ -16,6 +16,8 @@ export const conversationLabels = [
 ] as const;
 export type ConversationLabel = (typeof conversationLabels)[number];
 export type ConversationContext = {
+  // One server-owned label for routing, retrieval, answer persistence and audit.
+  // Answer generation may vary the wording, never reclassify this context.
   label: ConversationLabel;
   question: string;
   ignoredOverride: boolean;

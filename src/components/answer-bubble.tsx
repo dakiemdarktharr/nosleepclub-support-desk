@@ -7,12 +7,16 @@ export function AnswerBubble({
   item: Assistance;
   children?: ReactNode;
 }) {
+  // Older saved answers may have cacheHit but predate the distinct cache source.
+  const cached = item.source === "cache" || item.answer?.cacheHit === true;
   return (
     <div className="assistant-reveal" aria-live="polite">
       <article className="assistant-bubble" aria-label="Câu trả lời của trợ lý">
         <p className="assistant-byline">
           ✦{" "}
-          {item.source === "openai"
+          {cached
+            ? "VNG Support · Câu trả lời từ bộ nhớ đệm"
+            : item.source === "openai"
             ? "VNG Support · AI trả lời"
             : item.source === "mock"
               ? "VNG Support · Câu trả lời mẫu"
@@ -28,10 +32,10 @@ export function AnswerBubble({
         {item.answer ? (
           <>
             <div className="assistant-text">{item.answer.text}</div>
-            {item.answer.cacheHit && (
+            {cached && (
               <p className="assistant-note">
-                Câu trả lời AI đã lưu, dùng lại trong tối đa một giờ để tiết
-                kiệm lượt gọi.
+                Câu trả lời đã lưu được kiểm tra lại trước khi dùng.
+                Không gọi AI để tạo lại nội dung này trong lượt hiện tại.
               </p>
             )}
             {item.answer.scopeNotice && (

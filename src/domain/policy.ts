@@ -928,7 +928,9 @@ function evaluateSinglePolicy(
           ? [productionExportAuthorityRule.question, productionExportAuthorityRule.destinationQuestion]
           : request.riskSignals.includes("PUBLIC_EXPOSURE")
         ? [
-            "Nguồn, đích và cổng nào cần kết nối? Có thể dùng VPN hoặc giới hạn địa chỉ nguồn không?",
+            ...missing.filter(field => ["source", "target", "port", "protocol", "environment"].includes(field)).map(field => questionFor(field)),
+            ...request.ambiguities,
+            "Có thể dùng VPN hoặc giới hạn địa chỉ nguồn thay vì public không?",
             "Ai chịu trách nhiệm phê duyệt và đóng kết nối sau thời hạn?",
           ]
         : request.riskSignals.includes("SECRET")

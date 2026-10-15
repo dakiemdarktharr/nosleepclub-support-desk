@@ -226,6 +226,15 @@ xử lý; không tự sửa/xóa dữ liệu lịch sử.
 
 ## Chẩn đoán API và sentiment
 
+Preview v5.19 trả `data.diagnostics` và `Server-Timing`: stage, model attempts,
+usage khi provider trả, cache state và process invocation. Đo client từ trước
+fetch đến sau đọc JSON; không gọi thời gian ký tự đầu là phản hồi sử dụng
+được. Giữ request tuần tự, một warm-up tách riêng và tối thiểu 20 mẫu để
+so sánh cùng input/model; nearest-rank p50/p95, tách fallback/cache, cold
+unknown nếu không có bằng chứng. Không log input/key/URI; chỉ dọn chính xác
+ID thử nghiệm đã ghi trong manifest sau lưu bằng chứng. [Contract và giới
+hạn phép đo](docs/QUALITY-LATENCY-2026-10-15.md).
+
 Đánh giá fallback offline riêng (không model/API/Mongo), tại repository root:
 
 ```powershell
