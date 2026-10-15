@@ -11,6 +11,7 @@ test("sender sees safe guidance and progress; staff retains sentiment, expected 
   await expect(page.getByRole("article")).toContainText("Không cố kéo giấy");
   await expect(page.locator("main")).not.toContainText("Kết quả mong đợi:");
   await expect(page.locator("main")).not.toContainText("Sentiment");
+  await expect(page.getByRole("article")).not.toContainText("Dừng lại nếu thấy yêu cầu xóa dữ liệu");
   await page.screenshot({
     animations: "disabled",
     path: `artifacts/polish-preview-${info.project.name}.png`,
@@ -79,6 +80,7 @@ test("sender sees safe guidance and progress; staff retains sentiment, expected 
   await expect(
     page.getByRole("tabpanel", { name: "Hướng dẫn đã gửi" }),
   ).toContainText("Kết quả mong đợi:");
+  await expect(page.getByRole("tabpanel", { name: "Hướng dẫn đã gửi" })).toContainText("Dừng lại nếu thấy yêu cầu xóa dữ liệu");
   await page.getByRole("tab", { name: /^Lịch sử xử lý/ }).click();
   await expect(page.locator(".support-timeline")).toContainText("HANDOFF");
   await expect(page.locator(".support-timeline")).toContainText("GUIDE-007");

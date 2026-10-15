@@ -59,7 +59,9 @@ export function AssistanceHistory({
               ),
             )}
           </ol>
-          <p className="mt-4 text-sm text-amber-800">{item.warning}</p>
+          {audience === "reviewer" && (
+            <p className="mt-4 text-sm text-amber-800">{item.warning}</p>
+          )}
           {audience === "reviewer" && (
             <p className="mt-2 text-sm">
               Kết quả mong đợi: {item.expectedResult}

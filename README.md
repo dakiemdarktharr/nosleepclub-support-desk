@@ -32,7 +32,7 @@ Dự án thuộc **MLAI Hackathon 2026 — The Escalation Referee**. Phiên bả
 - **Theo dõi:** trạng thái dễ hiểu, tiến trình xử lý và lịch sử hướng dẫn được giữ khi chuyển hỗ trợ.
 - **Trải nghiệm desktop/mobile:** điều hướng bàn phím, trạng thái chờ, giữ nội dung khi lỗi, URL/QR và hỗ trợ giảm chuyển động.
 
-Màn hình người gửi tập trung vào vấn đề và bước tiếp theo. Sentiment, rule, evidence kỹ thuật, expected result và giải thích audit được trình bày trong không gian nhân viên hỗ trợ.
+Màn hình người gửi tập trung vào vấn đề và bước tiếp theo. Sentiment, rule, evidence kỹ thuật, kiểm tra an toàn nội bộ, expected result và giải thích audit được trình bày trong không gian nhân viên hỗ trợ.
 
 ### Dành cho nhân viên hỗ trợ
 

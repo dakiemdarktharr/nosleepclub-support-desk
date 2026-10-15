@@ -67,7 +67,7 @@ Preview chưa tạo ticket; kiểm tra TTL, fingerprint và policy trước xác
 
 | Người gửi | Nhân viên hỗ trợ |
 | --- | --- |
-| Nội dung gốc, hướng dẫn, cảnh báo an toàn và nguồn tham khảo | Toàn bộ hướng dẫn và expected result |
+| Nội dung gốc, hướng dẫn, cảnh báo an toàn và nguồn tham khảo | Toàn bộ hướng dẫn, kiểm tra an toàn nội bộ và expected result |
 | Trạng thái, thời gian và tiến trình dễ hiểu | Actor, action, rule, evidence, policy và lý do audit |
 | Hỏi tiếp, bổ sung hoặc yêu cầu gặp nhân viên | Sentiment khi tiếp nhận và assessment của phản hồi |
 
