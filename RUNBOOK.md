@@ -28,6 +28,7 @@ $env:SUPPORT_E2E_PRODUCTION='true'
 npm run test:e2e -- --project=chromium
 npm run test:e2e -- --project=mobile
 npm audit
+npm audit --omit=dev
 ```
 
 Playwright tự khởi động server riêng tại `127.0.0.1:3227` với model mock và bộ nhớ tạm. Chạy build xong mới chạy E2E vì cùng sử dụng `.next`. Chạy desktop và mobile riêng để mỗi lượt có server và hạn mức request riêng. Không dừng một tiến trình khác đang dùng cổng này.
@@ -51,123 +52,21 @@ Sau khi triển khai, kiểm tra trang chọn vai trò, popup lần đầu, URL/
 
 Mở **Kiểm thử**, chọn lượt đã lưu rồi tiếp tục sau khi lỗi mạng hoặc giới hạn tần suất đã hết. Trường hợp có thể thử lại giữ nguyên mã yêu cầu. Một kết quả không khớp policy vẫn được ghi là không đạt; không thay kỳ vọng để che lỗi.
 
-## Bảo trì dữ liệu và policy
+## Bảo trì policy và chất lượng
 
-Policy v5.18 dùng strict intent schema, quote đã xác minh và tách lỗi AI khỏi
-quyền nghiệp vụ. Preview/cache v5.17 cần tạo lại. Không đổi ngưỡng quyền,
-approval/quota hoặc Ground Truth. [Hướng dẫn dự phòng](docs/AI-RESILIENCE-2026-10-15.md)
-ghi giới hạn retry, trace và ca Verify lịch sử còn khác kỳ vọng.
+Policy runtime nằm trong `src/domain/policy-source.ts` và `src/domain/policy.ts`. Giữ nguyên dataset/Ground Truth; thay đổi contract phải có regression và quyết định có nguồn gốc. Bump policy khi nội dung preview/cache cũ không còn hợp lệ.
 
-Kiểm tra local với OpenAI thật chỉ khi đã được phép dùng API: cấu hình key
-trong file môi trường riêng (không commit), rồi chạy
-`node --env-file=.env.local scripts/check-support-ai-live.mjs --live`.
-Script từ chối chạy nếu thiếu opt-in; ép storage bộ nhớ, tắt web search,
-không tạo ticket/preview hoặc ghi Mongo. Kết quả này chưa phải UI Production.
+`npm test` kiểm tra định tuyến, safety, authority, bằng chứng, hội thoại, identity và lưu trữ. `node scripts/development-report.mjs` tạo báo cáo local; không stage artifact chứa trace, UUID hoặc dữ liệu chưa được rà soát. [Evaluation](docs/EVALUATION.md) mô tả cách diễn giải.
 
-Policy v5.17 sửa extraction dữ kiện/thời hạn, gắn câu trả lời thời hạn ngắn với
-yêu cầu đang chờ, chuẩn hóa quyền read-only và nhận diện thao tác phá hủy DB.
-Preview/cache v5.16 phải được tạo lại. Rule, ngưỡng, entitlement/approval và
-Ground Truth giữ nguyên. [Báo cáo v5.17](docs/MISMATCH-FOLLOWUP-2026-10-14.md)
-tách cải thiện trace khỏi exact-match; dữ liệu tự khai không trở thành bằng chứng verified.
-
-Đo development trên checkout cần đánh giá (không dùng artifact cũ như kết quả HEAD):
+Lời gọi AI thật local cần key riêng và opt-in:
 
 ```powershell
-npx vitest run tests/support-verify.test.ts
-node scripts/development-report.mjs
+node --env-file=.env.local scripts/check-support-ai-live.mjs --live
 ```
 
-Xuất báo cáo từng case và so sánh hai lượt (giữ baseline riêng trước khi sửa):
+Script dùng storage bộ nhớ, không tạo ticket hoặc ghi Mongo. Kết quả này không thay kiểm tra UI Production. Telemetry preview có stage timing và model calls; không ghi raw input hoặc credential.
 
-```powershell
-node scripts/development-report.mjs artifacts/original-fixture-evaluation.json --out artifacts/case-report.json
-node scripts/development-report.mjs artifacts/original-fixture-evaluation.json --baseline artifacts/technical-baseline.json --out artifacts/comparison-report.json
-```
-
-`--out` từ chối ghi đè file có sẵn. Mỗi case có expected/actual, rule, evidence,
-reason, missing fields và diagnostic signals; signal không phải kết luận của
-chuyên gia. Metadata thêm dataset ID/hash/split và evaluator hash/dirty. So sánh
-từ chối nhãn/input khác nhau khi có digest; baseline cũ thiếu digest được ghi
-rõ giới hạn. Trace có thể chứa tên/PII chưa được nhận diện trong fixture cũ:
-chỉ giữ local, không stage hay công bố nếu chưa rà soát. Xem
-[báo cáo mới](docs/REPO-AUDIT-2026-10-14.md) và [danh sách adjudication lịch sử](docs/archive/TECHNICAL-READINESS.md).
-
-Test dùng API route + readback mock/memory; ghi SHA, runtime digest/dirty, policy,
-Node và môi trường trong artifact local. Script in confusion matrix, coverage,
-exact-match, FNR, unnecessary escalation và các nhóm lỗi. Ground Truth giữ nguyên.
-Artifact có timestamp/UUID chỉ lưu local, không stage. Phân biệt feedback do chủ repo khai báo
-với held-out/nghiên cứu độc lập: xem [báo cáo hiện hành](docs/REPO-AUDIT-2026-10-14.md).
-
-Ghi chú lịch sử: policy `support-guidance-v5.13` tách SECURITY_CONTROL thành `SEC-008`,
-giữ PUBLIC_EXPOSURE là `SEC-002`; không đổi risk/authority precedence. Preview
-v5.12 cần tạo lại. Các ghi chú phiên bản bên dưới là lịch sử thay đổi.
-
-Policy `support-guidance-v5.8` đồng bộ alias dữ kiện với bộ tách subrequest,
-giữ approval context có giới hạn và không nhầm yêu cầu quyền thành artefact.
-Không đổi authority/risk gate hoặc quota. Bump version để preview/cache cũ không
-được dùng lại. Mở rộng redaction theo [inventory](docs/PRIVACY-INVENTORY.md).
-
-Version v5.9 chỉ vô hiệu preview/cache sau sửa extraction: giữ mã approval
-nhiều đoạn nguyên vẹn và không coi câu cảm ơn hoàn chỉnh là tác vụ riêng.
-Rule, quota, safety threshold và registry approval không đổi.
-
-Version v5.10 áp dụng [quyết định Member A](docs/decisions/PERSON-A-POLICY-DECISIONS.md):
-cấp VM/database thiếu sizing hoặc TTL được ESCALATE/MISSING_INFO. Export DB
-production có mục đích công việc, không nêu dữ liệu nhạy cảm/đích ngoài kiểm
-soát, chuyển DBA/Data reviewer với BEYOND_AUTHORITY; các trường hợp Security
-giữ ưu tiên. Preview/cache v5.9 phải tạo lại. Ground Truth, quota và registry
-approval giữ nguyên.
-
-Version v5.11 áp dụng quyết định tiếp theo của Member A: `DESTRUCTIVE` trên
-service DATABASE, environment production khớp `SEC-007/SECURITY_RISK` và chuyển
-Security/DBA. Approval đã xác minh hoặc lời hứa restore không bỏ qua rule này.
-AUTH-008 và các authority rule vẫn có trong audit. Scope khác tiếp tục theo
-rule hiện có; preview/cache v5.10 phải tạo lại. Ground Truth giữ nguyên.
-
-Version v5.12 áp dụng [contract do người dùng giao quyền quyết định](docs/decisions/PERSON-A-CONTRACT-DECISIONS.md):
-cấp VPN hỏi facts của access; cấp database hỏi sizing; Jira/Confluence hỏi
-project/space/page và mức quyền. Mapping push/User/Editor cần evidence khẳng
-định, không tự xác minh approval. Thời hạn phải dương và có đơn vị hoặc là
-timestamp ISO rõ múi giờ; thời hạn cloud dạng số thập phân không được làm tròn
-để vượt giới hạn. Giữ whitelist AUTO, provider/quota, registry và Ground Truth.
-Preview/cache v5.11 phải tạo lại.
-
-Policy `support-guidance-v5.13` kiểm tra CPU/RAM/disk/thời lượng cloud đã nêu rõ
-vượt quota trước nhánh hỏi các facts còn thiếu; giới hạn vẫn là 4 vCPU, 16 GB
-RAM, 100 GB disk và 8 giờ. Quota thời lượng quy đổi phút/giờ/ngày và số thập
-phân sang giờ, nên thời lượng như 30 phút hoặc 0.5 giờ không bị từ chối chỉ vì
-định dạng. Quota và sandbox AUTO chỉ áp dụng cho `CLOUD_SANDBOX`,
-`CLOUD_VM_REQUEST`, `GPU_REQUEST`; cloud intent chưa có contract riêng chuyển
-policy owner, trừ khi security/authority rule cụ thể đã khớp. Một câu chỉ nói
-credential sẽ lưu trong Vault không tự kích hoạt SEC-001; value credential hoặc
-hành động tiết lộ vẫn bị chặn. Preview/cache v5.12 phải tạo lại. Xem
-[bảng mismatch và evidence](docs/archive/TECHNICAL-CASE-REVIEW-PERSON-A.md).
-
-Policy hiện hành support-guidance-v5.14, hiệu lực 14/10/2026, bỏ các ngưỡng
-demo cố định. AUTO provisioning cần quota/cost/TTL được đánh giá đầy đủ từ nguồn
-capacity authoritative theo project/team, gồm tài nguyên đang chạy; nếu nguồn
-này chưa có hoặc quota vượt, chuyển Cloud/Capacity owner. Production không áp
-hạn mức số lần gọi model theo ngày ở cấp ứng dụng; quota/rate limit từ provider,
-timeout và token caps vẫn áp dụng. Bộ test giữ AI_TEST_MAX_ATTEMPTS làm guard riêng.
-Access routine cần entitlement và TTL theo service/risk; approval cần cùng record
-registry/ITSM, identity, role, scope và các trạng thái/điều kiện đã duyệt. Ticket
-nhiều yêu cầu được trả lại với hướng dẫn “Vui lòng gửi từng yêu cầu một.” Chi
-tiết quyết định và giới hạn tích hợp ở policy decisions.
-
-- [Bộ dữ liệu kiểm thử](docs/JUDGE-DATASETS.md) mô tả các pack hiện có.
-- [Quản trị knowledge](docs/KNOWLEDGE-REVIEW.md) hướng dẫn tạo revision mới và kiểm tra nguồn.
-- [Hợp đồng đánh giá](docs/EVALUATION.md) mô tả đầu vào và cách tính kết quả.
-- [Workflow theo bằng chứng](docs/archive/EVIDENCE-WORKFLOW-FOLLOWUP.md) mô tả yêu cầu bổ sung dữ liệu và điều kiện chuyển reviewer.
-
-Các policy gốc trong `mlai26_new/data/policy/` là dữ liệu lịch sử được bảo vệ bằng checksum tại `artifacts/migration-baseline-manifest.json`. Giữ nguyên chúng để hồi quy; policy runtime nằm trong `src/domain/policy-source.ts` và `src/domain/policy.ts`. `POLICY-REVIEW.md` mô tả policy-v2 trước tích hợp, không phải trạng thái runtime hiện tại.
-
-Các báo cáo release, migration và prompt bàn giao cũ có thể tra cứu trong lịch sử Git. Tài liệu vận hành hiện hành không yêu cầu áp lại patch hay chia thành hai package.
-
-Policy `support-guidance-v5.5` thay đổi nhận diện câu mô tả, feedback và đích tiếp nhận policy gap; preview cũ phải tạo lại. Reviewer có thể lọc `queue=OUT_OF_POLICY` hoặc `queue=AUTHORITY_REQUIRED` qua trang review/API phân trang. Bộ lọc áp dụng cả memory/Mongo, không sửa lịch sử quyết định đã lưu và không cấp quyền reviewer. Xem [đối chiếu nhận xét doanh nghiệp](docs/archive/ENTERPRISE-FEEDBACK.md) để phân biệt regression synthetic, Mongo mock và phần chưa xác minh live.
-
-Policy `support-guidance-v5.6` đưa nhận diện ý định freeform của provider OpenAI qua model trước khi áp dụng deterministic policy. Preview phiên bản cũ phải tạo lại; provider `mock` vẫn là mô phỏng regex để chạy demo/test offline và không chứng minh chất lượng nhận diện của OpenAI. Lỗi nhận diện, schema hoặc evidence chuyển reviewer an toàn. Không có thay đổi sentiment sau câu trả lời.
-
-Policy `support-guidance-v5.7` kiểm tra tổ hợp route/catalog của model, bỏ field tùy chọn rỗng khỏi phân tích và đánh giá riêng câu tiếp nối có rủi ro/thao tác nghiệp vụ. Phủ định trong câu cũ không được triệt tiêu rủi ro câu mới. Preview/answer cache phiên bản cũ không được dùng lại. Xem [regression và giới hạn kiểm chứng](docs/archive/INTENT-REVIEW-FIXES.md).
+Đối chiếu chất lượng trước/sau bằng cùng input, model và môi trường. Tách warm/cold quan sát được, cache hit/miss và fallback; thời gian đến câu trả lời đầy đủ quan trọng hơn ký tự đầu. Không bỏ validation hoặc đổi quyền để tăng tốc.
 
 ## Kiểm tra Mongo trong môi trường thử nghiệm riêng
 
@@ -182,9 +81,9 @@ Harness hiện đọc lại request/audit sau restart app, thực hiện STOP/CA
 app lần nữa và đối chiếu quyết định reviewer/audit nguyên vẹn với Mongo. Chỉ khi
 mọi assertion đạt mới trả `APP_RESTART_VERIFIED`. Không restart mongod, không
 chứng minh identity transaction/replica set hay production durability. Lượt
-kiểm tra này không có Mongo test: xem [bằng chứng hiện tại](docs/REPO-AUDIT-2026-10-14.md).
+kiểm tra này không có Mongo test: xem [bằng chứng hiện tại](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/REPO-AUDIT-2026-10-14.md).
 
-Ưu tiên harness có guard và tự restart tiến trình tại [hướng dẫn kiểm tra persistence](docs/archive/FEEDBACK-EVIDENCE-REVIEW.md#reproducible-mongo-evidence): `node scripts/mongo-restart-smoke.mjs`. Harness chỉ chấp nhận Mongo loopback trên instance disposable được khai báo rõ, database mới do script chọn, không có `.env` local, model mock và budget 0. Chưa có kết quả live từ harness trong lượt sửa này. `durable=true` vẫn là metadata của adapter; trường health `persistenceVerification=NOT_PERFORMED` nói rõ endpoint không kiểm tra restart.
+Ưu tiên harness có guard và tự restart tiến trình tại [hướng dẫn kiểm tra persistence](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/FEEDBACK-EVIDENCE-REVIEW.md#reproducible-mongo-evidence): `node scripts/mongo-restart-smoke.mjs`. Harness chỉ chấp nhận Mongo loopback trên instance disposable được khai báo rõ, database mới do script chọn, không có `.env` local, model mock và budget 0. Chưa có kết quả live từ harness trong lượt sửa này. `durable=true` vẫn là metadata của adapter; trường health `persistenceVerification=NOT_PERFORMED` nói rõ endpoint không kiểm tra restart.
 
 Quy trình thủ công dưới đây dành cho operator đã xác nhận database thử nghiệm riêng; không chạy trên production:
 
@@ -233,7 +132,7 @@ fetch đến sau đọc JSON; không gọi thời gian ký tự đầu là phả
 so sánh cùng input/model; nearest-rank p50/p95, tách fallback/cache, cold
 unknown nếu không có bằng chứng. Không log input/key/URI; chỉ dọn chính xác
 ID thử nghiệm đã ghi trong manifest sau lưu bằng chứng. [Contract và giới
-hạn phép đo](docs/QUALITY-LATENCY-2026-10-15.md).
+hạn phép đo](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/QUALITY-LATENCY-2026-10-15.md).
 
 Đánh giá fallback offline riêng (không model/API/Mongo), tại repository root:
 
@@ -317,7 +216,7 @@ Ngân sách/bảng giá chưa cấu hình nên luôn cần Capacity owner; chưa
 `tests/e2e/authority.spec.ts` dùng mock UI và API local thiếu Mongo. Những test
 này không chứng minh Mongo transaction/index/concurrency/restart thật.
 
-Hệ thống ID dùng MongoDB riêng, không thay storage Support. Không có memory/CSV fallback. Khi MongoDB không cấu hình/không khả dụng, API trả 503 và UI không xác nhận thành công. Mọi thao tác dưới đây dành cho operator đã có thẩm quyền; không chạy trên production chỉ vì có quyền push code.
+Hệ thống ID dùng collection riêng, có thể chung database `vng_main` với Support. Không có memory/CSV fallback. Khi MongoDB không cấu hình/không khả dụng, API trả 503 và UI không xác nhận thành công. Mọi thao tác dưới đây dành cho operator đã có thẩm quyền; không chạy trên production chỉ vì có quyền push code.
 
 ### Cấu hình
 
@@ -355,3 +254,11 @@ API access chỉ đánh giá scope và ghi audit, trả `assurance: demo`, `exec
 `npm test`, Mongo guard/report tests, lint, typecheck, build; sau build chạy E2E desktop/mobile tuần tự ở port3227 với mock/memory. Tests identity dùng adapter giả lập để kiểm tra role/rollback; E2E route mocks chỉ kiểm tra UI. Không suy ra Mongo transaction/restart thật từ chúng. Muốn chứng minh restart Support cần Mongo disposable như phần trên; bootstrap thành công trên database identity không thay thế bài đó.
 
 User yêu cầu bỏ OTP nên các test hợp đồng OTP được thay bằng ID-only, thu hồi role, phiên hết hạn, chống client tự khai báo verified/role và endpoint OTP đã ngừng. Giữ nguyên Ground Truth quyết định Support.
+
+## Kiểm tra bản trình diễn
+
+Giữ đăng nhập ID-only và reviewer công khai theo lựa chọn của nhóm để quay video/trình diễn nhanh. Màn hình người gửi không render sentiment, expected result hoặc audit thô; reviewer vẫn có các thông tin này. Phân tách màn hình không phải cơ chế xác thực bổ sung cho các API public-demo.
+
+Trước buổi trình diễn, kiểm tra máy in, VPN, reset có làm rõ, yêu cầu mở port nguy hiểm, DNS, hỏi tiếp, handoff và tra cứu lại trên desktop/mobile. Kiểm tra bằng lời gọi thật khi được phép, đối chiếu SHA và lưu receipt; dọn đúng ID dữ liệu giả lập vừa tạo sau khi lưu bằng chứng. Không chạy Verify bằng dữ liệu nghiệp vụ hoặc xóa theo điều kiện rộng.
+
+Dependency audit cần phân biệt runtime và toolchain. Lượt rà soát 15/10/2026: `npm audit --omit=dev` không có advisory; full audit còn 7 high trong chuỗi Tailwind/ESLint → glob → braces. [Advisory braces](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) chưa có bản vá công bố tại thời điểm kiểm tra. Không gọi `npm audit fix --force` hoặc tự thay major framework để làm sạch chỉ số. Chỉ dùng cấu hình glob tin cậy trong build/lint; rà bản vá hoặc migration toolchain riêng khi có phương án tương thích. Chạy lại audit ở mỗi lần phát hành.

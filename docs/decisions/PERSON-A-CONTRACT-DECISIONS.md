@@ -1,4 +1,4 @@
-> Nhật ký quyết định theo phiên bản, gồm quyết định mới v5.14. Các số đo lịch sử chỉ áp dụng cho SHA ghi tại đó. Xem [mục lục](../README.md) và [rà soát sau tích hợp](../INTEGRATION-AUDIT-2026-10-14.md).
+> Nhật ký quyết định theo phiên bản, gồm quyết định mới v5.14. Các số đo lịch sử chỉ áp dụng cho SHA ghi tại đó. Xem [mục lục](../README.md) và [rà soát sau tích hợp](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/INTEGRATION-AUDIT-2026-10-14.md).
 
 # Quyết định contract Member A — vòng v5.12
 
@@ -213,7 +213,7 @@ và request chưa ánh xạ vẫn giữ các gate đứng trước quota.
 Đây là thứ tự áp dụng của quota hiện hữu; không nới giới hạn, AUTO whitelist,
 hoặc approval verification. Regression dùng yêu cầu 11 GPU gốc và parser-level
 negative controls. Kết quả benchmark/evidence và 15 trace ngoài cohort được ghi
-trong [TECHNICAL-CASE-REVIEW-PERSON-A.md](../archive/TECHNICAL-CASE-REVIEW-PERSON-A.md),
+trong [TECHNICAL-CASE-REVIEW-PERSON-A.md](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/TECHNICAL-CASE-REVIEW-PERSON-A.md),
 cập nhật 13/10. Chưa có human B/C review.
 
 ## Follow-up 13/10/2026 — policy v5.13
@@ -240,7 +240,7 @@ So với candidate v5.12, bốn trace đổi; một mismatch `gt-authority-005` 
 `TC002` giờ nhận AUTH-QUOTA vì TTL 48 giờ vượt giới hạn 8 giờ. Tỷ lệ expected
 routine bị escalated tăng 28/34 → 29/34; đây là nhãn/contract conflict đã giữ
 nguyên, không tính là cải thiện chất lượng. Chi tiết hash và trace nằm trong
-[technical review](../archive/TECHNICAL-CASE-REVIEW-PERSON-A.md).
+[technical review](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/TECHNICAL-CASE-REVIEW-PERSON-A.md).
 
 Các giới hạn còn lại: toàn bộ 34 expected AUTO đều không có verified approval
 (6 pending, 28 unverifiable); bảy trong số đó nêu thời lượng hoặc CPU vượt quota
@@ -284,7 +284,7 @@ thứ tự xử lý không thay thế adjudication của tập dữ liệu.
 
 Regression mới dùng dữ liệu giả lập riêng: thiếu facts thì hỏi, đủ facts nhưng
 quota unavailable thì chuyển owner, vi phạm security vẫn chuyển ngay. Xem
-[báo cáo mismatch v5.15](../MISMATCH-REVIEW-2026-10-14.md).
+[báo cáo mismatch v5.15](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/MISMATCH-REVIEW-2026-10-14.md).
 
 ## Xác nhận tiếp theo — entitlement, approval và quota demo
 

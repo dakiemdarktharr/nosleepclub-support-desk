@@ -17,7 +17,7 @@ chấm điểm chính thức trong brief.
 | Held-out độc lập, missed/unnecessary escalation | **NOT COLLECTED**; [protocol](INDEPENDENT-EVALUATION-PROTOCOL.md). |
 | 5 slide đúng cấu trúc | Nội dung nháp bên dưới; chưa có deck cuối được đội thi duyệt. |
 | Video ≤3 phút | Script bên dưới; E2E tạo video local/mock, chưa phải video nộp cuối được duyệt. |
-| Build log 1 trang | [Bản ghi lượt này](archive/BUILD-LOG-READINESS.md); đội thi bổ sung lịch sử thực tế, không backdate. |
+| Build log 1 trang | [Bản ghi lượt này](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/BUILD-LOG-READINESS.md); đội thi bổ sung lịch sử thực tế, không backdate. |
 | Điều chỉnh ngưỡng dựa trên feedback | Có evaluator/đề xuất ngưỡng offline; chưa có activation tự động, dữ liệu thật hoặc authorization production. |
 
 ## Năm slide — không thêm slide thứ sáu
@@ -41,7 +41,7 @@ actor, thời gian, rule, evidence, trạng thái; Stop không hoàn tác hạ t
 Tác động người dùng: **NOT COLLECTED**, chưa được tuyên bố tiết kiệm thời gian.
 Trình bày protocol ba người, nhiệm vụ trước/sau được đảo thứ tự, onboarding tách
 riêng, lỗi/handoff/bỏ cuộc/gánh nặng/ỷ lại/giảm phối hợp. Development 128 fixture
-đã lộ cho đội phát triển: dùng số của [báo cáo readiness](archive/COMPETITION-READINESS.md),
+đã lộ cho đội phát triển: dùng số của [báo cáo readiness](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/COMPETITION-READINESS.md),
 không dùng làm accuracy held-out. Kèm numerator/denominator và SHA.
 
 ### Slide 4 — Kiến trúc, thật và mô phỏng

@@ -12,4 +12,4 @@ Cách chạy kiểm tra nằm trong [RUNBOOK](../RUNBOOK.md). Báo cáo Markdown
 
 `original-fixture-evaluation.json`, `rag-retrieval-evaluation.json`, `e2e-results.json`, ảnh `*-chromium.png`/`*-mobile.png` của test và `verify-persisted.png` được tạo lại khi chạy kiểm thử và đã bỏ theo dõi Git. Không dùng ảnh/JSON của lần chạy trước như kết quả mới. Các mẫu ignore là tên cụ thể, không ẩn manifest hoặc mọi JSON.
 
-Manifest migration và các JSON/ảnh live lịch sử vẫn được giữ; chúng không chứng minh phiên bản hiện tại đang hoạt động. Metrics tổng hợp có phạm vi rõ trong [báo cáo rà soát](../docs/REPO-AUDIT-2026-10-14.md). Raw benchmark chứa nội dung fixture chỉ giữ local sau khi rà soát PII.
+Manifest migration và các JSON/ảnh live lịch sử vẫn được giữ; chúng không chứng minh phiên bản hiện tại đang hoạt động. Metrics tổng hợp có phạm vi rõ trong [báo cáo rà soát](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/REPO-AUDIT-2026-10-14.md). Raw benchmark chứa nội dung fixture chỉ giữ local sau khi rà soát PII.

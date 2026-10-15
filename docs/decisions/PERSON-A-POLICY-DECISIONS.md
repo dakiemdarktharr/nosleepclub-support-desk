@@ -1,4 +1,4 @@
-> Nhật ký quyết định theo phiên bản, gồm quyết định mới v5.14. Các số đo lịch sử chỉ áp dụng cho SHA ghi tại đó. Xem [mục lục](../README.md) và [rà soát sau tích hợp](../INTEGRATION-AUDIT-2026-10-14.md).
+> Nhật ký quyết định theo phiên bản, gồm quyết định mới v5.14. Các số đo lịch sử chỉ áp dụng cho SHA ghi tại đó. Xem [mục lục](../README.md) và [rà soát sau tích hợp](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/INTEGRATION-AUDIT-2026-10-14.md).
 
 # Quyết định policy cho Member A
 
@@ -99,7 +99,7 @@ ticket, log, chat hay kênh khác. Câu “credential sẽ để trong Vault” 
 lưu trữ an toàn; các gate production, quyền và approval áp dụng độc lập.
 
 Các mismatch development chưa được phân xử độc lập được ghi ở
-[TECHNICAL-CASE-REVIEW-PERSON-A.md](../archive/TECHNICAL-CASE-REVIEW-PERSON-A.md): 34 nhãn
+[TECHNICAL-CASE-REVIEW-PERSON-A.md](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/TECHNICAL-CASE-REVIEW-PERSON-A.md): 34 nhãn
 AUTO thiếu verified approval, bảy nhãn AUTO có giới hạn quota rõ vượt contract,
 và ba nhãn BEYOND_AUTHORITY khác bucket với Security rules hiện hành. Không tạo
 approval record từ lời khai trong ticket, không nới quota/whitelist và không

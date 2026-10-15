@@ -52,3 +52,9 @@ playwright-report/
 /artifacts/guide-department-mobile-freeform.png
 /artifacts/guide-department-mobile-structured.png
 /submission/DEMO-LOCAL-MOCK.webm
+
+# Local QA evidence, never stage generated screenshots or runtime traces.
+/artifacts/*.png
+/artifacts/*-results.json
+
+/artifacts/polish-*

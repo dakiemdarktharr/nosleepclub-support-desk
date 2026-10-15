@@ -2,7 +2,7 @@
 
 Đối chiếu code bắt đầu từ `main` SHA `a057fcbe17ac0282d6aebe0af7db62df27d80506` vào ngày 03/10/2026. Các case là dữ liệu synthetic theo policy mô phỏng của dự án; đây không phải policy nội bộ đã được VNG xác nhận. Thay đổi có AI assistance, không suy ra human review từ Git identity.
 
-> Cập nhật 14/10/2026: runtime v5.14 sau tích hợp main. Bộ `submission-4` hiện có một mismatch đã biết: `submission-read-scope` expected AUTO/ROUTINE, actual ESCALATE/BEYOND_AUTHORITY vì chưa có entitlement/approval được backend xác minh. Giữ nhãn gốc và hiển thị FAIL trung thực. Đề A 5 ca giữ mục tiêu 3 routine/2 escalation. [Bằng chứng mới](INTEGRATION-AUDIT-2026-10-14.md).
+> Cập nhật 14/10/2026: runtime v5.14 sau tích hợp main. Bộ `submission-4` hiện có một mismatch đã biết: `submission-read-scope` expected AUTO/ROUTINE, actual ESCALATE/BEYOND_AUTHORITY vì chưa có entitlement/approval được backend xác minh. Giữ nhãn gốc và hiển thị FAIL trung thực. Đề A 5 ca giữ mục tiêu 3 routine/2 escalation. [Bằng chứng mới](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/INTEGRATION-AUDIT-2026-10-14.md).
 
 ## Chạy một bộ
 
@@ -63,7 +63,7 @@ Nguồn: `mlai26_new/data/verify/judge-15.json`. Bộ này dùng 13 tình huốn
 
 **Đã đo lại trên base `c2a832031deedd758120d49578eed52f6c12d190` ngày
 07/10/2026 ICT:** vẫn 56/128 (43,75%), coverage 128/128. Đây là lần đo mới,
-không tái sử dụng kết quả 03/10 bên dưới. [Báo cáo base/candidate](archive/COMPETITION-READINESS.md)
+không tái sử dụng kết quả 03/10 bên dưới. [Báo cáo base/candidate](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/COMPETITION-READINESS.md)
 ghi metric đầy đủ, provenance, nhóm lỗi và phần cần adjudication. Dùng lệnh
 `npx vitest run tests/support-verify.test.ts` rồi `node scripts/development-report.mjs`
 để đo đúng checkout; file artifact được test tạo lại không tự là kết quả HEAD.

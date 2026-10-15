@@ -14,13 +14,13 @@
    khảo tự chọn. Kết quả hợp lệ có thể là hỏi bổ sung hoặc từ chối có lý do.
 
 E2E mới kiểm tra đường đi này trên desktop/mobile và thao tác bàn phím.
-[Readiness hiện tại](archive/COMPETITION-READINESS.md) tách kết quả local/mock khỏi live,
+[Readiness hiện tại](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/COMPETITION-READINESS.md) tách kết quả local/mock khỏi live,
 user study và held-out. Health live chỉ đọc không chứng minh model quality hoặc
 Mongo restart; chạy Verify live có ghi dữ liệu và có thể gọi model trả phí.
 
 ## Phạm vi demo hiện tại
 
-Sản phẩm là IT support. Dùng các case synthetic; không nhập dữ liệu cá nhân/credential thật. Hàng đợi Ngoài quy định/Cần thẩm quyền chỉ lọc danh sách, không xác thực team hoặc thông báo đến người thật. Evaluator nhận nhãn do caller khai báo; chưa có bằng chứng held-out độc lập, consent đã xác minh hoặc user study. Redaction chỉ che một số mẫu có nhận diện; Mongo health ping không chứng minh persistence sau restart. Xem [bằng chứng và giới hạn hiện tại](archive/FEEDBACK-EVIDENCE-REVIEW.md), gồm harness local và quyết định quyền reviewer còn cần chủ repo cung cấp.
+Sản phẩm là IT support. Dùng các case synthetic; không nhập dữ liệu cá nhân/credential thật. Hàng đợi Ngoài quy định/Cần thẩm quyền chỉ lọc danh sách, không xác thực team hoặc thông báo đến người thật. Evaluator nhận nhãn do caller khai báo; chưa có bằng chứng held-out độc lập, consent đã xác minh hoặc user study. Redaction chỉ che một số mẫu có nhận diện; Mongo health ping không chứng minh persistence sau restart. Xem [bằng chứng và giới hạn hiện tại](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/FEEDBACK-EVIDENCE-REVIEW.md), gồm harness local và quyết định quyền reviewer còn cần chủ repo cung cấp.
 
 Các số kiểm thử và base commit ở những phần lịch sử bên dưới chỉ mô tả lần thay đổi tương ứng, không phải kết quả của HEAD hiện tại.
 
@@ -34,7 +34,7 @@ Thay đổi có AI assistance, tiếp nối commit `1ed0954` trên nhánh `codex
 - Có thể bấm **Tiếp theo** hoặc **Bỏ qua hướng dẫn**. Mỗi vai trò được ghi nhận ngay khi bắt đầu, nên thoát giữa chừng rồi quay lại cũng không lặp.
 - Cờ `vng-guide-v1:intro`, `sender`, `reviewer` nằm trong `sessionStorage`. Refresh và quay về trang chọn vai trò không lặp; đóng tab rồi mở link trong tab mới sẽ có hướng dẫn lại. Tab được trình duyệt khôi phục/nhân bản có thể giữ session theo hành vi của trình duyệt. Khi storage bị chặn, bộ nhớ trang là phương án dự phòng, không duy trì qua refresh.
 
-Người gửi có ID đã cấp có thể đăng nhập demo; “Nhân viên mới?” mở đơn cấp ID ba bước, lưu MongoDB và chờ IT duyệt. Luồng này không bắt buộc cho giám khảo dùng Support/Verify. Quyền xử lý ID cần OTP và role riêng, không lấy quyền từ reviewer demo. Xem [hướng dẫn ID](../README.md#đăng-nhập-cấp-id-và-phạm-vi-quyền) và [kết quả bản tích hợp mới](archive/IDENTITY-UX-DELIVERY.md).
+Người gửi có ID đã cấp có thể đăng nhập demo; “Nhân viên mới?” mở đơn cấp ID ba bước, lưu MongoDB và chờ IT duyệt. Luồng này không bắt buộc cho giám khảo dùng Support/Verify. Quyền xử lý ID cần OTP và role riêng, không lấy quyền từ reviewer demo. Xem [hướng dẫn ID](../README.md#đăng-nhập-cấp-id-và-phạm-vi-quyền) và [kết quả bản tích hợp mới](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/IDENTITY-UX-DELIVERY.md).
 
 ## URL / QR
 
