@@ -65,7 +65,7 @@ Các sơ đồ dưới đây được dựng từ Mermaid thành SVG để giữ
 
 [![Workflow tiếp nối: hỏi bổ sung, xác nhận kết quả, chuyển người và cập nhật hồ sơ](docs/diagrams/support-followup.svg)](docs/diagrams/support-followup.svg)
 
-[Nguồn Mermaid](docs/diagrams/support-followup.mmd). Lượt hỏi mới vẫn đi qua kiểm tra policy. Giải thích một bước và phản hồi cảm xúc không tự xác nhận đã giải quyết. Nhân viên có thể hỏi bổ sung, duyệt, từ chối, dừng hoặc ghi nhận hoàn tất theo trạng thái được phép; mọi quyết định cần lý do và đúng version. Nhánh Security risk không được approve/fulfill trong demo.
+[Nguồn Mermaid](docs/diagrams/support-followup.mmd). Lượt hỏi mới vẫn đi qua kiểm tra policy. Giải thích một bước và phản hồi cảm xúc không tự xác nhận đã giải quyết. Nhân viên có thể hỏi bổ sung, duyệt, từ chối, dừng hoặc ghi nhận hoàn tất theo trạng thái được phép; duyệt yêu cầu không bắt buộc nhập lý do, các quyết định khác vẫn cần lý do và mọi thao tác phải đúng version. Nhánh Security risk không được approve/fulfill trong demo.
 
 ### 3. AI, bằng chứng và quyết định an toàn
 

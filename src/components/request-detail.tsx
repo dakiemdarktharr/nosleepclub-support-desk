@@ -44,6 +44,49 @@ export function RequestDetail({ id }: { id: string }) {
       current = false;
     };
   }, [id]);
+  const canSync =
+    request !== null && !pending &&
+    !["COMPLETED", "STOPPED"].includes(request.status);
+  useEffect(() => {
+    if (!canSync) return;
+    let current = true;
+    let inFlight = false;
+    async function sync() {
+      if (
+        !current || inFlight ||
+        document.visibilityState === "hidden" || !navigator.onLine
+      ) return;
+      inFlight = true;
+      try {
+        const latest = await browserApi<SupportRequest>(
+          `/api/support/requests/${id}`,
+        );
+        if (current) {
+          setRequest((previous) =>
+            previous?.id === latest.id && latest.version > previous.version
+              ? latest
+              : previous,
+          );
+        }
+      } catch {
+        // Retry on the next tick without clearing drafts or an action error.
+      } finally {
+        inFlight = false;
+      }
+    }
+    const timer = window.setInterval(() => void sync(), 3000);
+    const resume = () => void sync();
+    document.addEventListener("visibilitychange", resume);
+    window.addEventListener("focus", resume);
+    window.addEventListener("online", resume);
+    return () => {
+      current = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", resume);
+      window.removeEventListener("focus", resume);
+      window.removeEventListener("online", resume);
+    };
+  }, [id, canSync]);
   async function update(path: string, body: object) {
     if (!request || pending) return;
     setPending(true);

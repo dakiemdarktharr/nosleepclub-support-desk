@@ -134,10 +134,12 @@ export function ReviewDetail({
     return (
       <Button
         variant={variant}
-        disabled={pending || !reasonReady || Boolean(block)}
+        disabled={
+          pending || (action !== "APPROVE" && !reasonReady) || Boolean(block)
+        }
         title={
           block ||
-          (!reasonReady
+          (action !== "APPROVE" && !reasonReady
             ? "Nhập lý do tối thiểu 8 ký tự để thực hiện."
             : labels[action])
         }
@@ -238,7 +240,7 @@ export function ReviewDetail({
               </div>
             )}
             <label className="it-reason">
-              Lý do (bắt buộc cho mọi quyết định của reviewer)
+              Lý do (không bắt buộc khi duyệt yêu cầu)
               <Textarea
                 rows={3}
                 maxLength={1000}
@@ -253,8 +255,8 @@ export function ReviewDetail({
               {pending
                 ? "Đang lưu quyết định…"
                 : reasonReady
-                  ? "Đã đủ độ dài. Lý do sẽ được lưu vào nhật ký."
-                  : "Nhập lý do tối thiểu 8 ký tự để mở thao tác."}
+                  ? "Lý do sẽ được lưu vào nhật ký."
+                  : "Có thể duyệt ngay. Các thao tác khác cần lý do tối thiểu 8 ký tự."}
               <span>{reason.length}/1000</span>
             </p>
             <div data-guide="reviewer-actions">

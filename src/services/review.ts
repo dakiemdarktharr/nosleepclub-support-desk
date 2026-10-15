@@ -39,7 +39,7 @@ const reviewSchema = z
   })
   .strict()
   .superRefine((input, ctx) => {
-    if (input.reason.length < 8)
+    if (input.action !== "APPROVE" && input.reason.length < 8)
       ctx.addIssue({
         code: "custom",
         path: ["reason"],
@@ -55,7 +55,11 @@ const reviewSchema = z
 export async function reviewSupport(id: string, value: unknown, actor: string) {
   const input = reviewSchema.parse(value);
   const redactedReason = redact(input.reason);
-  const reason = redactedReason.text || "Reviewer xác nhận thao tác demo.";
+  const reason =
+    redactedReason.text ||
+    (input.action === "APPROVE"
+      ? "Nhân viên hỗ trợ đã duyệt yêu cầu."
+      : "Reviewer xác nhận thao tác demo.");
   return updateSupportRequest(id, input.version, (request) => {
     if (!canReview(request.status, input.action))
       throw new SupportError(
