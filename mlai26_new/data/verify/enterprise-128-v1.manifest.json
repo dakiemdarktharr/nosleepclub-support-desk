@@ -1,0 +1,12 @@
+{
+  "datasetId": "enterprise-128-v1",
+  "sha256": "4f824e412e7e494d164b26de9fd1a505219911278277a0f6815c508a07b9a304",
+  "count": 128,
+  "expectedActions": {
+    "AUTO_APPROVE": 34,
+    "NEEDS_INFORMATION": 20,
+    "ESCALATE": 74
+  },
+  "labelStatus": "ai-authored-before-first-run-not-independently-reviewed",
+  "freezeRule": "Labels frozen before the first evaluator run; do not relabel to match observed output. New adjudication requires a new dataset version."
+}

@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "evaluate:sentiment": "vitest run tests/sentiment-evaluation.test.ts",
+    "evaluate:enterprise": "vitest run tests/enterprise-128-evaluation.test.ts && node scripts/enterprise-128-summary.mjs",
     "test:e2e": "playwright test",
     "test:persistence": "node --test scripts/mongo-restart.integration.test.mjs"
   },

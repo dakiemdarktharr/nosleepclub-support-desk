@@ -2,6 +2,7 @@ import { hasInstructionAttack } from "./answer-safety";
 import type { CanonicalRequest, SupportInput } from "./contracts";
 import { normalize } from "./text";
 import { isEmployeeIdentityField } from "./employee-identity";
+import { guidanceRules } from "./policy-source";
 
 export const conversationLabels = [
   "GREETING",
@@ -69,6 +70,13 @@ export function conversationMatchesBaseline(
   baseline: CanonicalRequest,
   label: ConversationLabel,
 ) {
+  // A known device/network/account symptom keeps its specific reviewed guide.
+  // Broad words such as "tài liệu", "ứng dụng" or "hướng dẫn" are not a new
+  // conversation intent. External Google recovery retains its dedicated route.
+  if (["GUIDANCE", "SAFE_DIAGNOSTIC"].includes(baseline.requestKind) &&
+      !["GENERAL_HOW_TO", "APPROVED_CATALOG_LOOKUP"].includes(baseline.intentLabel) &&
+      guidanceRules.some(rule => rule.labels.some(intent => intent === baseline.intentLabel)))
+    return label === "GOOGLE_RECOVERY" && baseline.serviceGroup === "ACCOUNT_ACCESS";
   return (
     !["EVERYDAY", "IDENTITY", "CAPABILITIES", "GREETING", "GENERAL_GUIDE"].includes(label) ||
     baseline.intentLabel === "UNKNOWN_SUPPORT_REQUEST" ||

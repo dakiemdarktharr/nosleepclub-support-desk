@@ -13,6 +13,10 @@ import { isEmployeeIdentityField } from "./employee-identity";
 import { guidanceRules, permissionMappings } from "./policy-source";
 import { extractNetworkFacts, isSingleNetworkPort, isSingleNetworkProtocol, networkFactLabels, sameNetworkFact } from "./network-facts";
 
+// Extraction fixes do not change rule definitions, but previously parsed
+// previews must be re-evaluated before confirmation under the new boundary.
+export const INTAKE_REVISION = "support-intake-v2";
+
 // One vocabulary for extracting a labelled fact and keeping it with its request.
 const factLabels: Record<string, string> = {
   resourceScope: "resourceScope|resource scope|database name|database|db|cơ sở dữ liệu|database đích",
@@ -158,8 +162,15 @@ function hasDirectDatabaseOperation(text: string) {
 }
 
 function hasDestructiveDatabaseOperation(text: string) {
-  return asserted(text, /\b(?:drop|delete|truncate|xoa)\s+(?:(?:production|prod|staging|sandbox|development|dev)\s+)?(?:database|db|table|bang|co so du lieu)\b|\bdelete from (?:table|bang)\b/) ||
+  return asserted(text, /\b(?:drop|delete|truncate|xoa)\s+(?:the\s+)?(?:(?:production|prod|staging|sandbox|development|dev)\s+)?(?:database|db|table|bang|co so du lieu)\b|\bdelete from (?:table|bang)\b/) ||
     (hasDirectDatabaseOperation(text) && asserted(text, /\bdelete from\b/));
+}
+
+// An unresolved choice names a destructive option without requesting it. Keep
+// other clauses intact, including any separate, affirmative factory reset.
+function resetChoiceContext(text: string) {
+  return text.replace(/\b(?:chua (?:quyet dinh|chon)|have not decided|haven't decided|not decided whether)\s+(?:restart|reboot|khoi dong lai)\s+(?:hay|or)\s+(?:factory reset|khoi phuc cai dat goc)\b/g,
+    "reset type undecided");
 }
 
 function refersToExistingResource(text: string, resources: string) {
@@ -222,7 +233,7 @@ function databaseProvisioningRequest(text: string) {
 
 function computeProvisioningRequest(text: string) {
   const computeResourcePattern =
-    String.raw`vm|server|host|node|worker|instance|etl (?:vm|server|box)|data node|spark driver(?: node)?|airflow worker|kafka connect(?: (?:host|worker|server|node))?|flink etl(?: server)?|trino coordinator|temporal worker|dbt runner`;
+    String.raw`vm|may chu|server|host|node|worker|instance|etl (?:vm|server|box)|data node|spark driver(?: node)?|airflow worker|kafka connect(?: (?:host|worker|server|node))?|flink etl(?: server)?|trino coordinator|temporal worker|dbt runner`;
   const computeResource = new RegExp(String.raw`\b(?:${computeResourcePattern})\b`);
   const createsResource =
     new RegExp(String.raw`\b(?:provision|create|build|set up|setup|stand up|tao|dung|cap)\s+(?:(?:a|an|one|new|another|separate|dedicated|mot|moi|rieng|them|\d+)\s+){0,3}(?:${computeResourcePattern})\b`);
@@ -407,7 +418,18 @@ function isDatabaseAuthorizationContext(previous: string, fragment: string) {
 }
 
 function isUncertaintyContext(fragment: string) {
-  return /^(?:(?:minh|toi|i|we) )?(?:khong chac (?:co )?lien quan(?: khong)?|(?:am |are )?not sure (?:if|whether) (?:this|it) is related)[.!?]*$/.test(normalize(fragment));
+  const text = normalize(fragment);
+  return /^(?:(?:minh|toi|i|we) )?(?:khong chac (?:co )?lien quan(?: khong)?|(?:am |are )?not sure (?:if|whether) (?:this|it) is related|reset type undecided)[.!?]*$/.test(resetChoiceContext(text)) ||
+    /^(?:the )?(?:schema|scope|duration|cpu|ram|disk|lifetime)(?:\s*(?:,|and)\s*(?:schema|scope|duration|cpu|ram|disk|lifetime))*\s+(?:are|is|still)\s+(?:not specified|unknown|need sizing)[.!?]*$/.test(text) ||
+    /^(?:(?:toi|minh|i|we) )?(?:chua (?:gui|cung cap|xac dinh)|have not (?:provided|sent|specified)) (?:query|execution plan|schema|space\/page|space|page|project|scope|duration|thoi han|transcript|diff)(?:\s+(?:hoac|va|or|and)\s+(?:query|execution plan|schema|space\/page|space|page|project|scope|duration|thoi han|transcript|diff))*[.!?]*$/.test(text);
+}
+
+function isExistingVpnLoginContext(previous: string, fragment: string) {
+  const prior = normalize(previous);
+  if (!/^(?:(?:toi|minh|i|we) )?(?:da co tai khoan vpn|already have (?:a |an )?vpn account)[.!]*$/.test(prior)) return false;
+  const [symptom, ...help] = fragment.split(",");
+  return /^(?:dang nhap (?:bi loi|that bai|khong duoc)|login (?:fails?|failed)|sign in (?:fails?|failed))[.!?]*$/.test(normalize(symptom)) &&
+    help.every(isGuidanceFollowup);
 }
 
 const approvalContextOperations = /\b(?:please|need|want|grant|give|open|change|modify|configure|expose|allow|enable|close|disable|drop|delete|export|dump|wipe|mount|bypass|send|share|deploy|install|create|provision|reset|restart|run|connect|execute|add|turn|use|transfer|pay|migrate|can|dung|cai|chay|chuyen tien|gui)\b/;
@@ -471,14 +493,14 @@ function isApprovalReferenceContext(fragment: string) {
 }
 
 export function detectedRisks(raw: string): RiskSignal[] {
-  const normalized = normalize(raw);
+  const normalized = resetChoiceContext(normalize(raw));
   const text = documentationOnlyDatabaseReference(normalized)
     ? normalized.replace(/\b(?:production|prod)\s+(?:database|db)\b/g, "documentation reference")
     : normalized;
   const risks = new Set<RiskSignal>();
   if (
     asserted(text,
-      /chuyen.{0,20}admin|pass.{0,15}admin|human (?:agent|reviewer)|khong hieu.{0,30}(?:ho tro|giup)/,
+      /chuyen.{0,20}admin|pass.{0,15}admin|human (?:(?:support|helpdesk) )?(?:agent|reviewer)|khong hieu.{0,30}(?:ho tro|giup)/,
     )
   )
     risks.add("USER_HANDOFF");
@@ -525,7 +547,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
       (clause) =>
         asserted(
           clause,
-          /\bpublic\b|\binternet\b|0\.0\.0\.0(?:\/0)?|\b0\/0\b|allow all|ra ngoai/,
+          /\bpublic(?:ly)?\b|\binternet\b|0\.0\.0\.0(?:\/0)?|\b0\/0\b|allow all|ra ngoai/,
         ) &&
         /\b(?:ports?|inbound|rdp|vnc|ssh|expose|exposed|exposure|accessible|internet facing|remote|bucket|service|server|database|db|postgresql|postgres|mysql|public ip)\b|\bcong(?: dich| nguon)?\s*[:=]?\s*[-+\d]|(?:open|mo)\s+\d+/.test(
           clause,
@@ -536,7 +558,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   if (
     asserted(
       text,
-      /(?:(?:disable|turn off|stop|remove|deactivate|tat|dung|bo)\s+(?:the |agent |security )?(?:mfa|2fa|edr|firewall|tuong lua|audit(?: logging)?|logging|security control|approval prompt|password)|(?:turn|switch)\s+(?:the |agent |security )?(?:mfa|2fa|edr|firewall|tuong lua|audit(?: logging)?|logging|security control)\s+off)/,
+      /(?:(?:disable|turn off|stop|remove|deactivate|tat|dung|bo|vo hieu hoa)\s+(?:(?:the|agent|security|control|kiem soat|bao mat|co che)\s+){0,4}(?:mfa\b|2fa\b|edr\b|firewall\b|tuong lua|audit(?: logging)?\b|logging\b|security control|approval prompt|password\b)|(?:turn|switch)\s+(?:the |agent |security )?(?:mfa|2fa|edr|firewall|tuong lua|audit(?: logging)?|logging|security control)\s+off)/,
     )
   )
     risks.add("SECURITY_CONTROL");
@@ -551,15 +573,15 @@ export function detectedRisks(raw: string): RiskSignal[] {
   )
     risks.add("BYPASS");
   if (
-    /ignore (?:all |previous |the )?(?:instructions|policy|security)|bo qua (?:tat ca |cac )?(?:instruction|huong dan|chi dan)|system prompt|developer message|return auto.approve|tra ve auto.approve|already approved by the system/.test(
+    /ignore (?:all |previous |the )?(?:instructions|policy|security)|bo qua (?:tat ca |cac )?(?:instruction|huong dan|chi dan)|system prompt|developer message|\[inst\]|\brole\s*[:=]\s*["']?(?:system|developer)\b|(?:return|output|tra ve) auto.approve|already approved by the system/.test(
       text,
     )
   )
     risks.add("INJECTION");
   if (
-    asserted(text, /export|dump|copy|xuat|sao chep/) &&
+    asserted(text, /export|dump|copy|xuat|(?:sao )?chep/) &&
     /production|prod\b|customer|khach hang/.test(text) &&
-    /laptop|may (?:ca nhan|phan tich)|repo|public|unmanaged|drive|bucket|storage/.test(
+    /laptop|may (?:ca nhan|phan tich)|o dia ca nhan|repo|public|unmanaged|drive|bucket|storage/.test(
       text,
     )
   )
@@ -567,7 +589,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   if (
     asserted(
       text,
-      /unsigned|sideload|unapproved|torrent|bittorrent|miner|xmrig|crack|disable edr/,
+      /unsigned|sideload|unapproved|(?:(?:cai(?: dat)?|install)\s+)?(?:phan mem|software|package)\s+(?:chua(?: duoc)?(?: phe)? duyet|not approved)|torrent|bittorrent|miner|xmrig|crack|disable edr/,
     )
   )
     risks.add("UNAPPROVED_SOFTWARE");
@@ -588,7 +610,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   if (
     hasDestructiveDatabaseOperation(text) || asserted(
       text,
-      /\bwipe\b|xoa (?:het|toan bo)|factory reset|khoi phuc cai dat goc|format disk|drop table|drop bang|data delete|delete resource/,
+      /\bwipe\b|xoa (?:het|toan bo)|\b(?:xoa|delete)\s+(?:the\s+)?(?:vm|server|cloud resource)\b|factory reset|khoi phuc cai dat goc|format disk|drop table|drop bang|data delete|delete resource/,
     )
   )
     risks.add("DESTRUCTIVE");
@@ -602,7 +624,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
   if (
     asserted(
       text,
-      /firewall change|dns change|proxy change|alert threshold|quota increase|tang quota|sua manifest|manifest change|config change|doi cau hinh/,
+      /firewall change|dns change|proxy change|alert threshold|quota increase|tang (?:gpu )?quota|sua manifest|manifest change|config change|doi cau hinh|(?:thay doi|sua|cap nhat|change|modify|update|configure)\s+(?:the\s+)?(?:dns|firewall|proxy)\b/,
     )
   )
     risks.add("CONTROL_CHANGE");
@@ -653,8 +675,14 @@ function isBoundedFallbackContext(fragment: string) {
   const helpOnly = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) (?:tu dau|gi truoc)|ban huong dan(?: giup toi)? duoc khong|(?:huong dan|chi) (?:toi|minh) (?:kiem tra|xu ly)(?: an toan)?|what should i check first|where should i start|please guide me through safe checks|(?:(?:hay|vui long) )?giai thich(?: ngan gon| ro hon)?|please explain(?: briefly)?)[?.!]*$/;
   const unchangedControl = /^(?:(?:toi|minh|i|we) )?(?:khong|khong duoc|do not|don't|never) (?:tat|bo qua|thay doi|doi|disable|bypass|turn off|change|modify) (?:mfa|2fa|edr|firewall|tuong lua|dns|proxy|cau hinh|audit|logging)[.!]*$/;
   const noNewAccess = /^(?:(?:toi|minh|i|we) )?(?:khong (?:can|xin|yeu cau)|do not (?:need|request)|no) (?:quyen(?: truy cap)?|access|permissions?)(?: (?:github|gitlab|jira|confluence))?[.!]*$/;
-  return helpOnly.test(text) || unchangedControl.test(text) || noNewAccess.test(text) ||
+  return helpOnly.test(text) || isGuidanceFollowup(fragment) || unchangedControl.test(text) || noNewAccess.test(text) ||
     isNegatedDeviceChangeRefusal(fragment);
+}
+
+// A complete request for checks adds no resource, authority or side effect.
+// Anchoring is essential: appended access/execute requests remain separate.
+function isGuidanceFollowup(fragment: string) {
+  return /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) (?:tu dau|gi truoc)|ban huong dan(?: giup toi)? duoc khong|(?:huong dan|chi) (?:toi|minh) (?:kiem tra|xu ly)(?: an toan)?|(?:(?:hay|vui long) )?giai thich(?: chi tiet cach kiem tra| tung buoc)|what should i check(?: first)?|where should i start|what safe checks can i do|what is the safe recovery process|(?:please )?(?:guide me through safe checks|help me (?:troubleshoot(?: it)?(?: safely)?|diagnose)|help troubleshoot|i need troubleshooting steps)|how can i diagnose the connection|(?:(?:hay|vui long) )?(?:huong dan|chi buoc) (?:kiem tra|xu ly)(?: an toan| ban dau| co ban)?|(?:toi|minh) muon huong dan kiem tra an toan)[?.!]*$/.test(normalize(fragment));
 }
 
 /** An outage may use a vetted guide only when server-visible facts establish
@@ -702,11 +730,12 @@ export function safeDeterministicGuidance(input: SupportInput, baseline: Canonic
 }
 
 function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
+  text = resetChoiceContext(text);
   // A technical noun in a definition question is not a request to change it.
   // Full-input risk and independent-subrequest checks still run afterwards.
   if (isConceptExplanation(text)) return ["OTHER", "GENERAL_HOW_TO", "GUIDANCE"];
   if (
-    /chuyen.{0,20}admin|pass.{0,15}admin|human (?:agent|reviewer)|khong hieu/.test(
+    /chuyen.{0,20}admin|pass.{0,15}admin|human (?:(?:support|helpdesk) )?(?:agent|reviewer)|khong hieu/.test(
       text,
     )
   )
@@ -886,6 +915,20 @@ function classify(text: string): [ServiceGroup, string, RequestKind] {
       pattern:
         /(?:postgresql|postgres|mysql|database).{0,30}(?:connection failed|connection refused|khong ket noi|loi ket noi)|(?:loi ket noi|cannot connect to).{0,15}(?:postgresql|postgres|mysql|database)/,
     },
+    { score: 3, group: "DEVICE_BOOT", label: "DEVICE_SLOW",
+      pattern: /\b(?:laptop|computer|may tinh)\b.{0,40}\b(?:chay cham|slow|sluggish)\b/ },
+    { score: 3, group: "DEVICE_BOOT", label: "DEVICE_CRASH",
+      pattern: /\b(?:laptop|computer|may tinh)\b.{0,40}\bcrash(?:es|ing)?\b/ },
+    { score: 3, group: "DEVICE_BOOT", label: "DEVICE_BATTERY",
+      pattern: /\b(?:pin|battery)\b.{0,40}\b(?:tut nhanh|drains?|het nhanh)\b/ },
+    { score: 3, group: "DEVICE_BOOT", label: "DEVICE_CAMERA",
+      pattern: /\bcamera\b.{0,40}\b(?:khong len hinh|khong hoat dong|not work|no image)\b/ },
+    { score: 3, group: "SOFTWARE_LICENSE", label: "SOFTWARE_CRASH",
+      pattern: /\b(?:software|application|phan mem|ung dung)\b.{0,50}\bcrash(?:es|ing)?\b/ },
+    { score: 3, group: "SOFTWARE_LICENSE", label: "SOFTWARE_PERFORMANCE",
+      pattern: /\b(?:software|application|phan mem|ung dung)\b.{0,50}\b(?:chay cham|slow|sluggish)\b/ },
+    { score: 3, group: "SOFTWARE_LICENSE", label: "LICENSE_ACTIVATION",
+      pattern: /\b(?:phan mem|software|license)\b.{0,50}\b(?:loi kich hoat|activation (?:error|fail))\b/ },
   ];
   const matches = candidates.filter((candidate) =>
     candidate.pattern.test(relevant),
@@ -1324,7 +1367,7 @@ export function extractIntake(
           .some((field) => normalize(field) === normalize(label));
       // These complete, bounded questions add no operation or scope. Do not
       // discard arbitrary unknown fragments, or extra actions hidden in prose.
-      const guidanceFollowup = /^(?:(?:toi|minh) (?:can|nen) (?:kiem tra|bat dau) (?:tu dau|gi truoc)|ban huong dan(?: giup toi)? duoc khong|(?:huong dan|chi) (?:toi|minh) (?:kiem tra|xu ly)(?: an toan)?|(?:(?:hay|vui long) )?giai thich(?: chi tiet cach kiem tra| tung buoc)|(?:what should i check first|where should i start|please guide me through safe checks))[?.!]*$/.test(normalize(fragment));
+      const guidanceFollowup = isGuidanceFollowup(fragment);
       // Approval claims add provenance, not a task or verified authority.
       const previous = requests.at(-1);
       const approvalContext = isApprovalContext(fragment, previous);
@@ -1339,6 +1382,7 @@ export function extractIntake(
       const databaseAuthorization = previous && isDatabaseAuthorizationContext(previous, fragment);
       const uncertaintyContext = isUncertaintyContext(fragment);
       const repeatedSymptom = previous && isRepeatedSafeSymptom(previous, fragment);
+      const existingVpnLogin = previous && isExistingVpnLoginContext(previous, fragment);
       if (
         requests.length &&
         (factLabel ||
@@ -1353,6 +1397,7 @@ export function extractIntake(
           databaseAuthorization ||
           isDurationOnlyContext(fragment) ||
           repeatedSymptom ||
+          existingVpnLogin ||
           uncertaintyContext)
       )
         requests[requests.length - 1] += `; ${fragment}`;

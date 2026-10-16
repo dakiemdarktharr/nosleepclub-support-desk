@@ -25,7 +25,7 @@ import { supportInputSchema } from "@/domain/input";
 import { POLICY_VERSION, guidanceRules } from "@/domain/policy-source";
 import { proposeAccessDuration } from "@/domain/access-defaults";
 import { evaluatePolicy } from "@/domain/policy";
-import { extractIntake, safeInput, safeDeterministicGuidance } from "@/domain/text";
+import { extractIntake, safeInput, safeDeterministicGuidance, INTAKE_REVISION } from "@/domain/text";
 import {
   getSupportRequest,
   getSupportPreview,
@@ -180,6 +180,8 @@ export async function analyze(
     baseline.subrequests.length === 0;
   const workEvidence = mockRouting && input.mode === "freeform" &&
     !singleResourceProvisioning &&
+    !(baseline.requestKind === "SAFE_DIAGNOSTIC" &&
+      guidanceRules.some(rule => rule.labels.some(label => label === baseline.intentLabel))) &&
     !(baseline.requestKind === "ACCESS_REQUEST" && baseline.entities.permission) &&
     !Object.keys(analysisInput.fields).length &&
     !baseline.riskSignals.length &&
@@ -248,6 +250,7 @@ function fingerprintOf(input: SupportInput) {
     .update(
       JSON.stringify({
         ...input,
+        intakeRevision: INTAKE_REVISION,
         fields: Object.fromEntries(Object.entries(input.fields).sort()),
         confirmed: undefined,
         idempotencyKey: undefined,
