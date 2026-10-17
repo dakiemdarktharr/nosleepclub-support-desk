@@ -4,6 +4,7 @@ import Link from "next/link";
 import { IncidentUpdates } from "./incident-panel";
 import { ReviewDrafts } from "./review-drafts";
 import { ReviewSummary } from "./review-summary";
+import { ServiceLevelPanel } from "./service-level-panel";
 import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { browserApi } from "@/lib/browser-api";
@@ -230,6 +231,7 @@ export function ReviewDetail({
             {!request.originalQuestion && !request.input.rawText && <dl className="it-request-fields">{Object.entries(request.input.fields).filter(([key]) => !["employeeId", "department"].includes(key)).map(([key, value]) => <div key={key}><dt>{labelForField(key)}</dt><dd>{optionName(value)}</dd></div>)}</dl>}
           </section>
           <ReviewSummary key={request.id} id={request.id} version={request.version} />
+          <ServiceLevelPanel id={request.id} version={request.version} />
           {!!request.sharedReplies?.length && <section className="it-surface it-intake" aria-label="Phản hồi chung">
             <h2>Phản hồi chung</h2>
             <ol className="reviewer-messages">{request.sharedReplies.map(reply => <li key={reply.id}>

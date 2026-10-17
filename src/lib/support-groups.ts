@@ -103,6 +103,22 @@ export async function sharedRepliesForRequest(id: string): Promise<SharedReply[]
   return rows.map(row => ({ id: row._id, timestamp: row.timestamp, text: row.text }))
     .sort((a, b) => a.timestamp.localeCompare(b.timestamp) || a.id.localeCompare(b.id));
 }
+/** Metadata only: shared delivery remains its own immutable audit source. */
+export async function groupResponseEvidence(ids: string[]) {
+  const wanted = new Set(ids);
+  const result = new Map<string, Array<{ id: string; timestamp: string }>>();
+  if (!ids.length) return result;
+  const collection = await replyCollection();
+  const rows = collection ? await collection.find({ "recipients.id": { $in: ids } }, {
+    projection: { _id: 1, timestamp: 1, recipients: 1 },
+  }).toArray() : [...memory().values()].filter(row => row.recipients.some(recipient => wanted.has(recipient.id)));
+  for (const row of rows) for (const recipient of row.recipients) {
+    if (!wanted.has(recipient.id)) continue;
+    const evidence = result.get(recipient.id) ?? [];
+    evidence.push({ id: row._id, timestamp: row.timestamp }); result.set(recipient.id, evidence);
+  }
+  return result;
+}
 export async function getRequestGroup(id: string): Promise<RequestGroupDetail> {
   groupIdSchema.parse(id);
   const group = groupsFor(await candidates()).get(id);

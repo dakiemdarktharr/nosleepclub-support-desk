@@ -1,4 +1,5 @@
 import { joinIncident } from "@/lib/support-incidents";
+import { newServiceLevelState } from "@/domain/service-level";
 import { sharedFaqAnswer } from "@/lib/shared-faq-cache";
 import { publicFaqTopic } from "@/domain/shared-support";
 import { guidanceTemplate } from "@/domain/guidance";
@@ -419,6 +420,7 @@ export async function submitSupport(
   }
   const now = new Date().toISOString();
   const request: SupportRequest = {
+    serviceLevel: newServiceLevelState(now),
     id: input.idempotencyKey,
     version: 0,
     fingerprint,

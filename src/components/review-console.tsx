@@ -236,6 +236,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
             <header className="it-page-heading">
               <div>
                 <h1>Tiếp nhận hỗ trợ</h1>
+                <Link href="/review/service-level">Phép đo thời gian phục vụ</Link>
               </div>
               <Button
                 aria-label="Tải lại danh sách"

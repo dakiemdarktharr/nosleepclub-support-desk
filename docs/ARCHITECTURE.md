@@ -31,6 +31,17 @@ Model có deadline/retry giới hạn; không retry vô hạn hoặc bỏ eviden
 
 ## Lưu và hiển thị theo vai trò
 
+Đo thời gian phục vụ dùng state/cycles trong cùng document ticket, không suy ra lịch sử từ status hiện tại.
+`updateSupportRequest` áp các business event mới vào clock trước CAS; version conflict rollback cả status/audit/clock.
+Mỗi clock pin policy/definition/target/calendar/version/scope; chuyển team và reopen có event, không xóa chu kỳ cũ.
+Hồ sơ mới bật SHADOW; hồ sơ cũ không tự nhận SLA state. Chỉ các event server hợp lệ mới bắt đầu/kết thúc phép đo.
+Tin nhắn nhóm vẫn dùng document giao hàng bất biến; projection đọc metadata theo recipient để kết thúc human response,
+không đổi version ticket. Incident update không kết thúc support completion. Báo cáo và chi tiết dùng cùng phép chiếu.
+Clock có thể tách elapsed thực và business elapsed theo calendar/zone/holidays đã duyệt; thiếu lịch trả unknown.
+Các cảnh báo deadline được tính từ snapshot và đầy đủ nguồn khi đọc, có ID ổn định và chỉ hiện trong app reviewer.
+Không sửa policy/priority/quyền hoặc tự đóng ticket; không có scheduler/email/push.
+[Contract, bảng sự kiện, mẫu số và giới hạn](SLA-DESIGN.md).
+
 [![Theo dõi, bàn giao và cập nhật hồ sơ theo version](diagrams/support-followup.svg)](diagrams/support-followup.svg)
 
 [Nguồn Mermaid](diagrams/support-followup.mmd).
