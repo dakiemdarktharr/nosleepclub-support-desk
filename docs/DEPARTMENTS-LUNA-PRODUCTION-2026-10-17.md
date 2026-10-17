@@ -1,5 +1,7 @@
 # Phòng ban demo, tin nhắn và tóm tắt Luna — 17/10/2026
 
+Đây là báo cáo lịch sử tại 6edafe2. Lượt sửa và kiểm chứng ba tin nhắn Luna đầy đủ sau đó nằm trong [báo cáo dbd3578](LUNA-FULL-REPLIES-2026-10-17.md); các fallback dưới đây được giữ nguyên làm bằng chứng trước sửa.
+
 ## Phạm vi và phiên bản
 
 AI-assisted implementation/verification bằng Codex, dữ liệu hoàn toàn giả lập; không phải phản hồi của người dùng thật.

@@ -61,13 +61,15 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 
 ## Kiểm chứng Production ngày 17/10/2026
 
-Đã đồng bộ 40/40 phòng ban và giữ nguyên quyền. Trên commit 6edafe2: tóm tắt Luna thật 3/3 ca, cache sau reload 3/3, tin nhắn reviewer đến đúng hồ sơ người gửi 3/3. Gợi ý trả lời ở lượt này: 1 bộ từ Luna, 2 bộ dùng mẫu dự phòng; không coi fallback là model thành công. Đã dọn chính xác các ID thử. [Báo cáo, kiểm thử và giới hạn](docs/DEPARTMENTS-LUNA-PRODUCTION-2026-10-17.md).
+Đã đồng bộ 40/40 phòng ban và giữ nguyên quyền. Lượt kiểm tra mới trên **dbd3578**: **Luna trả đủ 9/9 gợi ý trong 3 bộ** (máy in, VPN, Security), một inference/bộ, không fallback; tin nhắn được chọn đến đúng người gửi **3/3**, còn nguyên sau reload và khớp audit. Tóm tắt Luna/cache cũng đạt 3/3. Đã dọn chính xác ba hồ sơ thử cùng cache. [Báo cáo API thật, thời gian và kiểm thử](docs/LUNA-FULL-REPLIES-2026-10-17.md) · [Lịch sử migration và lượt kiểm tra trước](docs/DEPARTMENTS-LUNA-PRODUCTION-2026-10-17.md).
 
 Ảnh dưới chụp **Production với dữ liệu giả lập**, bản tóm tắt do OpenAI/gpt-6-luna trả về; không phải feedback người dùng thật.
 
 [![Chi tiết reviewer chỉ hiện nguyên văn và tóm tắt bằng Luna](docs/images/review-summary-desktop.png)](docs/images/review-summary-desktop.png)
 
 [Ảnh giao diện trên điện thoại](docs/images/review-summary-mobile.png).
+
+[Xem ba gợi ý Luna trên màn hình reviewer](docs/images/luna-full-replies-desktop.png) · [Tin nhắn người gửi nhận trên mobile](docs/images/luna-reply-sender-mobile.png).
 
 ## ID demo
 
