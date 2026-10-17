@@ -25,10 +25,10 @@ export function StaffWorkspace({
 }) {
   return (
     <div className="it-workspace">
-      <aside className="it-rail" aria-label="Không gian IT">
+      <aside className="it-rail" aria-label="Không gian hỗ trợ">
         <div className="it-rail-title">
           <Inbox size={22} />
-          <strong>Không gian IT</strong>
+          <strong>Support Desk</strong>
         </div>
         <p>Tiếp nhận và xử lý hỗ trợ</p>
         <nav aria-label="Điều hướng hỗ trợ">

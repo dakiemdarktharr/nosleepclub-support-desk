@@ -256,7 +256,7 @@ test("Verify preserves original labels, reports unverified access and accepts ne
     "5/5 · Pass: 5 · Fail: 0",
   );
   await expect(page.getByRole("table")).toBeVisible();
-  await expect(page.getByLabel("Bộ kiểm thử").locator("option")).toHaveCount(4);
+  await expect(page.getByLabel("Bộ kiểm thử").locator("option")).toHaveCount(5);
   await expect(page.getByLabel("Bộ kiểm thử").locator("option[value='test-cache-system']")).toHaveText("test cache system");
   await page.getByLabel("Bộ kiểm thử").selectOption("submission-4");
   await page

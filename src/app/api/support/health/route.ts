@@ -23,6 +23,8 @@ export function GET() {
         process.env.VERCEL_GIT_COMMIT_SHA ||
         "local",
       simulated: true,
+      productionReady: false,
+      accessAssurance: "public-demo",
     };
   });
 }

@@ -24,6 +24,8 @@ import {
 } from "./policy-source";
 import { normalize, normalizeFact, teamFor } from "./text";
 import { jiraRoleProfile } from "./access-defaults";
+import { companyDecision, companyMissingFacts } from "./company-policy";
+import { withDecisionDivision, divisionForGroup } from "./support-divisions";
 
 // Verified approval is supplied by a server-only verifier, never by input fields or model output.
 export type Approval = {
@@ -167,6 +169,8 @@ function requiredFactRuleFor(request: CanonicalRequest) {
 }
 
 export function missingFacts(request: CanonicalRequest): string[] {
+  const companyMissing = companyMissingFacts(request);
+  if (companyMissing) return companyMissing;
   const { entities: e, serviceGroup, requestKind } = request;
   if (request.intentLabel === "DEVICE_RESET_GUIDANCE") return ["resetType"];
   const guide = guidanceRules.find((rule) =>
@@ -854,6 +858,9 @@ function evaluateSinglePolicy(
     subrequestOutcomes: [],
   };
 
+  const company = companyDecision(request, base);
+  if (company?.ruleIds.some(id => id.endsWith("-URGENT")) &&
+      !matched.some(rule => rule.bucket === "SECURITY_RISK" || rule.id.startsWith("FAIL"))) return company;
   if (matched.length) {
     const bucket = matched.reduce(
       (current, rule) =>
@@ -952,6 +959,7 @@ function evaluateSinglePolicy(
     };
   }
 
+  if (company) return company;
   // Uncertain meaning is a request for clarification, not proof of conflicting
   // authority. Concrete risk/conflict rules above still take precedence; known
   // missing fields below retain their specific questions (for example resetType).
@@ -1072,7 +1080,7 @@ function evaluateSinglePolicy(
       ],
       userReason: "Chưa ánh xạ được request vào service/owner trong policy.",
       adminReason:
-        "AUTH-005: classifier/reviewer phải xác định owner; không tự chọn IT Helpdesk.",
+        "AUTH-005: classifier/reviewer phải xác định owner; không tự phê duyệt khi chưa rõ owner.",
       assignedTeam: unresolved.length ? "Classifier/reviewer" : "Policy owner / Classifier/reviewer",
       nextStep:
         "Classifier/reviewer xác nhận service, owner và scope trước khi xử lý.",
@@ -1436,7 +1444,7 @@ export function evaluatePolicy(
   evidence: PolicyEvidence | PolicyEvidenceResolver = {},
 ): Decision {
   const synchronizeQuestions = (decision: Decision): Decision => ({
-    ...decision,
+    ...withDecisionDivision(request, decision),
     targetedQuestions: decision.reviewerQuestions ?? decision.questions,
   });
   const parent = synchronizeQuestions(
@@ -1471,7 +1479,8 @@ export function evaluatePolicy(
         ["SECURITY_RISK", "BEYOND_AUTHORITY"].includes(decision.bucket),
       )
       .sort((left, right) => bucketPriority[right.bucket] - bucketPriority[left.bucket])[0];
-    if (highestPriorityDecision)
+    const divisions = new Set([request.serviceGroup, ...request.subrequests.map(part => part.serviceGroup)].map(divisionForGroup));
+    if (highestPriorityDecision && (highestPriorityDecision.bucket === "SECURITY_RISK" || divisions.size === 1))
       return synchronizeQuestions(highestPriorityDecision);
     return synchronizeQuestions({
       ...parent,

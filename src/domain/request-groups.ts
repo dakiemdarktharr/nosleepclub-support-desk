@@ -2,6 +2,7 @@ import type { AuditEvent, CanonicalRequest, SupportRequest, SupportSummary } fro
 import { faqIntents, faqTopic } from "./faq-intent";
 import { incidentLabels, incidentTopic } from "./shared-support";
 import { canReview } from "./transitions";
+import { requestDivision } from "./support-divisions";
 
 export type GroupCandidate = Pick<SupportRequest,
   "id" | "version" | "status" | "input" | "originalQuestion" | "createdAt" | "updatedAt" | "decision" | "incidentId"
@@ -41,7 +42,7 @@ export function requestGroup(row: GroupCandidate): { key: string; topic: string 
   } else return null;
   return {
     key: JSON.stringify(["reply-group-v1", scope, row.status, decision.policyVersion,
-      decision.uncertaintyClass, decision.assignedTeam, input.verifyRunId ?? "support"]),
+      decision.uncertaintyClass, decision.assignedTeam, input.verifyRunId ?? "support", requestDivision(row)]),
     topic,
   };
 }

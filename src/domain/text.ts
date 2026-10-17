@@ -2,6 +2,7 @@ import { normalize } from "./text-normalization";
 export { normalize } from "./text-normalization";
 import { faqTopic, faqIntents } from "./faq-intent";
 import { guidanceCacheContext } from "./guidance-cache-context";
+import { classifyCompanySupport, isCompanyService } from "./company-support";
 import { allFields, catalog, validIntent } from "./catalog";
 import type {
   CanonicalRequest,
@@ -19,10 +20,14 @@ import { extractNetworkFacts, isSingleNetworkPort, isSingleNetworkProtocol, netw
 
 // Extraction fixes do not change rule definitions, but previously parsed
 // previews must be re-evaluated before confirmation under the new boundary.
-export const INTAKE_REVISION = "support-intake-v3-public-guidance-context";
+export const INTAKE_REVISION = "support-intake-v3-company-divisions";
 
 // One vocabulary for extracting a labelled fact and keeping it with its request.
 const factLabels: Record<string, string> = {
+  timeWindow: "timeWindow|kỳ|ky|khoảng thời gian|khoang thoi gian",
+  location: "location|vị trí|vi tri|địa điểm|dia diem",
+  neededBy: "neededBy|cần trước|can truoc",
+  requestReference: "requestReference|mã hồ sơ|ma ho so|mã chứng từ|ma chung tu",
   resourceScope: "resourceScope|resource scope|database name|database|db|cơ sở dữ liệu|database đích",
   targetSystem: "targetSystem|target system|ứng dụng|hệ thống",
   namespace: "namespace", workload: "workload|pod|deployment", cluster: "cluster|cụm",
@@ -508,7 +513,7 @@ export function detectedRisks(raw: string): RiskSignal[] {
     /\bcredentials?\s*(?:(?:[:=]\s*)|(?:\b(?:is|are|was|were)\s+))(?!stored\b|kept\b|saved\b|managed\b|redacted\b|masked\b)[a-z0-9][a-z0-9+/=_-]{7,}\b/,
   );
   if (
-    /\[redacted/.test(text) ||
+    /\[redacted(?: (?:private key|token|verification code))?\]/.test(text) ||
     asserted(
       text,
       /private key|kubeconfig|vault token|api key|secret|bearer/,
@@ -853,6 +858,9 @@ function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
 // Specific symptom/subject pairs compete by specificity before broad catalog hints.
 // Mentions of an unaffected system are not requests to change that system.
 function classify(text: string): [ServiceGroup, string, RequestKind] {
+  const company = classifyCompanySupport(text);
+  if (company && (company.urgent || !databaseProvisioningRequest(text) && !computeProvisioningRequest(text)))
+    return [company.serviceGroup, company.intentLabel, company.requestKind];
   const topic = faqTopic(text);
   if (topic) return [topic.startsWith("printer:") ? "DEVICE_BOOT" : "NETWORK_VPN", faqIntents[topic], "SAFE_DIAGNOSTIC"];
   const context = guidanceCacheContext(text);
@@ -1305,7 +1313,7 @@ export function extractIntake(
     /^(wipe|delete|replace|factory reset)$/.test(requestedAction)
   )
     risks.add("DESTRUCTIVE");
-  if (/ADMIN|ROOT/.test(intentLabel)) risks.add("PRIVILEGED");
+  if (!isCompanyService(serviceGroup) && /ADMIN|ROOT/.test(intentLabel)) risks.add("PRIVILEGED");
   if (/SECRET|CREDENTIAL/.test(intentLabel)) risks.add("SECRET");
   if (/PUBLIC_EXPOSURE|PUBLIC_IP|REMOTE_ACCESS/.test(intentLabel))
     risks.add("PUBLIC_EXPOSURE");
@@ -1331,7 +1339,11 @@ export function extractIntake(
       environment === "production")
   )
     risks.add("DATA_EXPORT");
-  const parts = input.rawText
+  const conjunctionParts = input.rawText.split(/\s+(?:và|va|and)\s+/i);
+  const distinctIntents = new Set(conjunctionParts.map(part => classify(normalize(part))[1]).filter(intent => intent !== "UNKNOWN_SUPPORT_REQUEST"));
+  const splitCompanyAsk = conjunctionParts.some(part => classifyCompanySupport(part) &&
+    /^(?:(?:toi|minh|em|i|we)\s+)?(?:can|need|xin|nho|please|yeu cau|de nghi|hay|vui long|muon)\b/.test(normalize(part))) && distinctIntents.size > 1;
+  const parts = (splitCompanyAsk ? conjunctionParts.join("; ") : input.rawText)
     // "but still" describes the same symptom; risks are already evaluated on the full original text.
     .replace(/\b(?:nhưng|nhung|but)\s+(?:vẫn|van)\b/gi, "vẫn")
     // In this conditional, "then" connects the same provisioning request.
@@ -1363,6 +1375,7 @@ export function extractIntake(
         [...allFields, ...Object.values(factLabels).flatMap((value) => value.split("|")),
           ...Object.values(networkFactLabels).flatMap((value) => value.split("|"))]
           .some((field) => normalize(field) === normalize(label));
+      const privateContactFact = /^(?:(?:so tai khoan|bank account(?: number)?|stk|ho chieu|passport(?: number)?)\s*[:=]?\s*)?\[redacted (?:bank account|passport|email|phone number|identity number)\][.!]*$/i.test(normalize(fragment));
       // These complete, bounded questions add no operation or scope. Do not
       // discard arbitrary unknown fragments, or extra actions hidden in prose.
       const guidanceFollowup = isGuidanceFollowup(fragment);
@@ -1383,7 +1396,7 @@ export function extractIntake(
       const existingVpnLogin = previous && isExistingVpnLoginContext(previous, fragment);
       if (
         requests.length &&
-        (factLabel ||
+        (factLabel || privateContactFact ||
           guidanceFollowup ||
           approvalContext ||
           approvalReferenceContext ||

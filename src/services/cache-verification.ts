@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import type { Assistance, SupportRequest } from "@/domain/contracts";
-import { applyServiceLevelEvents, newServiceLevelState } from "@/domain/service-level";
 import { getSupportRequest, insertSupportRequest, SupportError } from "@/lib/support-repository";
 import { auditEvent } from "./support";
 import { supportInputSchema } from "@/domain/input";
@@ -90,14 +89,13 @@ async function saveCacheRequest(
     status: "RECEIVED", input, originalQuestion: input.rawText,
     canonical: evaluated.canonical, decision: evaluated.decision,
     assistance: evaluated.decision.action === "AUTO_APPROVE" ? [evaluated.answer] : [],
-    feedback: [], events: [], serviceLevel: newServiceLevelState(now),
+    feedback: [], events: [],
   };
   request.events.push(auditEvent(request, null, "RECEIVED", "cache-verification",
     "Hồ sơ mô phỏng từ bộ test cache. Extraction và policy được đánh giá khi tạo hồ sơ, không gọi model."));
   request.status = evaluated.decision.action === "AUTO_APPROVE" ? "AUTO_APPROVED"
     : evaluated.decision.action === "ESCALATE" ? "ESCALATED" : "NEEDS_INFORMATION";
   request.events.push(auditEvent(request, "RECEIVED", "DECISION", "deterministic-policy", evaluated.decision.adminReason));
-  applyServiceLevelEvents(request, request.events);
   if (!(await insertSupportRequest(request)) && !(await readExisting()))
     throw new SupportError("STORAGE_UNAVAILABLE", "Chưa lưu được hồ sơ kiểm thử. Vui lòng thử lại.", 503);
   return request.id;

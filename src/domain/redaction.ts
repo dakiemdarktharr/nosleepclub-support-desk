@@ -82,6 +82,14 @@ export function redact(text: string): { text: string; markers: string[] } {
   replace(/\b[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)+\b/gi,
     "EMAIL", "[REDACTED_EMAIL]");
   safe = safe.replace(
+    /((?:số tài khoản|so tai khoan|\bstk|bank account(?: number)?)\s*(?:[:=]|là|la|is)?\s*)[0-9](?:[ .-]?[0-9]){5,23}(?![ .-]*[0-9])/gi,
+    (_, prefix: string) => { markers.add("LABELED_BANK_ACCOUNT"); return prefix + "[REDACTED_BANK_ACCOUNT]"; },
+  );
+  safe = safe.replace(
+    /((?:hộ chiếu|ho chieu|passport(?: number)?)\s*(?:[:=]|là|la|is)?\s*)[a-z]{0,2}[0-9]{6,9}\b/gi,
+    (_, prefix: string) => { markers.add("LABELED_PASSPORT"); return prefix + "[REDACTED_PASSPORT]"; },
+  );
+  safe = safe.replace(
     /((?:employee[ _-]?id|mã nhân viên|ma nhan vien)\s*["']?\s*[:=]\s*["']?)[a-z0-9][a-z0-9_-]{2,63}\b/gi,
     (_, prefix: string) => {
       markers.add("LABELED_EMPLOYEE_ID");

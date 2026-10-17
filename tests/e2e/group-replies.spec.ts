@@ -17,6 +17,8 @@ test("admin opens seven grouped requests and sends a reply to every tracker, wit
   }
   for (const text of dataset.groups[3].requests) rows.push(await create(text));
   await page.goto("/review");
+  // Verify fixtures are also visible now; this scenario addresses real submissions.
+  await page.getByLabel("Nguồn yêu cầu").selectOption("support");
   const row = page.locator(".it-request-row").filter({ hasText: "7 yêu cầu về máy in offline" });
   await expect(row).toHaveCount(1);
   await row.click();

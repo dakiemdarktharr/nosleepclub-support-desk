@@ -7,6 +7,7 @@ import { guidanceTemplate } from "@/domain/guidance";
 import { guidanceRules } from "@/domain/policy-source";
 import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
 import { draftKinds, draftResponseSchema, DraftValidationError, validateDraftOutput, type DraftSource } from "@/domain/review-drafts";
+import { privateCompanyTopic } from "@/domain/company-support";
 
 const inputSchema = z.object({ version: z.number().int().nonnegative() }).strict();
 export type ReviewDrafts = {
@@ -74,6 +75,7 @@ export async function draftReviewReasons(id: string, value: unknown, options: Mo
   const fallback = introductions.map((text, index) => redact(text + "\n\n" + requiredAnswerParts.map((part, step) => index === 1 ? `${step + 1}. ${part}` : part).join("\n")).text);
   const model = process.env.AI_MODEL || "";
   let result: ReviewDrafts = { version, options: fallback, kinds, source: "deterministic" };
+  if (canonical && privateCompanyTopic(canonical)) return result;
   let trace: ModelCallTrace | undefined;
   try {
     const raw = await callModel({

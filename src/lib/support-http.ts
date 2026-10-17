@@ -13,6 +13,10 @@ const httpRuntime = globalThis as typeof globalThis & SupportHttpRuntime;
 
 export async function supportApi(work: () => Promise<unknown>, status = 200) {
   try {
+    // ID-only/public reviewer is an explicit demo, not an organization login.
+    // Fail closed instead of exposing corporate data in an unimplemented private mode.
+    if (process.env.NODE_ENV === "production" && process.env.SUPPORT_ACCESS_MODE !== "public-demo")
+      throw new SupportError("ORGANIZATION_AUTH_REQUIRED", "Cần cấu hình xác thực và phân quyền tổ chức trước khi vận hành với dữ liệu thật.", 403);
     return successResponse(await work(), { status });
   } catch (error) {
     if (error instanceof SupportError)
@@ -122,22 +126,26 @@ export async function requireEmployeeIdentity(value: unknown, request?: Request)
 }
 export function enforceDemoRateLimit(
   request: Request,
-  scope: "intake" | "mutation" | "cache-verify",
+  scope: "intake" | "mutation" | "cache-verify" | "verify" | "ingress",
 ) {
   if (process.env.NODE_ENV !== "production") return;
   const now = Date.now();
   const windowMs = 60_000;
-  // Cache verification has no model calls. Allow one
-  // complete 42-case run; ordinary intake/mutation limits remain unchanged.
-  const limit = scope === "cache-verify" ? 60 : scope === "intake" ? 30 : 15;
+  // Isolated cache fixtures can restore 42 synthetic queue records after a run.
+  // Allow the run plus restoration; ordinary intake/mutation limits stay unchanged.
+  const limit = ["verify", "ingress"].includes(scope) ? 90 : scope === "cache-verify" ? 120 : scope === "intake" ? 30 : 15;
   const client =
     request.headers.get("x-real-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "anonymous";
-  const key = `${scope}:${client}`;
+  const key = `${scope}:${client.slice(0, 80)}`;
   const limits = (httpRuntime.supportRateLimits ??= new Map());
   const current = limits.get(key);
   if (!current || now - current.startedAt >= windowMs) {
+    if (limits.size >= 5000) {
+      for (const [oldKey, oldWindow] of limits) if (now - oldWindow.startedAt >= windowMs) limits.delete(oldKey);
+      if (limits.size >= 5000) limits.delete(limits.keys().next().value!);
+    }
     limits.set(key, { startedAt: now, count: 1 });
     return;
   }

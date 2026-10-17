@@ -57,7 +57,9 @@ const applicationApi: typeof fetch = async (url, init) => {
 };
 
 it("freezes 128 distinct candidate labels before evaluation and preserves the legacy corpora", () => {
-  expect(candidate.policyVersion).toBe(POLICY_VERSION);
+  // This corpus is frozen against its original policy. Evaluate its unchanged
+  // labels against the current policy below; never rewrite historical provenance.
+  expect(candidate.policyVersion).toBe("support-guidance-v5.20");
   expect(candidate.source).toBe("synthetic");
   expect(candidate.split).toBe("development");
   expect(candidate.labelStatus).toBe("ai-authored-before-first-run-not-independently-reviewed");

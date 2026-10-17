@@ -6,6 +6,8 @@ import synthetic from "../../mlai26_new/data/ground-truth/synthetic_tickets.json
 import extended from "../../mlai26_new/data/ground-truth/extended_ticket_cases.json";
 import crossFunction from "../../mlai26_new/data/ground-truth/enterprise_cross_function_cases.json";
 import { cachePackId, cacheVerificationCases, type CacheCheck } from "@/domain/cache-verification";
+import expansion from "../../data/support-desk-expansion.json";
+import type { SupportDivision } from "@/domain/support-divisions";
 import {
   pendingReview,
   type AuditEvent,
@@ -24,6 +26,7 @@ export type VerifyCase = {
   expected_action: string;
   expected_bucket: string;
   expected_rule?: string;
+  expected_division?: string;
 };
 const originals = (
   rows: typeof official | typeof synthetic,
@@ -41,8 +44,11 @@ export const judgePackIds: readonly string[] = [
   "submission-4",
   "judge-15",
   cachePackId,
+  "support-desk-expansion",
 ];
 export const supportVerifyCases: VerifyCase[] = [
+  ...expansion.map(row => ({ ...row, pack: "support-desk-expansion",
+    fields: row.fields ? Object.fromEntries(Object.entries(row.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")) : undefined })),
   ...cacheVerificationCases.map(row => ({ id: row.id, pack: cachePackId, rawText: row.rawText, expected_action: row.expected, expected_bucket: "FAQ_CACHE" })),
   ...judge.map((row) => ({
     ...row,
@@ -80,7 +86,7 @@ export type VerifyResult = {
   caseId: string;
   timestamp: string;
   requestId?: string;
-  expected: { action: string; bucket: string; rule?: string };
+  expected: { action: string; bucket: string; rule?: string; division?: SupportDivision };
   actual?: Decision;
   pass: boolean;
   persistence?: { pass: boolean; checks: string[] };
@@ -102,6 +108,7 @@ export async function runSupportCase(
       action: item.expected_action,
       bucket: item.expected_bucket,
       rule: item.expected_rule,
+      division: item.expected_division as SupportDivision | undefined,
     },
     pass: false,
   };
@@ -148,7 +155,11 @@ export async function runSupportCase(
         error: "Request đang xử lý; chưa có quyết định.",
       };
     const persistence = await verifyPersistence(request, fetcher);
-    const responseQuality = item.pack === "judge-15" ? verifyResponse(request, item.expected_action) : undefined;
+    const responseQuality = ["judge-15", "support-desk-expansion"].includes(item.pack) ? verifyResponse(request, item.expected_action) : undefined;
+    if (responseQuality && item.expected_division) {
+      responseQuality.checks.push(`division:${actual.division === item.expected_division ? "pass" : "fail"}`);
+      responseQuality.pass = responseQuality.checks.every(check => check.endsWith(":pass"));
+    }
     return {
       ...result,
       persistence,

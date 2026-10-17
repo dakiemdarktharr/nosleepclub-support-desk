@@ -191,7 +191,7 @@ it("Mongo stores all recipients atomically, handles a duplicate insert and never
     if (documents.has(document._id)) throw Object.assign(new Error("duplicate"), { code: 11000 });
     documents.set(document._id, structuredClone(document));
   });
-  const findCandidates = vi.fn(() => ({ toArray: async () => rows.map(data => ({ _id: data.id, data: structuredClone(data) })) }));
+  const findCandidates = vi.fn(() => ({ limit: () => ({ toArray: async () => rows.map(data => ({ _id: data.id, data: structuredClone(data) })) }) }));
   const db = {
     databaseName: "synthetic-group-test",
     collection: (name: string) => name === "v3_support_requests" ? { find: findCandidates } : {

@@ -1,6 +1,6 @@
 # VNG Support
 
-Trợ lý hỗ trợ IT giúp người dùng mô tả vấn đề, nhận hướng dẫn an toàn, bổ sung thông tin và chuyển nhân viên hỗ trợ cùng lịch sử hội thoại.
+Support Desk chung giúp nhân viên mô tả vấn đề công việc, nhận hướng dẫn an toàn và chuyển đúng bộ phận cùng lịch sử hội thoại. Không cần biết thuật ngữ kỹ thuật để gửi yêu cầu.
 
 **[Mở ứng dụng](https://vng-support.vercel.app)** · **[Gửi hỗ trợ](https://vng-support.vercel.app/guest)** · **[Hướng dẫn sử dụng](docs/USAGE.md)** · **[Vận hành](RUNBOOK.md)** · **[Kiến trúc](docs/ARCHITECTURE.md)**
 
@@ -37,6 +37,8 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 [Chi tiết hiệu ứng, nguồn tham khảo và kiểm thử](docs/UI-MOTION.md).
 
 ## Hỗ trợ hàng loạt và giám sát tự động
+
+- **Ba ban xử lý: IT, Commercial, HR**: Luna phân loại nhu cầu, server kiểm tra evidence/policy và đưa yêu cầu vào đúng tab. IT bao gồm thiết bị, engineering, DevOps, dữ liệu và an ninh mạng; các chuyên môn thương mại và dịch vụ nhân viên được gom nội bộ vào Commercial/HR. Bộ **Support Desk expansion** trong Kiểm thử có 30 tình huống kiểm tra cả ban tiếp nhận, thẩm quyền, phản hồi và dữ liệu lưu lại. [Phạm vi và đánh giá production-readiness](docs/SUPPORT-DESK-EXPANSION.md). Tab điều phối demo chưa phải phân quyền tổ chức; phiên ID-only/reviewer công khai chỉ dành cho dữ liệu giả lập.
 
 - **Trả lời chung**: hàng đợi hiện nhóm như **7 yêu cầu về lỗi kết nối VPN**. Mở nhóm để xem từng yêu cầu và nhập một câu trả lời cho toàn bộ người gửi. Tin nhắn hiện ở hồ sơ theo dõi của từng người, giữ trạng thái riêng. Nhóm thay đổi thì tải lại trước khi gửi. [Cách dùng và hợp đồng gửi](docs/GROUP-REPLIES.md).
 

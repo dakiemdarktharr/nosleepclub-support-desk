@@ -3,6 +3,7 @@ import { faqTopic } from "./faq-intent";
 import { intentName } from "./presentation";
 import type { Assistance, CanonicalRequest } from "./contracts";
 import { guidanceRules, type GuidanceTopic } from "./policy-source";
+import { companyGuidance } from "./company-support";
 
 export const assistanceOptions = [
   "A. Tôi đã làm được",
@@ -19,7 +20,7 @@ const steps: Record<GuidanceTopic, string[]> = {
   device: [
     "Chờ một lúc để máy hoàn tất tác vụ và kiểm tra đèn nguồn, cáp nguồn hoặc pin.",
     "Nếu máy còn phản hồi, lưu công việc đang mở và ghi lại tên ứng dụng gặp lỗi.",
-    "Nếu vẫn treo hoặc có cảnh báo phần cứng, dừng thao tác và chuyển IT Helpdesk; không tháo máy hay factory reset.",
+    "Nếu vẫn treo hoặc có cảnh báo phần cứng, dừng thao tác và chuyển bộ phận hỗ trợ thiết bị; không tháo máy hay factory reset.",
   ],
   vpn: [
     "Kiểm tra Internet bằng một trang nội bộ hoặc trang công khai tin cậy mà bạn thường dùng.",
@@ -155,6 +156,8 @@ export function guidanceTemplate(
   request: CanonicalRequest,
   round = 0,
 ): Omit<Assistance, "source" | "timestamp"> {
+  const company = companyGuidance(request, round);
+  if (company) return company;
   const rule = guidanceRules.find((item) =>
     item.labels.some((label) => label === request.intentLabel),
   );

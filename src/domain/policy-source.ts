@@ -1,7 +1,7 @@
 import type { Decision, Environment, RequestKind, RiskSignal, ServiceGroup } from "./contracts";
 
 // Versioned executable policy data. Meaning and migrations are documented independently of the engine.
-export const POLICY_VERSION = "support-guidance-v5.20";
+export const POLICY_VERSION = "support-guidance-v5.21-company-support";
 export const POLICY_EFFECTIVE_DATE = "2026-10-15";
 
 // Proposed support workflow: observed failed interactions, never emotion alone.

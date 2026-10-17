@@ -18,10 +18,14 @@ export async function POST(
     requireDemoReviewer();
     const id = requestId((await context.params).id);
     const run = await getVerifyRun(id);
-    enforceDemoRateLimit(request, run.pack === cachePackId ? "cache-verify" : "intake");
+    enforceDemoRateLimit(request, run.pack === cachePackId ? "cache-verify" : "verify");
     const origin = new URL(request.url).origin;
-    const productionApi: typeof fetch = (path, init) =>
-      fetch(new URL(String(path), origin), { ...init, cache: "no-store" });
+    const productionApi: typeof fetch = (path, init) => {
+      const headers = new Headers(init?.headers);
+      const client = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+      if (client) headers.set("x-forwarded-for", client.slice(0, 80));
+      return fetch(new URL(String(path), origin), { ...init, headers, cache: "no-store" });
+    };
     return executeVerifyCase(
       id,
       await supportBody(request),

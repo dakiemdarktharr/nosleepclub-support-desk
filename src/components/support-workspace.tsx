@@ -1,5 +1,6 @@
 "use client";
 import { incidentTopic } from "@/domain/shared-support";
+import { companyServiceGroups, isCompanyService } from "@/domain/company-support";
 import { useEffect, useState } from "react";
 import { GuestRequestHistory } from "./guest-request-history";
 import { rememberGuestRequest } from "@/lib/guest-request-history";
@@ -260,6 +261,9 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
                 }
               >
                 <option value="OTHER">Tôi chưa biết nhóm nào</option>
+                <optgroup label="Công việc & dịch vụ nhân viên">
+                  {companyServiceGroups.map(group => <option key={group} value={group}>{catalog[group].label}</option>)}
+                </optgroup>
                 <optgroup label="Vấn đề thường gặp">
                   {familiar.map((group) => (
                     <option key={group} value={group}>
@@ -267,10 +271,10 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
                     </option>
                   ))}
                 </optgroup>
-                <optgroup label="Các vấn đề khác">
+                <optgroup label="Công nghệ chuyên sâu">
                   {serviceGroups
                     .filter(
-                      (group) => group !== "OTHER" && !familiar.includes(group),
+                      (group) => group !== "OTHER" && !familiar.includes(group) && !isCompanyService(group),
                     )
                     .map((group) => (
                       <option key={group} value={group}>

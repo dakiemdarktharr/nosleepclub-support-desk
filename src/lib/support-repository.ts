@@ -59,6 +59,7 @@ export async function ensureSupportRequestIndexes(db: Db) {
     const collection = supportRequests(db);
     const creating = Promise.all([
       collection.createIndex({ "data.updatedAt": -1 }),
+      collection.createIndex({ "data.decision.division": 1, "data.status": 1, "data.createdAt": -1 }, { name: "division_queue" }),
       collection.createIndex({ "data.events.afterStatus": 1, "data.createdAt": -1 }, { name: "auto_decisions_created_at" }),
       collection.createIndex(
         { "data.input.fields.employeeId": 1, "data.createdAt": -1 },

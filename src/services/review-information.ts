@@ -6,6 +6,7 @@ import { redact } from "@/domain/redaction";
 import { normalize, detectedRisks } from "@/domain/text";
 import { callModel, type ModelOptions } from "@/lib/support-model";
 import { getSupportRequest, SupportError } from "@/lib/support-repository";
+import { companyTopic, privateCompanyTopic } from "@/domain/company-support";
 
 const inputSchema = z.object({ version: z.number().int().nonnegative() }).strict();
 const outputSchema = z.object({ text: z.string().trim().min(12).max(500), evidence: z.string().min(1).max(300) }).strict();
@@ -27,11 +28,15 @@ export async function draftReviewInformation(id: string, value: unknown, options
   if (!request) throw new SupportError("NOT_FOUND", "Không tìm thấy yêu cầu.", 404);
   if (request.version !== version) throw new SupportError("VERSION_CONFLICT", "Hồ sơ đã đổi. Tải lại để soạn tin nhắn.", 409);
   const canonical = request.canonical;
+  const company = canonical && companyTopic(canonical.intentLabel);
+  const privateTopic = canonical && privateCompanyTopic(canonical);
+  if (privateTopic) return { version, source: "deterministic",
+    text: `Bạn vui lòng trao đổi chi tiết qua kênh nội bộ đã xác minh của ${privateTopic.service.team}; không gửi hồ sơ cá nhân hoặc thông tin thanh toán tại đây nhé.` };
   const decisionMissing = request.decision?.missingFields ?? [];
   const required = decisionMissing.length ? decisionMissing : canonical ? missingFacts(canonical) : [];
   // Required policy fields win. Otherwise ask for absent diagnostic details,
   // without treating them as new approval gates.
-  const candidates = required.length ? required : ["errorCode", "os", "startTime"];
+  const candidates = required.length ? required : company ? ["desiredOutcome", "neededBy"] : ["errorCode", "os", "startTime"];
   const supplied = normalize([request.input.rawText, ...Object.values(request.input.fields), ...request.feedback.map(item => item.replyText || "")].join(" "));
   const unknown = required.length ? required : candidates.filter(field => !canonical?.entities[field] && !request.input.fields[field] && !diagnosticAlreadySupplied(field, supplied));
   const fields = canonical ? clarificationPlan(canonical, unknown).fields : unknown.slice(0, 3);

@@ -13,8 +13,11 @@ import {
 } from "./support-repository";
 import { employeeIdPattern, normalizeEmployeeId } from "@/domain/employee-identity";
 import type { GroupCandidate } from "@/domain/request-groups";
+import { supportDivisions, requestDivision, divisionForGroup, type SupportDivision } from "@/domain/support-divisions";
+import { serviceGroups } from "@/domain/contracts";
 
 const querySchema = z.object({
+  division: z.enum(supportDivisions).optional(),
   cursor: z.coerce.number().int().min(0).max(1000000).default(0),
   limit: z.coerce.number().int().min(1).max(100).default(30),
   // The UI displays HT- plus the first eight UUID characters. Normalize its
@@ -43,7 +46,7 @@ export function parseSupportQuery(url: string) {
   const params = new URL(url).searchParams;
   return querySchema.parse(
     Object.fromEntries(
-      ["cursor", "limit", "q", "employeeId", "status", "origin", "requestId", "queue", "verifyRunId"]
+      ["cursor", "limit", "q", "employeeId", "status", "origin", "requestId", "queue", "verifyRunId", "division"]
         .filter((key) => params.has(key))
         .map((key) => [key, params.get(key)]),
     ),
@@ -60,10 +63,20 @@ export function parseEmployeeSuggestionPrefix(url: string): string {
 export type SupportQuery = z.infer<typeof querySchema>;
 type Row = { _id: string; data: SupportRequest };
 const pending = ["ESCALATED", "APPROVED_BY_HUMAN"];
+export function supportDivisionFilter(division: SupportDivision) {
+  const groups = serviceGroups.filter(group => divisionForGroup(group) === division);
+  return { $and: [{ $or: [
+    { "data.decision.division": division },
+    { "data.decision.division": { $exists: false }, "data.canonical.serviceGroup": { $in: groups } },
+    { "data.decision.division": { $exists: false }, "data.canonical": null,
+      "data.input.serviceGroup": { $in: groups } },
+    ...(division === "IT" ? [{ "data.decision.division": { $exists: false }, "data.canonical": null, "data.input.serviceGroup": { $exists: false } }] : []),
+  ] }] };
+}
 function filterFor(query: SupportQuery): Filter<Row> {
-  const filter: Filter<Row> = {};
+  const filter: Filter<Row> = query.division ? supportDivisionFilter(query.division) : {};
   if (query.requestId) filter._id = query.requestId;
-  if (query.verifyRunId) filter.$and = [{ "data.input.verifyRunId": query.verifyRunId }];
+  if (query.verifyRunId) filter.$and = [...(filter.$and ?? []), { "data.input.verifyRunId": query.verifyRunId }];
   if (query.employeeId)
     filter["data.input.fields.employeeId"] = query.employeeId;
   if (query.queue !== "all") filter["data.decision.uncertaintyClass"] = query.queue;
@@ -97,6 +110,7 @@ async function memoryRows(query: SupportQuery) {
 }
 export function matchesSupportQuery(row: GroupCandidate, query: SupportQuery) {
   return (
+      (!query.division || requestDivision(row) === query.division) &&
       (!query.requestId || row.id === query.requestId) &&
       (!query.verifyRunId || row.input.verifyRunId === query.verifyRunId) &&
       (!query.employeeId ||
@@ -117,6 +131,7 @@ export function matchesSupportQuery(row: GroupCandidate, query: SupportQuery) {
 }
 export function summarizeSupport(row: GroupCandidate): SupportSummary {
   return {
+    division: requestDivision(row),
     id: row.id, incidentId: row.incidentId, version: row.version, status: row.status,
     createdAt: row.createdAt, updatedAt: row.updatedAt,
     title: (row.originalQuestion || row.input.rawText || "Yêu cầu theo danh mục").slice(0, 140),
@@ -148,12 +163,14 @@ export async function supportPage(
             "data.updatedAt": 1,
             "data.originalQuestion": 1,
             "data.input.rawText": 1,
+            "data.input.serviceGroup": 1,
             "data.input.fields.employeeId": 1,
             "data.input.verifyRunId": 1,
             "data.canonical.serviceGroup": 1,
             "data.decision.action": 1,
             "data.decision.uncertaintyClass": 1,
             "data.decision.assignedTeam": 1,
+            "data.decision.division": 1,
             "data.knowledgeCandidate.status": 1,
           },
         })
@@ -173,6 +190,7 @@ export async function supportPage(
     : (await memoryRows(query)).length;
   return {
     items: rows.map(({ data: row }) => ({
+      division: requestDivision(row),
       id: row.id,
       incidentId: row.incidentId,
       version: row.version,
@@ -200,7 +218,7 @@ export async function supportPage(
         : null,
   };
 }
-export async function employeeIdSuggestions(prefix: string): Promise<string[]> {
+export async function employeeIdSuggestions(prefix: string, division?: SupportDivision): Promise<string[]> {
   const normalized = normalizeEmployeeId(prefix);
   if (
     normalized.length < 2 ||
@@ -216,7 +234,7 @@ export async function employeeIdSuggestions(prefix: string): Promise<string[]> {
     const rows = await db
       .collection<Row>("v3_support_requests")
       .aggregate<{ _id: string }>([
-        { $match: { "data.input.fields.employeeId": { $regex: literal } } },
+        { $match: { ...filterFor(querySchema.parse({ division })), "data.input.fields.employeeId": { $regex: literal } } },
         { $group: { _id: "$data.input.fields.employeeId" } },
         { $sort: { _id: 1 } },
         { $limit: 8 },
@@ -234,6 +252,7 @@ export async function employeeIdSuggestions(prefix: string): Promise<string[]> {
   }
 
   const employeeIds = (await listSupportRequests(true))
+    .filter(row => !division || requestDivision(row) === division)
     .map((row) => normalizeEmployeeId(row.input.fields.employeeId ?? ""))
     .filter(
       (employeeId) =>

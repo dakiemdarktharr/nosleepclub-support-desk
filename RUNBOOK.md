@@ -347,6 +347,12 @@ Lệnh đối chiếu đúng 40 ID, tên, batch, profile version, role và scope
 
 ## Vận hành cache và sự cố chung
 
+Support Desk dùng ba ban điều phối `IT`, `COMMERCIAL`, `HR`; `decision.division` do server xác định, không nhận từ browser/model. Query `division` lọc ở server trước tổng số/phân trang/gộp; hồ sơ cũ đọc theo service group. Không migration dữ liệu hoặc thay quyền identity. Index mới `division_queue` hỗ trợ hàng đợi. [Hợp đồng, bộ 30 ca và đánh giá điều hành](docs/SUPPORT-DESK-EXPANSION.md).
+
+Runtime API chỉ cho phép chế độ `public-demo` khi chạy production build; các giá trị khác bị chặn `ORGANIZATION_AUTH_REQUIRED` thay vì mặc nhiên bật truy cập không xác thực. Health báo `productionReady: false`; chưa có SSO/RBAC tổ chức thực tế. Không đưa dữ liệu công ty thật vào demo. Đánh giá go-live vẫn **Not ready** cho đến khi có xác thực, phân quyền từng ban, policy tổ chức và bằng chứng phục hồi/vận hành thật. Cấu hình Mongo/API key hoặc CI xanh không thay thế các điều kiện đó.
+
+Verify nghiệp vụ có bucket 90 request/phút/client sau khi server kiểm tra đúng fixture/run; request nội bộ giữ cùng client để không dùng chung bucket loopback giữa các lượt chạy. Intake thông thường vẫn 30/phút và mutation 15/phút. Bucket ingress 90/phút chặn body không hợp lệ; bộ nhớ limiter có giới hạn. Đây là limiter theo process của demo, không phải kiểm soát abuse phân tán.
+
 Giữ `MONGODB_URI` và `MONGODB_DB` hiện có cho Support. App tạo index trên `v3_support_shared_faq` (TTL 7 ngày) và `v3_support_incidents` (unique activeKey), cùng index liên kết hồ sơ. Không dùng database identity để lưu ticket. Runtime Production thiếu Mongo sẽ từ chối lưu; cache lỗi được coi là miss, không tạo fallback lưu trữ Production khác.
 
 Sự cố chỉ liên kết trong 24 giờ tính từ khi tạo nhóm. Sau 24 giờ hoặc khi đóng, yêu cầu mới tạo nhóm khác. Audit/cập nhật cũ được giữ để theo dõi; không xóa lịch sử theo TTL cache. Cập nhật dùng mẫu server có giới hạn an toàn, không cho gửi secrets hay lệnh tùy ý đến mọi người. Đánh dấu sự cố chung đã khắc phục không tự đóng ticket cá nhân. Màn hình theo dõi polling khi tab đang mở và online; không phải dịch vụ thông báo ngoài app. Danh sách nhóm hiển thị tối đa 50 nhóm đang mở mới nhất, hồ sơ vẫn tra cứu được riêng.

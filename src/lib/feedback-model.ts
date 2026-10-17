@@ -38,8 +38,8 @@ export type SentimentContext = "support-request" | "post-answer";
 
 function instructionsFor(context: SentimentContext): string {
   const task = context === "support-request"
-    ? "Classify the emotional tone in a new IT support request before processing. A factual description of a problem, request, or question is neutral unless it clearly expresses emotion."
-    : "Classify the user's latest free-form feedback after an IT support answer. Acknowledging receipt or saying thanks alone is neutral; positive requires clear satisfaction or confirmation the help worked. An unresolved issue alone is not negative. A question mark alone is not evidence of neutral sentiment.";
+    ? "Classify the emotional tone in a new company support request before processing. A factual description of a problem, request, or question is neutral unless it clearly expresses emotion."
+    : "Classify the user's latest free-form feedback after a company support answer. Acknowledging receipt or saying thanks alone is neutral; positive requires clear satisfaction or confirmation the help worked. An unresolved issue alone is not negative. A question mark alone is not evidence of neutral sentiment.";
   return `${task}
 Return only JSON with sentiment, evidence, and explanation.
 Sentiment definitions: positive means clear satisfaction, relief, or gratitude beyond a bare courtesy; negative means explicit dissatisfaction, impatience, anger, or frustration. A complaint about waiting for hours can be negative. Neutral means no clear positive or negative affect.

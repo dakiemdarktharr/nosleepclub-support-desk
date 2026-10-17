@@ -5,6 +5,7 @@ import { IncidentUpdates } from "./incident-panel";
 import { ReviewDrafts } from "./review-drafts";
 import { ReviewSummary } from "./review-summary";
 import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
+import { divisionLabels, requestDivision } from "@/domain/support-divisions";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { browserApi } from "@/lib/browser-api";
 import type { InformationDraft } from "@/services/review-information";
@@ -409,7 +410,7 @@ export function ReviewDetail({
                   </div>
                   <div>
                     <dt>Nhóm tiếp nhận</dt>
-                    <dd>{decision.assignedTeam}</dd>
+                    <dd>{divisionLabels[requestDivision(request)]}</dd>
                   </div>
                   <div>
                     <dt>Quy tắc áp dụng</dt>

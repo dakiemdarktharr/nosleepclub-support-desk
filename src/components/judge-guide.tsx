@@ -209,7 +209,7 @@ export function JudgeGuide({ children }: { children: ReactNode }) {
         <div className="guide-modal-scroll" tabIndex={0} aria-label="Nội dung hướng dẫn sử dụng">
           <section>
             <h3>Đăng nhập và cấp ID</h3>
-            <p>Chọn “Tôi cần hỗ trợ” ở trang đầu để đăng nhập bằng ID đã được IT cấp. Truy cập bằng ID là demo, chưa xác minh danh tính. Chọn “Nhân viên mới?” để gửi họ tên, job và phạm vi quyền; lưu liên kết theo dõi. Chỉ sau khi IT duyệt mới có ID chính thức. Quyền xử lý ID cần vai trò riêng do operator cấp; đăng nhập chỉ bằng ID là demo, chưa xác minh người sử dụng.</p>
+            <p>Chọn “Tôi cần hỗ trợ” ở trang đầu để đăng nhập bằng ID đã được IT cấp. Truy cập bằng ID là demo, chưa xác minh danh tính. Chọn “Nhân viên mới?” để gửi họ tên, job và phạm vi quyền; lưu liên kết theo dõi. Chỉ sau khi quản trị viên duyệt mới có ID chính thức. Quyền xử lý ID cần vai trò riêng do operator cấp; đăng nhập chỉ bằng ID là demo, chưa xác minh người sử dụng.</p>
           </section>
           <section>
             <h3>1. Tôi cần hỗ trợ — trải nghiệm người gửi</h3>

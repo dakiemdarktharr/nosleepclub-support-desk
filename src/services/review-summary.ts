@@ -4,13 +4,14 @@ import { redact } from "@/domain/redaction";
 import { normalize } from "@/domain/text";
 import { callModel, type ModelOptions } from "@/lib/support-model";
 import { getSupportRequest, supportDatabase, SupportError } from "@/lib/support-repository";
+import { privateCompanyTopic } from "@/domain/company-support";
 
 const inputSchema = z.object({ version: z.number().int().nonnegative() }).strict();
 const outputSchema = z.object({ summary: z.string().trim().min(10).max(700), evidence: z.array(z.string().trim().min(3).max(300)).min(1).max(4) }).strict();
 const wireSchema = { type: "object", additionalProperties: false, properties: {
   summary: { type: "string" }, evidence: { type: "array", minItems: 1, maxItems: 4, items: { type: "string" } },
 }, required: ["summary", "evidence"] };
-export type ReviewerSummary = { version: number; summary?: string; evidence?: string[]; source: "openai" | "mock" | "unavailable"; model?: string; cache: "hit" | "miss"; generatedAt?: string; fallbackReason?: string };
+export type ReviewerSummary = { version: number; summary?: string; evidence?: string[]; source: "openai" | "mock" | "unavailable" | "deterministic"; model?: string; cache: "hit" | "miss"; generatedAt?: string; fallbackReason?: string };
 type Entry = { _id: string; requestId: string; summary: string; evidence: string[]; source: "openai" | "mock"; model: string; createdAt: Date; expiresAt: Date };
 const local = new Map<string, Entry>();
 const inFlight = new Map<string, Promise<Entry>>();
@@ -21,6 +22,9 @@ export async function summarizeReviewRequest(id: string, value: unknown, options
   const request = await getSupportRequest(id);
   if (!request) throw new SupportError("NOT_FOUND", "Không tìm thấy yêu cầu.", 404);
   if (request.version !== version) throw new SupportError("VERSION_CONFLICT", "Hồ sơ đã đổi. Tải lại để tóm tắt nội dung mới.", 409);
+  const company = request.canonical && privateCompanyTopic(request.canonical);
+  if (company) return { version, source: "deterministic", cache: "miss",
+    summary: `Yêu cầu có nội dung riêng tư về ${company.label.toLocaleLowerCase("vi")}; ${company.service.team} cần tiếp nhận qua kênh được xác minh.` };
   const fields = Object.fromEntries(Object.entries(request.input.fields).filter(([field]) => !["employeeId", "department"].includes(field)));
   const context = JSON.parse(redact(JSON.stringify({
     original: request.originalQuestion || request.input.rawText,

@@ -52,7 +52,7 @@ test("reviewer can select separate policy and authority queues", async ({ page }
   await page.goto("/review");
   const queue = page.getByLabel("Hàng đợi chuyển tiếp");
   await queue.selectOption("OUT_OF_POLICY");
-  await expect(page.locator(`.review-list a[href='/review?requestId=${security}']`)).toContainText("Security");
+  await expect(page.locator(`.review-list a[href='/review?requestId=${security}']`)).toContainText("Nơi tiếp nhận: Ban IT");
   await expect(page.locator(`.review-list a[href='/review?requestId=${authority}']`)).toHaveCount(0);
   await queue.selectOption("AUTHORITY_REQUIRED");
   await expect(page.locator(`.review-list a[href='/review?requestId=${authority}']`)).toContainText("Cần thẩm quyền");

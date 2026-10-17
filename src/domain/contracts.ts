@@ -2,6 +2,8 @@ import { z } from "zod";
 import type { WorkEvidence } from "./work-evidence";
 import type { GuestDepartment } from "./guest-session";
 import type { ConversationContext, ConversationLabel } from "./conversation";
+import { companyServiceGroups } from "./company-support";
+import type { SupportDivision } from "./support-divisions";
 
 export const requestKinds = [
   "GUIDANCE",
@@ -25,6 +27,7 @@ export const serviceGroups = [
   "STORAGE",
   "SECURITY",
   "GIT_PERMISSION",
+  ...companyServiceGroups,
   "OTHER",
 ] as const;
 export const environments = [
@@ -139,6 +142,7 @@ export type SubrequestOutcome = {
   questions: string[];
 };
 export type Decision = {
+  division?: SupportDivision;
   action: Action;
   requestKind: RequestKind;
   handlingMode: "GUIDE" | "LLM_ASSIST" | "SIMULATED_WORKFLOW" | "HUMAN_REVIEW";
@@ -241,6 +245,7 @@ export type Assistance = {
   timestamp: string;
 };
 export type AuditEvent = {
+  division?: SupportDivision;
   /** The redacted message confirmed by a reviewer, visible to the requester. */
   senderMessage?: string;
   generationReason?: Assistance["generationReason"];
@@ -316,6 +321,7 @@ export type SupportSummary = Pick<
   SupportRequest,
   "id" | "version" | "status" | "createdAt" | "updatedAt"
 > & {
+  division?: SupportDivision;
   employeeId?: string;
   verifyRunId?: string;
   title: string;

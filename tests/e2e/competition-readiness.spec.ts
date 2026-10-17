@@ -18,7 +18,7 @@ test("judge can enter from home, run De A, inspect audit and try a new input wit
   await expect(actual.filter({ hasText: "AUTO_APPROVE" })).toHaveCount(3);
   await expect(actual.filter({ hasText: "ESCALATE" })).toHaveCount(2);
   await page.getByText("Bằng chứng quyết định", { exact: true }).first().click();
-  await expect(page.getByText("Nơi tiếp nhận:", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("Ban tiếp nhận: Ban IT", { exact: false }).first()).toBeVisible();
   const resultsUrl = page.url();
   await page.getByRole("link", { name: "Mở request / audit" }).last().click();
   await page.getByText("Lịch sử yêu cầu và hướng dẫn", { exact: true }).click();

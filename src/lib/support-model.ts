@@ -38,6 +38,8 @@ import { redact } from "@/domain/redaction";
 import { isSingleNetworkPort, isSingleNetworkProtocol, sameNetworkFact } from "@/domain/network-facts";
 import { reserveModelAttemptForModel } from "./support-repository";
 import { observedFeedbackText } from "@/domain/interaction-feedback";
+import { isCompanyService } from "@/domain/company-support";
+import { divisionForGroup } from "@/domain/support-divisions";
 
 export class ModelFailure extends Error {
   constructor(
@@ -370,6 +372,11 @@ export async function extractWithModel(
       parsed.data;
     const withSentiment = (canonical: CanonicalRequest) =>
       withSentimentAssessment(canonical, rawSentiment, input.rawText);
+    if ((isCompanyService(baseline.serviceGroup) || isCompanyService(model.serviceGroup)) &&
+        baseline.serviceGroup !== "OTHER" && route !== "conversation" && route !== "work" &&
+        (divisionForGroup(baseline.serviceGroup) !== divisionForGroup(model.serviceGroup) ||
+          isCompanyService(baseline.serviceGroup) && baseline.requestKind !== "GUIDANCE" && model.requestKind === "GUIDANCE"))
+      throw new ModelFailure("MODEL_EVIDENCE_INVALID", "EVIDENCE_MISMATCH");
     const modelRouting = process.env.AI_PROVIDER === "openai";
     if (
       modelRouting &&

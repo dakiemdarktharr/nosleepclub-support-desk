@@ -5,7 +5,8 @@ import { requestGroup, type GroupCandidate, type RequestGroupDetail, type Shared
 import { redact } from "@/domain/redaction";
 import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
 import { listSupportRequests, supportDatabase, SupportError } from "./support-repository";
-import { matchesSupportQuery, summarizeSupport, type SupportQuery } from "./support-query";
+import { matchesSupportQuery, summarizeSupport, supportDivisionFilter, type SupportQuery } from "./support-query";
+import { requestDivision, type SupportDivision } from "@/domain/support-divisions";
 
 type Group = { id: string; topic: string; members: GroupCandidate[] };
 type ReplyRecord = {
@@ -25,16 +26,17 @@ const groupIdSchema = z.string().regex(/^[a-f0-9]{64}$/);
 
 /** Read compact candidates, not assistance/audit payloads. Group before paging,
  * including legacy requests without requiring a production data migration. */
-async function candidates(): Promise<GroupCandidate[]> {
+async function candidates(division?: SupportDivision): Promise<GroupCandidate[]> {
   const db = supportDatabase();
-  if (!db) return listSupportRequests(true);
+  if (!db) return (await listSupportRequests(true)).filter(row => !division || requestDivision(row) === division);
   const rows = await db.collection<{ _id: string; data: GroupCandidate }>("v3_support_requests")
-    .find({}, { projection: {
+    .find(division ? supportDivisionFilter(division) : {}, { projection: {
       "data.id": 1, "data.version": 1, "data.status": 1, "data.input": 1,
       "data.originalQuestion": 1, "data.createdAt": 1, "data.updatedAt": 1,
       "data.incidentId": 1, "data.canonical": 1, "data.decision": 1,
       "data.events.afterStatus": 1, "data.knowledgeCandidate.status": 1,
-    } }).toArray();
+    } }).limit(2001).toArray();
+  if (rows.length > 2000) throw new SupportError("GROUPING_LIMIT", "Danh sách lớn: bỏ chọn gộp yêu cầu để dùng danh sách phân trang đầy đủ.", 422);
   return rows.map(row => row.data);
 }
 function groupsFor(rows: GroupCandidate[]) {
@@ -54,7 +56,7 @@ function membership(group: Group) {
   return digest(group.members.map(({ id, version }) => ({ id, version })).sort((a, b) => a.id.localeCompare(b.id)));
 }
 export async function groupedSupportPage(query: SupportQuery): Promise<ResultPage<SupportQueueItem>> {
-  const rows = await candidates();
+  const rows = await candidates(query.division);
   const groups = groupsFor(rows);
   const groupedIds = new Set<string>();
   const items: SupportQueueItem[] = [];

@@ -27,6 +27,7 @@ import { Alert, Badge, Button } from "@/components/ui";
 import { ReviewDetail } from "@/components/review-detail";
 import { StaffWorkspace } from "@/components/staff-workspace";
 import type { SupportQueueItem } from "@/domain/request-groups";
+import { supportDivisions, divisionLabels, type SupportDivision } from "@/domain/support-divisions";
 
 export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: string; initialVerifyRunId?: string }) {
   const sequence = useRef(0);
@@ -39,6 +40,7 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
     [pending, setPending] = useState(false),
     [error, setError] = useState("");
   const [groupIncidents, setGroupIncidents] = useState(true);
+  const [division, setDivision] = useState<SupportDivision>("IT");
   const [filter, setFilter] = useState("all");
   const [verifyRunId, setVerifyRunId] = useState(initialVerifyRunId);
   const [search, setSearch] = useState("");
@@ -53,10 +55,19 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filtersReady, setFiltersReady] = useState(false);
+  function chooseDivision(next: SupportDivision) {
+    if (next === division) return;
+    sequence.current++;
+    employeeSuggestionSequence.current++;
+    setRequests([]); setTotal(0); setNextCursor(null); setLoading(true);
+    setEmployeeSuggestions([]); setEmployeeSuggestionsOpen(false);
+    setDivision(next);
+  }
   useEffect(() => {
     try {
       const saved: unknown = JSON.parse(sessionStorage.getItem("vng-review-filters-v1") || "null");
       if (!initialVerifyRunId && saved && typeof saved === "object") {
+        if ("division" in saved && supportDivisions.includes(saved.division as SupportDivision)) setDivision(saved.division as SupportDivision);
         if ("filter" in saved && typeof saved.filter === "string" && ["pending", "knowledge", "all", "auto"].includes(saved.filter)) setFilter(saved.filter);
         if ("origin" in saved && typeof saved.origin === "string" && ["support", "verify", "all"].includes(saved.origin)) setOrigin(saved.origin);
         if ("queue" in saved && typeof saved.queue === "string" && ["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"].includes(saved.queue)) setQueue(saved.queue);
@@ -69,9 +80,9 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
   }, [initialVerifyRunId]);
   useEffect(() => {
     if (!filtersReady || requestId) return;
-    try { sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ filter, origin, queue, search, employeeId })); }
+    try { sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ division, filter, origin, queue, search, employeeId })); }
     catch { /* Do not block the queue when session storage is unavailable. */ }
-  }, [filter, origin, queue, search, employeeId, filtersReady, requestId]);
+  }, [division, filter, origin, queue, search, employeeId, filtersReady, requestId]);
   function clearFilters() {
     setSearch(""); setEmployeeId(""); setFilter("all"); setOrigin("all"); setQueue("all");
     setVerifyRunId(undefined);
@@ -98,6 +109,7 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
           status: filter,
           origin,
           queue,
+          division,
           limit: "30",
           ...(employeeId.trim() ? { employeeId: employeeId.trim() } : {}),
           ...(cursor ? { cursor } : {}),
@@ -122,7 +134,7 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
         if (current === sequence.current) setLoading(false);
       }
     },
-    [search, employeeId, filter, origin, queue, groupIncidents, verifyRunId],
+    [search, employeeId, filter, origin, queue, groupIncidents, verifyRunId, division],
   );
   useEffect(() => {
     if (requestId || !filtersReady) return;
@@ -150,6 +162,7 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
       const params = new URLSearchParams({
         view: "employee-suggestions",
         employeePrefix: prefix,
+        division,
       });
       void browserApi<string[]>(`/api/support/requests?${params}`)
         .then((suggestions) => {
@@ -165,7 +178,7 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
         });
     }, 180);
     return () => clearTimeout(timer);
-  }, [employeeId, selectedEmployeeId]);
+  }, [employeeId, selectedEmployeeId, division]);
   const loadSelected = useCallback(async () => {
     if (!requestId) return;
     const current = ++detailSequence.current;
@@ -255,7 +268,21 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
                 <span className="it-reload-label">Tải lại danh sách</span>
               </Button>
             </header>
-            <IncidentQueue />
+            <div role="tablist" aria-label="Ban tiếp nhận" className="flex flex-wrap gap-2 mb-4 border-b border-slate-200 pb-3">
+              {supportDivisions.map((value, index) => <button key={value} id={`division-tab-${value}`}
+                type="button" role="tab" aria-selected={division === value} aria-controls="division-queue"
+                tabIndex={division === value ? 0 : -1}
+                className={`button ${division === value ? "primary" : "secondary"}`}
+                onClick={() => chooseDivision(value)}
+                onKeyDown={event => {
+                  const next = event.key === "ArrowRight" ? (index + 1) % 3 : event.key === "ArrowLeft" ? (index + 2) % 3
+                    : event.key === "Home" ? 0 : event.key === "End" ? 2 : -1;
+                  if (next < 0) return;
+                  event.preventDefault(); chooseDivision(supportDivisions[next]);
+                  document.getElementById(`division-tab-${supportDivisions[next]}`)?.focus();
+                }}>{divisionLabels[value]}</button>)}
+            </div>
+            {division === "IT" && <IncidentQueue />}
             <label className="flex items-center gap-2 my-3"><input type="checkbox" checked={groupIncidents} onChange={event => setGroupIncidents(event.target.checked)} />Gộp yêu cầu cùng vấn đề</label>
             <div className="it-quick-queues" role="group" aria-label="Chọn nhanh hàng đợi">
               {quickQueues.map(({ label, filter: nextFilter, queue: nextQueue, icon: Icon }) => (
@@ -266,6 +293,9 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
               ))}
             </div>
             <section
+              id="division-queue"
+              role="tabpanel"
+              aria-labelledby={`division-tab-${division}`}
               className="it-queue"
               aria-label="Danh sách yêu cầu"
               aria-busy={loading}
@@ -465,7 +495,7 @@ export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: s
                             <small>Mã nhân viên: {request.employeeId}</small>
                           )}
                           {request.assignedTeam && (
-                            <small>Nơi tiếp nhận: {request.assignedTeam}</small>
+                            <small>Nơi tiếp nhận: {divisionLabels[request.division ?? "IT"]}</small>
                           )}
                           <div className="it-row-tags">
                             {request.verifyRunId && <Badge>Case Verify</Badge>}

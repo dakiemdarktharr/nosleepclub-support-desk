@@ -15,6 +15,7 @@ import { VerifyProgress } from "@/components/verify-progress";
 import { AiPending } from "@/components/loading-feedback";
 import { cachePackId, cachePackName, cacheVerificationCases } from "@/domain/cache-verification";
 import { CacheGroupResults } from "@/components/cache-group-results";
+import { divisionLabels } from "@/domain/support-divisions";
 
 export default function VerifyPage() {
   const router = useRouter();
@@ -235,6 +236,7 @@ export default function VerifyPage() {
                 Bộ dữ liệu kiểm thử — 15 tình huống
               </option>
               <option value={cachePackId}>{cachePackName}</option>
+              <option value="support-desk-expansion">Support Desk expansion — IT / Commercial / HR</option>
             </select>
           </label>
           <Button onClick={() => void run(false)}>
@@ -395,7 +397,7 @@ export default function VerifyPage() {
               <p>Rule IDs: {result.actual?.ruleIds.join(", ") ?? "—"}</p>
               {result.response && <p>Kiểm tra phản hồi: {result.response.checks.join(" · ")}</p>}
               {result.actual && <>
-                <p>Nơi tiếp nhận: {result.actual.assignedTeam} · nhãn điều phối mô phỏng, chưa gửi thông báo.</p>
+                <p>Ban tiếp nhận: {result.actual.division ? divisionLabels[result.actual.division] : "Chưa xác định"}{result.expected.division && ` · kỳ vọng: ${divisionLabels[result.expected.division]}`}</p>
                 <p>Policy: {result.actual.policyVersion}</p>
                 <details>
                   <summary>Bằng chứng quyết định</summary>

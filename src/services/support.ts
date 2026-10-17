@@ -2,6 +2,7 @@ import { joinIncident } from "@/lib/support-incidents";
 import { sharedFaqAnswer } from "@/lib/shared-faq-cache";
 import { readGuidanceAnswer, withGuidanceAnswerCache } from "@/lib/guidance-answer-cache";
 import { guidanceCacheContext } from "@/domain/guidance-cache-context";
+import { companyTopic, privateCompanyTopic, isCompanyService } from "@/domain/company-support";
 import { publicFaqTopic } from "@/domain/shared-support";
 import { guidanceTemplate } from "@/domain/guidance";
 import {
@@ -63,6 +64,7 @@ export function auditEvent(
   explanation: string,
 ): AuditEvent {
   return {
+    division: request.decision?.division,
     ...(request.canonical ? { model: request.canonical.model } : {}),
     ...(request.assistance.length ? {
       assistanceSource: request.assistance.at(-1)!.source,
@@ -201,12 +203,19 @@ export async function analyze(
     await checkWorkSources(canonical, input.rawText);
     return { canonical, decision: measureSupportSync("policy", () => evaluatePolicy(canonical, verifyApproval)) };
   }
-  const conversation = mockRouting
+  const potentialConversation = mockRouting
     ? conversationRoute(analysisInput, baseline)
     : null;
+  const conversation = !isCompanyService(baseline.serviceGroup) || potentialConversation?.label === "COMPANY_POLICY"
+    ? potentialConversation : null;
   let canonical: CanonicalRequest;
   let sentiment: SentimentAssessment | undefined;
-  if (conversation) {
+  if (privateCompanyTopic(baseline) || [baseline, ...baseline.subrequests].some(part => companyTopic(part.intentLabel)?.urgent)) {
+    // Private people/customer matters and physical danger do not need an external
+    // model to decide the already known owner or delay a safety handoff.
+    canonical = baseline;
+    sentiment = supportRequestSentimentFallback(input.rawText);
+  } else if (conversation) {
     canonical = conversationalCanonical(baseline, conversation);
   } else {
     const extraction = await extractWithModel(analysisInput, baseline, options);

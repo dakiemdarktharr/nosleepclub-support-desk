@@ -74,5 +74,5 @@ it("approval API retains the configured reviewer access guard", async () => {
   vi.stubEnv("SUPPORT_ACCESS_MODE", "disabled");
   const response = await approve(crypto.randomUUID(), 0);
   expect(response.status).toBe(403);
-  expect((await response.json()).error.code).toBe("REVIEW_NOT_ENABLED");
+  expect((await response.json()).error.code).toBe("ORGANIZATION_AUTH_REQUIRED");
 });

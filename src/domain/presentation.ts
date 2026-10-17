@@ -1,5 +1,7 @@
 import type { RequestStatus } from "./contracts";
+import { companyServices } from "./company-support";
 export const intentLabels: Record<string, string> = {
+  ...Object.fromEntries(Object.values(companyServices).flatMap(service => service.topics.map(topic => [topic.id, topic.label]))),
   DEVICE_SHUTDOWN_GUIDANCE: "Tắt máy",
   DEVICE_RESTART_GUIDANCE: "Khởi động lại máy",
   DEVICE_RESET_GUIDANCE: "Đặt lại máy (chưa rõ cách)",

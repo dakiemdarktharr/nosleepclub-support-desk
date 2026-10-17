@@ -39,16 +39,16 @@ test("new employee wizard preserves scope, uses only allowed fields and waits fo
   await page.getByRole("button", { name: "Tiếp tục" }).click();
   await expect(page.getByRole("heading", { name: "Kiểm tra trước khi gửi" })).toBeVisible();
   await page.route("**/api/identity/applications", (route) => route.fulfill({ status: 503, json: { success: false, error: { message: "MongoDB không khả dụng. Chưa xác nhận lưu." } } }));
-  await page.getByRole("button", { name: "Gửi đơn cho IT" }).click();
+  await page.getByRole("button", { name: "Gửi đơn cho quản trị viên" }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Chưa xác nhận lưu");
-  await expect(page.getByRole("heading", { name: "Đơn đang chờ IT duyệt" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Đơn đang chờ quản trị viên duyệt" })).toHaveCount(0);
   await page.unroute("**/api/identity/applications");
   await page.route("**/api/identity/applications", async (route) => {
     expect(Object.keys(route.request().postDataJSON()).sort()).toEqual(["fullName", "id", "job", "trackingToken"]);
     await route.fulfill({ status: 201, json: { success: true, data: { id, status: "PENDING" } } });
   });
-  await page.getByRole("button", { name: "Gửi đơn cho IT" }).click();
-  await expect(page.getByRole("heading", { name: "Đơn đang chờ IT duyệt" })).toBeVisible();
+  await page.getByRole("button", { name: "Gửi đơn cho quản trị viên" }).click();
+  await expect(page.getByRole("heading", { name: "Đơn đang chờ quản trị viên duyệt" })).toBeVisible();
   await expect(page.getByLabel("Liên kết theo dõi riêng")).toHaveValue(/\/identity\/track#id=.+&token=[a-f0-9]{64}/);
   await expect(page.getByText("ID chính thức của bạn")).toHaveCount(0);
 });
@@ -98,7 +98,7 @@ test("ID-only login routes an IT role to review without an OTP step", async ({ p
   await page.getByLabel("ID nhân viên", { exact: true }).fill("itnvgl");
   await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
   await expect(page).toHaveURL(/\/identity\/review$/);
-  await expect(page.getByText(/người biết ID IT/i)).toBeVisible();
+  await expect(page.getByText(/người biết ID quản trị/i)).toBeVisible();
   const retired = await request.post("/api/identity/verify", { data: {} });
   expect(retired.status()).toBe(410);
   expect(retired.headers()["set-cookie"]).toBeUndefined();

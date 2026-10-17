@@ -137,5 +137,5 @@ it("message API retains the reviewer access guard", async () => {
     body: JSON.stringify({ version: 0, action: "SEND_MESSAGE", reason: "Xin chào" }),
   }), { params: Promise.resolve({ id }) });
   expect(response.status).toBe(403);
-  expect((await response.json()).error.code).toBe("REVIEW_NOT_ENABLED");
+  expect((await response.json()).error.code).toBe("ORGANIZATION_AUTH_REQUIRED");
 });

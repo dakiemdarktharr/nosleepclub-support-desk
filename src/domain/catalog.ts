@@ -1,5 +1,6 @@
 import type { ServiceGroup } from "./contracts";
 import { departmentOptions } from "./departments";
+import { companyServiceGroups, companyServices } from "./company-support";
 
 type Service = {
   label: string;
@@ -8,10 +9,15 @@ type Service = {
   fields: string[];
 };
 const words = (text: string) => text.split(" ");
+const companyCatalog = Object.fromEntries(companyServiceGroups.map(group => [group, {
+  label: companyServices[group].label, team: companyServices[group].team,
+  labels: companyServices[group].topics.map(topic => topic.id),
+  fields: ["desiredOutcome", "timeWindow", "location", "neededBy", "requestReference", "businessPurpose"],
+}])) as Record<typeof companyServiceGroups[number], Service>;
 export const catalog: Record<ServiceGroup, Service> = {
   DEVICE_BOOT: {
     label: "Máy tính & thiết bị",
-    team: "IT Helpdesk",
+    team: "Hỗ trợ thiết bị",
     labels: words(
       "DEVICE_SHUTDOWN_GUIDANCE DEVICE_RESTART_GUIDANCE DEVICE_RESET_GUIDANCE DEVICE_FACTORY_RESET DEVICE_WONT_BOOT DEVICE_FREEZE DEVICE_SLOW DEVICE_CRASH DEVICE_UPDATE_DRIVER DEVICE_BATTERY DEVICE_DISPLAY DEVICE_AUDIO DEVICE_CAMERA DEVICE_PRINTER DEVICE_LOST_STOLEN DEVICE_REPLACEMENT DEVICE_WIPE",
     ),
@@ -21,7 +27,7 @@ export const catalog: Record<ServiceGroup, Service> = {
   },
   ACCOUNT_ACCESS: {
     label: "Tài khoản & quyền truy cập",
-    team: "IAM/IT",
+    team: "Quản lý tài khoản & truy cập",
     labels: words(
       "ACCOUNT_LOGIN ACCOUNT_LOCKED PASSWORD_RESET MFA_SETUP MFA_FAILURE SSO_FAILURE REQUEST_STANDARD_ACCESS REQUEST_READ_ACCESS REQUEST_WRITE_ACCESS REQUEST_ADMIN_ACCESS REQUEST_ROOT_ACCESS GROUP_MEMBERSHIP ROLE_CHANGE REVOKE_ACCESS SERVICE_ACCOUNT ACCOUNT_DEACTIVATION",
     ),
@@ -51,7 +57,7 @@ export const catalog: Record<ServiceGroup, Service> = {
   },
   SOFTWARE_LICENSE: {
     label: "Phần mềm & bản quyền",
-    team: "IT",
+    team: "Hỗ trợ phần mềm",
     labels: words(
       "SOFTWARE_INSTALL SOFTWARE_UPDATE SOFTWARE_UNINSTALL SOFTWARE_CRASH SOFTWARE_COMPATIBILITY SOFTWARE_PERFORMANCE LICENSE_ACTIVATION LICENSE_REQUEST APPROVED_CATALOG_LOOKUP BROWSER_EXTENSION UNSIGNED_SOFTWARE UNAPPROVED_SOFTWARE DEVELOPER_TOOL_SETUP",
     ),
@@ -127,6 +133,7 @@ export const catalog: Record<ServiceGroup, Service> = {
       "provider repository environment permission duration reason approvalReference",
     ),
   },
+  ...companyCatalog,
   OTHER: {
     label: "Khác / chưa rõ nhóm",
     team: "Classifier/reviewer",
@@ -222,6 +229,8 @@ export const fieldOptions: Record<string, string[]> = {
   protocol: ["TCP", "UDP", "HTTPS", "SSH", "RDP", "Other"],
 };
 export const fieldLabels: Record<string, string> = {
+  neededBy: "Thời điểm cần hỗ trợ",
+  requestReference: "Mã hồ sơ hoặc chứng từ (không có dữ liệu cá nhân)",
   department: "Phòng ban",
   incidentSite: "Khu vực sự cố",
   employeeId: "Mã nhân viên",
