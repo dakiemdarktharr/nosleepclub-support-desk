@@ -82,7 +82,15 @@ test("medium assistance passes to admin with history intact", async ({
   await expect(page.getByRole("article", { name: "Câu trả lời của trợ lý" })).toContainText("VNG Support");
   const detailUrl = `/api/support${new URL(page.url()).pathname}`;
   const before = (await (await page.request.get(detailUrl)).json()).data;
-  expect(before.assistance[0]).toMatchObject({ source: "deterministic", generationReason: "REVIEWED_TEMPLATE_SUFFICIENT" });
+  {
+      expect(before.assistance[0].generationReason).toBe("REVIEWED_TEMPLATE_SUFFICIENT");
+      expect(["deterministic", "cache"]).toContain(before.assistance[0].source);
+      if (before.assistance[0].source === "cache") {
+        expect(before.assistance[0].cache.kind).toBe("FAQ");
+        expect(before.assistance[0].cache.similarity).toBeGreaterThanOrEqual(.8);
+        expect(Date.parse(before.assistance[0].cache.expiresAt)).toBeGreaterThan(Date.now());
+      }
+    }
   await page
     .getByRole("button", {
       name: "D. Chuyển cho nhân viên hỗ trợ",

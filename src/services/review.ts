@@ -1,3 +1,5 @@
+import { assessSupportNeed } from "@/domain/support-need";
+import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
 import { createConversationAnswer } from "@/lib/conversation-model";
 import {
   isContinuationOnly,
@@ -32,7 +34,7 @@ const reviewSchema = z
       "OVERRIDE",
       "FULFILL",
     ]),
-    reason: z.string().trim().max(1000).default(""),
+    reason: z.string().trim().max(REVIEW_MESSAGE_MAX_LENGTH).default(""),
     target: z
       .enum(["APPROVED_BY_HUMAN", "REJECTED", "NEEDS_INFORMATION"])
       .optional(),
@@ -183,6 +185,9 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
     event.redactions = [
       ...new Set([...event.redactions, ...redactedReason.markers]),
     ];
+    // One atomic write stores the decision, audit and requester-facing message.
+    // A generated/selected draft alone never reaches this mutation.
+    event.senderMessage = reason;
     request.events.push(event);
   });
 }
@@ -310,6 +315,7 @@ export async function feedbackSupport(
   }
   return updateSupportRequest(id, input.version, (request) => {
     const before = request.status;
+    request.supportNeed = assessSupportNeed(request, safeReply?.text || (input.choice === "ADMIN" ? "Nhờ nhân viên hỗ trợ" : input.choice === "STILL_BROKEN" ? "Vẫn chưa được" : ""), assessment);
     request.feedback.push({
       choice: input.choice,
       timestamp: new Date().toISOString(),

@@ -1,6 +1,7 @@
 "use client";
 import { ContentSkeleton } from "./loading-feedback";
 import Link from "next/link";
+import { IncidentQueue } from "./incident-panel";
 import {
   Inbox,
   Search,
@@ -36,6 +37,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     [target, setTarget] = useState<RequestStatus>("NEEDS_INFORMATION"),
     [pending, setPending] = useState(false),
     [error, setError] = useState("");
+  const [groupIncidents, setGroupIncidents] = useState(true);
   const [filter, setFilter] = useState("pending");
   const [search, setSearch] = useState("");
   const [employeeId, setEmployeeId] = useState("");
@@ -53,7 +55,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     try {
       const saved: unknown = JSON.parse(sessionStorage.getItem("vng-review-filters-v1") || "null");
       if (saved && typeof saved === "object") {
-        if ("filter" in saved && typeof saved.filter === "string" && ["pending", "knowledge", "all"].includes(saved.filter)) setFilter(saved.filter);
+        if ("filter" in saved && typeof saved.filter === "string" && ["pending", "knowledge", "all", "auto"].includes(saved.filter)) setFilter(saved.filter);
         if ("origin" in saved && typeof saved.origin === "string" && ["support", "verify", "all"].includes(saved.origin)) setOrigin(saved.origin);
         if ("queue" in saved && typeof saved.queue === "string" && ["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"].includes(saved.queue)) setQueue(saved.queue);
         if ("search" in saved && typeof saved.search === "string") setSearch(saved.search.slice(0, 200));
@@ -71,7 +73,9 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     setSearch(""); setEmployeeId(""); setFilter("all"); setOrigin("all"); setQueue("all");
     setSelectedEmployeeId(""); setEmployeeSuggestions([]); setEmployeeSuggestionsOpen(false);
   }
+  const visibleRequests = requests.filter((row, index, all) => !groupIncidents || !row.incidentId || all.findIndex(r => r.incidentId === row.incidentId) === index);
   const quickQueues = [
+    { label: "Đã xử lý tự động", filter: "auto", queue: "all", icon: UserCheck },
     { label: "Chờ xử lý", filter: "pending", queue: "all", icon: Inbox },
     { label: "Ngoài quy định", filter: "pending", queue: "OUT_OF_POLICY", icon: ShieldAlert },
     { label: "Cần thẩm quyền", filter: "pending", queue: "AUTHORITY_REQUIRED", icon: UserCheck },
@@ -246,6 +250,8 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                 <span className="it-reload-label">Tải lại danh sách</span>
               </Button>
             </header>
+            <IncidentQueue />
+            <label className="flex items-center gap-2 my-3"><input type="checkbox" checked={groupIncidents} onChange={event => setGroupIncidents(event.target.checked)} />Gộp sự cố trùng trong danh sách đã tải (vẫn giữ mọi hồ sơ)</label>
             <div className="it-quick-queues" role="group" aria-label="Chọn nhanh hàng đợi">
               {quickQueues.map(({ label, filter: nextFilter, queue: nextQueue, icon: Icon }) => (
                 <button key={label} type="button" aria-pressed={filter === nextFilter && queue === nextQueue}
@@ -355,6 +361,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                     value={filter}
                     onChange={(event) => setFilter(event.target.value)}
                   >
+                    <option value="auto">Đã xử lý tự động</option>
                     <option value="pending">Đang chờ xử lý</option>
                     <option value="knowledge">
                       Gợi ý tri thức
@@ -396,7 +403,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                 <span role="status" aria-live="polite">
                   {loading
                     ? "Đang tải danh sách…"
-                    : `Đang hiển thị ${requests.length}/${total} yêu cầu.`}
+                    : `Đã tải ${requests.length}/${total} hồ sơ; hiển thị ${visibleRequests.length} mục${groupIncidents ? " sau gộp sự cố" : ""}.`}
                 </span>
                 {(search || employeeId || filter !== "all" || origin !== "all" || queue !== "all") && (
                   <Button variant="quiet" onClick={clearFilters}><X size={14} />Xóa bộ lọc</Button>
@@ -429,7 +436,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                   </div>
                 )}
                 <ul className="it-request-list review-list">
-                  {requests.map((request, index) => (
+                  {visibleRequests.map((request, index) => (
                     <li key={request.id}>
                       <Link
                         href={`/review?requestId=${request.id}`}
@@ -447,6 +454,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                         </div>
                         <div className="it-row-subject">
                           <strong>{request.title}</strong>
+                          {request.incidentId && <small>Sự cố chung · cập nhật một lần cho các hồ sơ cùng nhóm</small>}
                           <small>{catalog[request.serviceGroup].label}</small>
                           {request.employeeId && (
                             <small>Mã nhân viên: {request.employeeId}</small>

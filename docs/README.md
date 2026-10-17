@@ -7,6 +7,7 @@
 | Luồng xử lý và code | [Kiến trúc](ARCHITECTURE.md) |
 | Retrieval và nguồn trả lời | [Retrieval](RAG-RETRIEVAL.md), [câu trả lời](RAG-ANSWER.md), [quản trị tri thức](KNOWLEDGE-REVIEW.md) |
 | Dữ liệu và đánh giá | [Riêng tư](PRIVACY-INVENTORY.md), [evaluation](EVALUATION.md), [Enterprise 128 v1](ENTERPRISE-128-EVALUATION.md), [sentiment](SENTIMENT-EVALUATION.md) |
+| Hỗ trợ hàng loạt | [Contract](BATCH-SUPPORT-CONTRACT.md), [kiểm chứng](BATCH-SUPPORT-VALIDATION.md) |
 | Trình diễn | [Hướng dẫn giám khảo](JUDGE-ONBOARDING.md), [dataset](JUDGE-DATASETS.md) |
 | Thu thập feedback | [Protocol](INDEPENDENT-EVALUATION-PROTOCOL.md), [nội dung nộp](SUBMISSION-CONTENT.md) |
 | Quyết định còn áp dụng | [Policy](decisions/PERSON-A-POLICY-DECISIONS.md), [contract](decisions/PERSON-A-CONTRACT-DECISIONS.md), [quyền demo](decisions/DEMO-AUTHORITY-CONTRACT.md) |

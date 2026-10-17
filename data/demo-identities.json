@@ -17,7 +17,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "tuanna",
@@ -33,7 +34,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "khangtd",
@@ -49,7 +51,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "namlh",
@@ -65,7 +68,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "anvm",
@@ -81,7 +85,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "longdb",
@@ -97,7 +102,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "phucbt",
@@ -113,7 +119,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "tridm",
@@ -129,7 +136,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "linhhn",
@@ -145,7 +153,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "product"
     },
     {
       "id": "anhnm",
@@ -161,7 +170,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "product"
     },
     {
       "id": "chaudb",
@@ -177,7 +187,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "product"
     },
     {
       "id": "ngocvm",
@@ -193,7 +204,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "vypk",
@@ -209,7 +221,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "huymb",
@@ -225,7 +238,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "quancn",
@@ -241,7 +255,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "datlm",
@@ -257,7 +272,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "baotg",
@@ -273,7 +289,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "thaodp",
@@ -289,7 +306,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "tamcm",
@@ -305,7 +323,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "dungha",
@@ -321,7 +340,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "operations"
     },
     {
       "id": "diepln",
@@ -337,7 +357,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "sontt",
@@ -353,7 +374,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "nguyentk",
@@ -369,7 +391,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "hanhnm",
@@ -385,7 +408,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "product"
     },
     {
       "id": "hantng",
@@ -401,7 +425,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "product"
     },
     {
       "id": "khoilam",
@@ -417,7 +442,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "nganpnb",
@@ -433,7 +459,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "operations"
     },
     {
       "id": "chauvnm",
@@ -449,7 +476,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "finance"
     },
     {
       "id": "uyendtp",
@@ -465,7 +493,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "human_resources"
     },
     {
       "id": "vinhbdq",
@@ -481,7 +510,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "operations"
     },
     {
       "id": "hadnt",
@@ -497,7 +527,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "operations"
     },
     {
       "id": "minhhmn",
@@ -513,7 +544,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "operations"
     },
     {
       "id": "lamndp",
@@ -529,7 +561,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "quyendnt",
@@ -545,7 +578,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "product"
     },
     {
       "id": "hieuvdm",
@@ -561,7 +595,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "engineering"
     },
     {
       "id": "trucpht",
@@ -577,7 +612,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "operations"
     },
     {
       "id": "thanhmthd",
@@ -593,7 +629,8 @@
         }
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "nhungcnth",
@@ -609,7 +646,8 @@
         }
       ],
       "expectedAccess": "SECURITY_RISK",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "kietltmq",
@@ -625,7 +663,8 @@
         }
       ],
       "expectedAccess": "SECURITY_RISK",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "it"
     },
     {
       "id": "trangtlnd",
@@ -641,7 +680,8 @@
         }
       ],
       "expectedAccess": "IN_SCOPE",
-      "profileVersion": 2
+      "profileVersion": 2,
+      "department": "finance"
     }
   ]
 }

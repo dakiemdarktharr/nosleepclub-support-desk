@@ -327,3 +327,28 @@ Giữ đăng nhập ID-only và reviewer công khai theo lựa chọn của nhó
 Trước buổi trình diễn, kiểm tra máy in, VPN, reset có làm rõ, yêu cầu mở port nguy hiểm, DNS, hỏi tiếp, handoff và tra cứu lại trên desktop/mobile. Kiểm tra bằng lời gọi thật khi được phép, đối chiếu SHA và lưu receipt; dọn đúng ID dữ liệu giả lập vừa tạo sau khi lưu bằng chứng. Không chạy Verify bằng dữ liệu nghiệp vụ hoặc xóa theo điều kiện rộng.
 
 Dependency audit cần phân biệt runtime và toolchain. Lượt rà soát 15/10/2026: `npm audit --omit=dev` không có advisory; full audit còn 7 high trong chuỗi Tailwind/ESLint → glob → braces. [Advisory braces](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) chưa có bản vá công bố tại thời điểm kiểm tra. Không gọi `npm audit fix --force` hoặc tự thay major framework để làm sạch chỉ số. Chỉ dùng cấu hình glob tin cậy trong build/lint; rà bản vá hoặc migration toolchain riêng khi có phương án tương thích. Chạy lại audit ở mỗi lần phát hành.
+
+## Bổ sung phòng ban cho 40 ID hiện có
+
+Đọc manifest `data/demo-identities.json`; validate không chạm database:
+
+```sh
+node scripts/identity-demo-roster.mjs --file data/demo-identities.json
+node --test scripts/identity-demo-roster.test.mjs scripts/identity-demo-rename.test.mjs
+```
+
+Operator chỉ áp dụng trên database identity đã xác nhận, qua terminal có sẵn biến môi trường an toàn; không gửi URI/key vào chat. Dùng đúng database đang cấu hình trong `IDENTITY_MONGODB_DB` (không tự đổi sang database khác). Trong PowerShell:
+
+```powershell
+node scripts/identity-demo-roster.mjs --file data/demo-identities.json --apply --sync-departments --demo-id-only --database "$env:IDENTITY_MONGODB_DB" --actor operator-demo
+```
+
+Lệnh đối chiếu đúng 40 ID, tên, batch, profile version, role và scope trước khi bổ sung phòng ban còn trống. Không đổi ID, role hay scope; gặp phòng ban đã có nhưng khác manifest sẽ rollback cả batch. Chạy lại không tạo audit thừa. Lưu receipt ngoài Git. Commit này không tự chạy migration trên Production. Phiên đăng nhập đọc phòng ban từ Mongo, điền vào form và server dùng giá trị đó; người chưa có phòng ban vẫn dùng lựa chọn hiện có.
+
+## Vận hành cache và sự cố chung
+
+Giữ `MONGODB_URI` và `MONGODB_DB` hiện có cho Support. App tạo index trên `v3_support_shared_faq` (TTL 7 ngày) và `v3_support_incidents` (unique activeKey), cùng index liên kết hồ sơ. Không dùng database identity để lưu ticket. Runtime Production thiếu Mongo sẽ từ chối lưu; cache lỗi được coi là miss, không tạo fallback lưu trữ Production khác.
+
+Sự cố chỉ liên kết trong 24 giờ tính từ khi tạo nhóm. Sau 24 giờ hoặc khi đóng, yêu cầu mới tạo nhóm khác. Audit/cập nhật cũ được giữ để theo dõi; không xóa lịch sử theo TTL cache. Cập nhật dùng mẫu server có giới hạn an toàn, không cho gửi secrets hay lệnh tùy ý đến mọi người. Đánh dấu sự cố chung đã khắc phục không tự đóng ticket cá nhân. Màn hình theo dõi polling khi tab đang mở và online; không phải dịch vụ thông báo ngoài app. Danh sách nhóm hiển thị tối đa 50 nhóm đang mở mới nhất, hồ sơ vẫn tra cứu được riêng.
+
+Cache FAQ chỉ lưu mô tả công khai thuộc grammar đóng và hash template. Mỗi hit đối chiếu template hiện hành + policy, ngưỡng Dice trên tập từ >= 0,8; sửa template/policy tự vô hiệu hóa bản cũ. Không chia sẻ nội dung tự do/credential/entitlement. Verify và fault injection bỏ qua cache mới. Không thay model, rate limit hoặc quota. Đây chưa phải kiểm chứng tải 3.000 người hay bảo vệ DDoS đa vùng.

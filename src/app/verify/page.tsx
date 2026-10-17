@@ -10,11 +10,14 @@ import { SupportResult } from "@/components/support-result";
 import { EmployeeIdentityFields } from "@/components/employee-identity-fields";
 import { employeeIdentityError } from "@/domain/employee-identity";
 import { StaffWorkspace } from "@/components/staff-workspace";
+import { VerifyProgress } from "@/components/verify-progress";
+import { AiPending } from "@/components/loading-feedback";
 
 export default function VerifyPage() {
   const [pack, setPack] = useState("de-a-v3"),
     [running, setRunning] = useState(false);
   const [readback, setReadback] = useState("");
+  const [judging, setJudging] = useState(false);
   const [identity, setIdentity] = useState<Record<string, string>>({});
   const [judge, setJudge] = useState(""),
     [judged, setJudged] = useState<SupportRequest | null>(null),
@@ -69,6 +72,7 @@ export default function VerifyPage() {
     setRunning(true);
     setError("");
     stop.current = false;
+    if (!resume) setCurrentRun(null);
     let row: VerifyRun | null = null;
     try {
       row =
@@ -130,6 +134,7 @@ export default function VerifyPage() {
       return;
     }
     activeOperation.current = true;
+    setJudging(true);
     setRunning(true);
     setError("");
     setJudged(null);
@@ -157,6 +162,7 @@ export default function VerifyPage() {
       setError(error instanceof Error ? error.message : "API error");
     } finally {
       activeOperation.current = false;
+      setJudging(false);
       setRunning(false);
     }
   }
@@ -202,6 +208,9 @@ export default function VerifyPage() {
             Chạy toàn bộ test ({cases.length})
           </Button>
         </fieldset>
+        {!judging && (busy || currentRun) && <VerifyProgress
+          completed={results.length} total={currentRun?.cases.length ?? cases.length}
+          pending={running} loading={loading} starting={running && !currentRun} />}
         {currentRun && (
           <Card>
             <h2>Lần kiểm thử {currentRun.id.slice(0, 8)}</h2>
@@ -209,13 +218,14 @@ export default function VerifyPage() {
               Bắt đầu: {new Date(currentRun.createdAt).toLocaleString("vi-VN")} ·{" "}
               {currentRun.status}
             </p>
+            <div className="flex flex-wrap items-center gap-3 my-3">
             <Link
               className="text-accent underline"
               href={`/verify?run=${currentRun.id}`}
             >
               Liên kết kết quả đã lưu
             </Link>
-            {running ? (
+            {running && !judging ? (
               <Button variant="danger" onClick={() => void stopRun()}>
                 Dừng sau case hiện tại
               </Button>
@@ -226,6 +236,7 @@ export default function VerifyPage() {
                 </Button>
               )
             )}
+            </div>
             <p className="text-sm">
               Có thể rời trang rồi mở lại liên kết này. Khi bị giới hạn tốc độ,
               chờ một phút và bấm Tiếp tục.
@@ -395,6 +406,7 @@ export default function VerifyPage() {
               Đánh giá input mới
             </Button>
           </form>
+          {judging && <AiPending message="Đang kiểm tra tình huống mới và đọc lại hồ sơ…" />}
           {judged?.decision && judged.canonical && (
             <div className="mt-4 space-y-3">
               <p>Kiểm tra lưu trữ: {readback}</p>

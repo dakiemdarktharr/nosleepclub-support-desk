@@ -1,4 +1,5 @@
 import { TransitionLink } from "@/components/route-transition";
+import { GuestEntryLink } from "@/components/guest-entry-link";
 import Image from "next/image";
 import { ArrowRight, Headphones, ClipboardList } from "lucide-react";
 
@@ -19,7 +20,7 @@ export default function Home() {
             <ArrowRight size={24} aria-hidden="true" />
           </TransitionLink>
         </div>
-        <TransitionLink transition="line" className="button secondary guest-entry" href="/guest">Đăng nhập không cần tài khoản</TransitionLink>
+        <GuestEntryLink className="button secondary guest-entry">Đăng nhập không cần tài khoản</GuestEntryLink>
       </section>
       <div className="welcome-art">
         <span className="mascot-orbit" aria-hidden="true" />

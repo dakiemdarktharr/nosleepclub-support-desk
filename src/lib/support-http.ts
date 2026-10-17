@@ -109,6 +109,7 @@ export async function requireEmployeeIdentity(value: unknown, request?: Request)
     if (input.fields.employeeId?.trim().toLowerCase() !== employee.id)
       throw new SupportError("IDENTITY_MISMATCH", "ID trong yêu cầu khác phiên hiện tại. Tải lại hoặc đăng xuất để dùng demo.", 403);
     input.fields.employeeId = employee.id;
+    if (employee.department) input.fields.department = employee.department;
   }
   const identityError = employeeIdentityError(input.fields);
   if (identityError)

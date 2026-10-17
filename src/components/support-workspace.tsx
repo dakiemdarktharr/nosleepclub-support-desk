@@ -1,4 +1,5 @@
 "use client";
+import { incidentTopic } from "@/domain/shared-support";
 import { useEffect, useState } from "react";
 import { identityApi } from "@/components/identity-ui";
 import { useRouter } from "next/navigation";
@@ -35,6 +36,7 @@ import { SupportResult } from "@/components/support-result";
 import { SupportField } from "@/components/support-field";
 import { AssistanceHistory } from "@/components/support-history";
 import { AiPending } from "@/components/loading-feedback";
+import { ensureGuestSession, startGuestSession } from "@/lib/guest-demo-session";
 type Preview = {
   durationProposal?: DurationProposal | null;
   input: SupportInput;
@@ -63,8 +65,8 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
   useEffect(() => {
     if (guest) return;
     let active = true;
-    void identityApi<{ id: string; assurance: string }>("session").then((session) => {
-      if (active) { setAccount(session); setInput((current) => ({ ...current, fields: { ...current.fields, employeeId: session.id } })); }
+    void identityApi<{ id: string; assurance: string; department?: string }>("session").then((session) => {
+      if (active) { setAccount(session); setInput((current) => ({ ...current, fields: { ...current.fields, employeeId: session.id, ...(session.department ? { department: session.department } : {}) } })); }
     }).catch(() => { /* Public judge demo remains available without an account. */ });
     return () => { active = false; };
   }, [guest]);
@@ -80,6 +82,18 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
   const [preview, setPreview] = useState<Preview | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  useEffect(() => {
+    if (guest) {
+      const url = new URL(window.location.href);
+      const newSession = url.searchParams.get("newSession") === "1";
+      if (newSession) {
+        url.searchParams.delete("newSession");
+        window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      }
+      const guestDepartment = newSession ? startGuestSession() : ensureGuestSession();
+      setInput(current => ({ ...current, guestDepartment }));
+    }
+  }, [guest]);
   function edit(next: Partial<SupportInput>) {
     setInput((current) => ({ ...current, ...next, previewId: undefined }));
     setPreview(null);
@@ -175,7 +189,10 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
   return (
     <main className="page page-narrow page-enter" data-guide-stage={guest ? undefined : preview ? "sender-preview" : "sender-form"}>
       <h1>Tôi cần hỗ trợ</h1>
-      {guest && <p className="guest-notice">Bạn đang dùng hỗ trợ không cần tài khoản. Hỏi đáp và hướng dẫn thông thường có thể dùng ngay; yêu cầu nhạy cảm vẫn cần kiểm tra hoặc chuyển người phụ trách.</p>}
+      {guest && <div className="guest-notice">
+        <p role="status" aria-label="Phòng ban phiên khách"><strong>Phiên khách demo · Phòng ban ngẫu nhiên: {input.guestDepartment ? optionName(input.guestDepartment) : "Đang chọn…"}</strong></p>
+        <p>Phòng ban giữ nguyên trong phiên này; chọn lại đăng nhập không cần tài khoản từ trang đầu sẽ nhận phòng ban khác. Đây là thông tin giả lập, không cấp quyền nhân viên. Hỏi đáp và hướng dẫn thông thường dùng được ngay; yêu cầu nhạy cảm vẫn cần kiểm tra hoặc chuyển người phụ trách.</p>
+      </div>}
       {account && <Alert>ID {account.id} · Truy cập demo, chưa xác minh danh tính. <button type="button" className="identity-text-link" onClick={async () => { try { await identityApi("logout", {}); setAccount(null); edit({ fields: { ...input.fields, employeeId: "" } }); } catch (cause) { setError((cause as Error).message); } }}>Đăng xuất</button></Alert>}
       <p className="page-description">
         Bạn cứ mô tả vấn đề bằng lời của mình. Chúng tôi sẽ giúp bạn tìm hướng
@@ -342,6 +359,10 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
                 mã xác minh.
               </span>
             </label>
+            {incidentTopic(input.rawText) && <label>Khu vực sự cố (để nhận cập nhật chung)
+              <input aria-label="Khu vực sự cố" value={input.fields.incidentSite || ""} maxLength={40} pattern="[A-Za-z0-9][A-Za-z0-9_-]+" placeholder="Mã khu vực, ví dụ DEMO-HQ" onChange={event => edit({ fields: { ...input.fields, incidentSite: event.target.value } })} />
+              <span className="field-hint">Dùng cùng mã khu vực với đồng nghiệp. Bỏ trống nếu chưa biết; yêu cầu vẫn được tiếp nhận riêng. Không nhập tên người hoặc địa chỉ.</span>
+            </label>}
           </fieldset>
           {error && <Alert tone="error">{error}</Alert>}
           {busy && !preview && <AiPending />}

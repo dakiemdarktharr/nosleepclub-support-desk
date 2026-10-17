@@ -1116,3 +1116,23 @@ input:not([type="checkbox"]),textarea { transition:border-color 150ms,box-shadow
   .skeleton-bone::after, .it-loading span::after { animation: none; display: none; }
   .ai-progress > span { animation: none; transform: none; width: 100%; opacity: .65; }
 }
+
+.review-drafts { margin: 1rem 0; }
+.review-draft-option { display: grid; gap: .3rem; text-align: left; width: 100%; padding: .75rem; border: 1px solid #d8dde3; border-radius: .75rem; margin-top: .5rem; background: #fff; font-size: .875rem; }
+.review-draft-option:hover { border-color: #f05a22; background: #fff7f2; }
+.review-draft-option:focus-visible { outline: 3px solid #ae380d; outline-offset: 2px; }
+.reviewer-messages { list-style: none; padding: 0; display: grid; gap: 12px; margin-top: 12px; }
+.reviewer-messages li { padding: 16px; border-radius: 4px 18px 18px; background: var(--accent-soft); border: 1px solid #f2d3c6; overflow-wrap: anywhere; }
+.reviewer-messages li > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; font-size: .8rem; }
+.reviewer-messages time { color: #59524e; }
+.reviewer-messages p { margin: 8px 0 0; white-space: pre-wrap; }
+.verify-progress { padding: 20px; border: 1px solid #f2d3c6; border-radius: 18px; background: #fffaf7; }
+.verify-progress-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--accent-ink); }
+.verify-progress-track { height: 10px; margin: 14px 0 10px; border-radius: 999px; overflow: hidden; background: #f3d5c6; }
+.verify-progress-track > span { display: block; height: 100%; width: 100%; background: var(--orange); border-radius: inherit; transform-origin: left center; transition: transform 380ms cubic-bezier(.22,1,.36,1); }
+.verify-progress-track.is-indeterminate > span { width: 38%; animation: ai-progress-travel 1600ms cubic-bezier(.45,0,.25,1) infinite; }
+.verify-progress small { color: #59524e; }
+@media (prefers-reduced-motion: reduce) {
+  .verify-progress-track > span { transition: none; animation: none !important; }
+  .verify-progress-track.is-indeterminate > span { width: 100%; opacity: .55; }
+}

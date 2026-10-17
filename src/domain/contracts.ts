@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { WorkEvidence } from "./work-evidence";
+import type { GuestDepartment } from "./guest-session";
 import type { ConversationContext, ConversationLabel } from "./conversation";
 
 export const requestKinds = [
@@ -92,6 +93,7 @@ export type Extraction = z.infer<typeof extractionSchema>;
 
 export type SupportInput = {
   requesterMode?: "guest";
+  guestDepartment?: GuestDepartment;
   mode: "freeform" | "structured";
   serviceGroup: ServiceGroup;
   requestKind?: RequestKind;
@@ -218,6 +220,7 @@ export type ConversationAnswer = {
   ignoredOverride: boolean;
 };
 export type Assistance = {
+  cache?: { kind: "FAQ"; createdAt: string; expiresAt: string; similarity: number };
   generationReason?: "REVIEWED_TEMPLATE_SUFFICIENT";
   model?: CanonicalRequest["model"];
   fallbackReason?: string;
@@ -237,6 +240,8 @@ export type Assistance = {
   timestamp: string;
 };
 export type AuditEvent = {
+  /** The redacted message confirmed by a reviewer, visible to the requester. */
+  senderMessage?: string;
   generationReason?: Assistance["generationReason"];
   model?: CanonicalRequest["model"];
   assistanceModel?: CanonicalRequest["model"];
@@ -276,6 +281,9 @@ export type SupportRequest = {
   input: SupportInput;
   originalQuestion?: string;
   intakeSentiment?: SentimentAssessment;
+  supportNeed?: import("./support-need").SupportNeed;
+  incidentId?: string;
+  incident?: import("../lib/support-incidents").IncidentView;
   stepExplanations?: Array<{ step: number; text: string; timestamp: string }>;
   canonical: CanonicalRequest | null;
   decision: Decision | null;
@@ -309,6 +317,7 @@ export type SupportSummary = Pick<
   serviceGroup: ServiceGroup;
   action: Action | null;
   hasKnowledgeCandidate?: boolean;
+  incidentId?: string;
   uncertaintyClass?: Decision["uncertaintyClass"];
   assignedTeam?: string;
 };

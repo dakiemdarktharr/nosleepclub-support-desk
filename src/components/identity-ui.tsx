@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { GuestEntryLink } from "./guest-entry-link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { applicationInputSchema, environments, operations, resources, scopeKey, scopeRisk, scopeSchema, type JobProfile, type Scope } from "@/domain/identity";
@@ -34,7 +35,7 @@ export function LoginPanel() {
       {error && <Alert tone="error">{error}</Alert>}
       <Button disabled={busy}>{busy ? "Đang xử lý…" : "Đăng nhập"}</Button>
     </form>
-    <Link className="button secondary guest-entry" href="/guest">Đăng nhập không cần tài khoản</Link>
+    <GuestEntryLink className="button secondary guest-entry">Đăng nhập không cần tài khoản</GuestEntryLink>
     <Link className="identity-text-link" href="/identity/new">Nhân viên mới?</Link>
 
     <details className="login-options"><summary>Hướng dẫn & tùy chọn</summary><p>Đăng nhập chỉ bằng ID là chế độ demo, chưa xác minh người sử dụng. ID có vai trò IT mở trang cấp ID; người biết ID IT có thể mạo danh. Chỉ dùng dữ liệu giả lập.</p><div className="identity-links"><Link href="/identity/track">Theo dõi đơn cấp ID</Link><Link href="/help">Hướng dẫn sử dụng</Link><button type="button" onClick={() => window.dispatchEvent(new Event("vng-open-guide"))}>Hướng dẫn demo</button><Link href="/send-help">Trải nghiệm demo</Link></div></details>

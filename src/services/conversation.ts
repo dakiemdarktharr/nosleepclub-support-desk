@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assessSupportNeed, repeatedAffect } from "@/domain/support-need";
 import {
   getSupportRequest,
   SupportError,
@@ -35,6 +36,7 @@ export async function continueConversation(id: string, value: unknown) {
   const reply = prepareInput({ rawText: input.question, idempotencyKey: id });
   const baseline = extractIntake(reply.input, reply.markers);
   const risky = requiresFeedbackAnalysis(baseline);
+  if (!risky && repeatedAffect(current, safeReply)) return current;
   const assessment = risky ? undefined : await analyzeSupportSentiment(safeReply, "post-answer");
   const sentiment = assessment?.sentiment ?? "neutral";
   const choice = risky ? null : explicitFeedbackChoice(safeReply);
@@ -46,6 +48,7 @@ export async function continueConversation(id: string, value: unknown) {
     }, assessment);
   if (!risky && isFeedbackComment(safeReply))
     return updateSupportRequest(id, input.version, (request) => {
+      request.supportNeed = assessSupportNeed(request, safeReply, assessment);
       request.feedback.push({ choice: "COMMENT", sentiment, sentimentAssessment: assessment, replyText: safeReply, timestamp: new Date().toISOString() });
       request.events.push(auditEvent(request, request.status, "FEEDBACK", "employee-demo",
         `Ghi nhận cảm xúc ${sentiment}; chưa có xác nhận giải quyết hoặc yêu cầu chuyển người. Không đổi trạng thái.`));
@@ -68,6 +71,7 @@ export async function continueConversation(id: string, value: unknown) {
   });
   const result = await completeAnalysis(safe.input, safe.markers);
   return updateSupportRequest(id, input.version, (request) => {
+    request.supportNeed = assessSupportNeed(request, safeReply, assessment);
     request.feedback.push({
       choice: "STILL_BROKEN",
       timestamp: new Date().toISOString(),

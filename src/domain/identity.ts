@@ -62,6 +62,7 @@ export type IdentityApplication = {
   employeeId?: string; grantedProfile?: { id: string; version: number };
 };
 export type EmployeeAccount = {
+  department?: string;
   id: string; fullName: string; status: "ACTIVE" | "DISABLED"; profileId: string; profileVersion: number;
   roles: Array<"identity-admin">; createdAt: string; applicationId: string;
   // Legacy delivery metadata; not used by ID-only login and never returned publicly.

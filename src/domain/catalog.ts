@@ -139,7 +139,7 @@ export const catalog: Record<ServiceGroup, Service> = {
 };
 
 export const commonFields = words(
-  "impact environment urgency desiredOutcome approvalStatus dataSensitivity department employeeId",
+  "impact environment urgency desiredOutcome approvalStatus dataSensitivity department employeeId incidentSite",
 );
 export const fieldOptions: Record<string, string[]> = {
   department: [
@@ -232,6 +232,7 @@ export const fieldOptions: Record<string, string[]> = {
 };
 export const fieldLabels: Record<string, string> = {
   department: "Phòng ban",
+  incidentSite: "Khu vực sự cố",
   employeeId: "Mã nhân viên",
   impact: "Mức độ ảnh hưởng",
   urgency: "Mức độ khẩn cấp",

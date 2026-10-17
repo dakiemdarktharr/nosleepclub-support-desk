@@ -20,7 +20,7 @@ export async function GET(request: Request, context: Context) {
     if (path.join("/") === "profiles") return listIdentityProfiles();
     if (path.join("/") === "session") {
       const { employee, assurance } = await requireIdentitySession(request);
-      return { id: employee.id, name: employee.fullName, assurance, canReviewIds: employee.roles.includes("identity-admin") };
+      return { id: employee.id, name: employee.fullName, department: employee.department, assurance, canReviewIds: employee.roles.includes("identity-admin") };
     }
     if (path.length === 2 && path[0] === "applications") return trackIdentityApplication(z.string().uuid().parse(path[1]), z.string().regex(/^[a-f0-9]{64}$/).parse(request.headers.get("x-tracking-token")));
     await requireIdentitySession(request, true);

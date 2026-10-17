@@ -32,7 +32,7 @@ const querySchema = z.object({
       .pipe(z.string().regex(employeeIdPattern))
       .optional(),
   ),
-  status: z.enum(["all", "pending", "knowledge"]).default("all"),
+  status: z.enum(["all", "pending", "knowledge", "auto"]).default("all"),
   origin: z.enum(["all", "support", "verify"]).default("all"),
   queue: z.enum(["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"]).default("all"),
   requestId: z.string().uuid().optional(),
@@ -64,6 +64,7 @@ function filterFor(query: SupportQuery): Filter<Row> {
   if (query.employeeId)
     filter["data.input.fields.employeeId"] = query.employeeId;
   if (query.queue !== "all") filter["data.decision.uncertaintyClass"] = query.queue;
+  if (query.status === "auto") filter["data.events"] = { $elemMatch: { afterStatus: "AUTO_APPROVED" } };
   if (query.status === "pending") filter["data.status"] = { $in: pending };
   if (query.status === "knowledge")
     filter["data.knowledgeCandidate.status"] = "PENDING_REVIEW";
@@ -97,7 +98,7 @@ async function memoryRows(query: SupportQuery) {
           query.employeeId) &&
       (query.queue === "all" || row.decision?.uncertaintyClass === query.queue) &&
       (query.status === "all" ||
-        (query.status === "pending"
+        (query.status === "auto" ? row.events.some(event => event.afterStatus === "AUTO_APPROVED") : query.status === "pending"
           ? pending.includes(row.status)
           : row.knowledgeCandidate?.status === "PENDING_REVIEW")) &&
       (query.origin === "all" ||
@@ -120,6 +121,7 @@ export async function supportPage(
         .find(filter, {
           projection: {
             "data.id": 1,
+            "data.incidentId": 1,
             "data.version": 1,
             "data.status": 1,
             "data.createdAt": 1,
@@ -151,6 +153,7 @@ export async function supportPage(
   return {
     items: rows.map(({ data: row }) => ({
       id: row.id,
+      incidentId: row.incidentId,
       version: row.version,
       status: row.status,
       createdAt: row.createdAt,

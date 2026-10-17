@@ -15,6 +15,7 @@ const scope = z.object({
 const account = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/),
   fullName: z.string().trim().min(2).max(120),
+  department: z.enum(['it', 'engineering', 'product', 'sales', 'marketing', 'finance', 'human_resources', 'operations', 'other']).optional(),
   jobPosition: z.string().trim().min(2).max(90),
   profileId: z.string().uuid(), profileVersion: z.number().int().positive().optional(), scopes: z.array(scope).length(1),
   expectedAccess: z.enum(['IN_SCOPE', 'BEYOND_AUTHORITY', 'SECURITY_RISK']),
@@ -40,7 +41,7 @@ export function validateRoster(value) {
   }
   return roster;
 }
-export async function importDemoRoster(client, database, value, actor) {
+export async function importDemoRoster(client, database, value, actor, syncDepartments = false) {
   const roster = validateRoster(value);
   z.string().trim().min(3).max(120).parse(actor);
   const db = client.db(database);
@@ -56,7 +57,7 @@ export async function importDemoRoster(client, database, value, actor) {
   const session = client.startSession();
   try {
     return await session.withTransaction(async () => {
-      const receipt = { batchId: roster.batchId, manifestSha256: digest, database, created: [], unchanged: [] };
+      const receipt = { batchId: roster.batchId, manifestSha256: digest, database, created: [], unchanged: [], departmentsUpdated: [] };
       for (const row of roster.accounts) {
         const applicationId = `${roster.batchId}:${row.id}`;
         const profileName = `${row.jobPosition} — demo`;
@@ -70,11 +71,19 @@ export async function importDemoRoster(client, database, value, actor) {
             || existing.roles.length !== 0 || profile.version !== profileVersion || !profile.active || profile.name !== profileName
             || profile.createdBy !== roster.batchId || JSON.stringify(profile.scopes) !== JSON.stringify(row.scopes))
             throw new Error('EXISTING_RECORD_CONFLICT');
-          receipt.unchanged.push(row.id); continue;
+          if (row.department && existing.department !== row.department) {
+            if (!syncDepartments || existing.department !== undefined) throw new Error('DEPARTMENT_CONFLICT');
+            const changed = await db.collection('identity_employees').updateOne({ id: row.id, applicationId, department: { $exists: false } }, { $set: { department: row.department } }, { session });
+            if (changed.modifiedCount !== 1) throw new Error('DEPARTMENT_CONFLICT');
+            await db.collection('identity_audit').insertOne({ id: randomUUID(), at: new Date().toISOString(), actor, action: 'DEMO_DEPARTMENT_ASSIGNED', subject: row.id, reason: `Synthetic department ${row.department}; manifest ${digest}; no scopes or roles changed.` }, { session });
+            receipt.departmentsUpdated.push(row.id);
+          } else receipt.unchanged.push(row.id);
+          continue;
         }
+        if (syncDepartments) throw new Error('EXISTING_ACCOUNT_REQUIRED');
         const now = new Date().toISOString();
         await db.collection('identity_profiles').insertOne({ id: row.profileId, version: profileVersion, name: profileName, scopes: row.scopes, active: true, createdAt: now, createdBy: roster.batchId }, { session });
-        await db.collection('identity_employees').insertOne({ id: row.id, fullName: row.fullName, status: 'ACTIVE', profileId: row.profileId, profileVersion, roles: [], createdAt: now, applicationId }, { session });
+        await db.collection('identity_employees').insertOne({ id: row.id, fullName: row.fullName, status: 'ACTIVE', profileId: row.profileId, profileVersion, roles: [], createdAt: now, applicationId, ...(row.department ? { department: row.department } : {}) }, { session });
         await db.collection('identity_audit').insertOne({ id: randomUUID(), at: now, actor, action: 'OPERATOR_DEMO_ROSTER_CREATED', subject: row.id,
           reason: `User-authorized synthetic account; batch ${roster.batchId}; manifest ${digest}. Job scopes remain subject to runtime policy; no identity-admin role.`, version: profileVersion }, { session });
         receipt.created.push(row.id);
@@ -95,7 +104,7 @@ async function main() {
   if (!args.includes('--demo-id-only') || !uri || !database || database !== process.env.IDENTITY_MONGODB_DB || !actor)
     throw new Error('EXPLICIT_DATABASE_ACTOR_AND_DEMO_ACK_REQUIRED');
   const client = new MongoClient(uri, { serverSelectionTimeoutMS: 8000 });
-  try { await client.connect(); console.log(JSON.stringify(await importDemoRoster(client, database, roster, actor))); }
+  try { await client.connect(); console.log(JSON.stringify(await importDemoRoster(client, database, roster, actor, args.includes('--sync-departments')))); }
   finally { await client.close(); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

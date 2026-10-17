@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { guestDepartments } from "./guest-session";
 import {
   allFields,
   catalog,
@@ -12,6 +13,7 @@ import { isEmployeeIdentityField, normalizeEmployeeId } from "./employee-identit
 export const supportInputSchema = z
   .object({
     requesterMode: z.literal("guest").optional(),
+    guestDepartment: z.enum(guestDepartments).optional(),
     mode: z.enum(["freeform", "structured"]).default("freeform"),
     serviceGroup: z.enum(serviceGroups).default("OTHER"),
     requestKind: z.enum(requestKinds).optional(),
@@ -40,6 +42,8 @@ export const supportInputSchema = z
       : input.fields,
   }))
   .superRefine((input, ctx) => {
+    if (input.guestDepartment && input.requesterMode !== "guest")
+      ctx.addIssue({ code: "custom", path: ["guestDepartment"], message: "Phòng ban giả lập chỉ dùng cho phiên khách." });
     if (input.requesterMode === "guest" && (input.verifyRunId || input.verifyCaseId))
       ctx.addIssue({ code: "custom", path: ["requesterMode"], message: "Luồng khách không phải lượt Verify." });
     if (Boolean(input.verifyRunId) !== Boolean(input.verifyCaseId))

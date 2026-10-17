@@ -1,3 +1,7 @@
+import { joinIncident } from "@/lib/support-incidents";
+import { sharedFaqAnswer } from "@/lib/shared-faq-cache";
+import { publicFaqTopic } from "@/domain/shared-support";
+import { guidanceTemplate } from "@/domain/guidance";
 import {
   conversationRoute,
   conversationalCanonical,
@@ -162,9 +166,10 @@ export async function analyze(
   // Sender identity is metadata for record management, not a support fact.
   const analysisInput = {
     ...input,
+    guestDepartment: undefined,
     fields: Object.fromEntries(
       Object.entries(input.fields).filter(
-        ([field, value]) => !isEmployeeIdentityField(field) && value.trim(),
+        ([field, value]) => !isEmployeeIdentityField(field) && field !== "incidentSite" && value.trim(),
       ),
     ),
   };
@@ -264,6 +269,20 @@ export async function completeAnalysis(
   markers: string[],
   options: ModelOptions = {},
 ) {
+  const cacheAllowed = !options.run && !options.fault && !options.assistanceRound && !input.verifyRunId &&
+    (process.env.NODE_ENV !== "test" || process.env.SUPPORT_SHARED_CACHE_TEST === "true");
+  if (cacheAllowed && publicFaqTopic(input.rawText) && input.mode === "freeform") {
+    const baseline = extractIntake({ ...input, fields: {} }, markers);
+    const decision = evaluatePolicy(baseline, verifyApproval);
+    if (safeDeterministicGuidance(input, baseline) && reviewedGuideAnswers(input, baseline, 0)) {
+      const assistance = await sharedFaqAnswer(input, baseline, decision, {
+        ...guidanceTemplate(baseline), source: "deterministic", timestamp: new Date().toISOString(),
+        generationReason: "REVIEWED_TEMPLATE_SUFFICIENT",
+      }, "read");
+      if (assistance.source === "cache") return { canonical: baseline, decision, assistance,
+        sentiment: supportRequestSentimentFallback(input.rawText) };
+    }
+  }
   const result = await analyze(input, markers, options);
   let assistance = null;
   if (
@@ -286,6 +305,8 @@ export async function completeAnalysis(
       result.decision = evaluatePolicy(result.canonical, verifyApproval);
     }
   }
+  if (cacheAllowed && assistance && input.mode === "freeform")
+    assistance = await sharedFaqAnswer(input, result.canonical, result.decision, assistance);
   return { ...result, assistance };
 }
 export async function previewSupport(value: unknown, options: ModelOptions = {}) {
@@ -366,9 +387,7 @@ export async function submitSupport(
       Date.now() - Date.parse(existing.updatedAt) > 60_000
     ) {
       const result = await completeAnalysis(input, safe.markers, options);
-      return updateSupportRequest(existing.id, existing.version, (draft) => {
-        applyAnalysis(draft, result);
-      });
+      return finishAnalysis(existing, result);
     }
     return waitForDecision(existing);
   }
@@ -435,9 +454,18 @@ export async function submitSupport(
   }
   const result =
     cached ?? (await completeAnalysis(input, safe.markers, options));
-  return updateSupportRequest(request.id, 0, (draft) =>
-    applyAnalysis(draft, result),
-  );
+  return finishAnalysis(request, result);
+}
+
+async function finishAnalysis(request: SupportRequest, result: Awaited<ReturnType<typeof completeAnalysis>>) {
+  const incidentId = await joinIncident({ input: request.input, canonical: result.canonical, decision: result.decision });
+  return updateSupportRequest(request.id, request.version, draft => {
+    applyAnalysis(draft, result);
+    if (incidentId) {
+      draft.incidentId = incidentId;
+      draft.events.push(auditEvent(draft, draft.status, "INCIDENT_LINKED", "server", "Liên kết sự cố cùng loại và khu vực trong 24 giờ; giữ hồ sơ riêng. Cập nhật và audit chung nằm trong nhóm " + incidentId));
+    }
+  });
 }
 
 function applyAnalysis(

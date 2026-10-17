@@ -1,16 +1,19 @@
 "use client";
 import Link from "next/link";
+import { IncidentUpdates } from "./incident-panel";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { SupportRequest } from "@/domain/contracts";
 import { allFields } from "@/domain/catalog";
-import { displayId, statusLabels } from "@/domain/presentation";
+import { displayId, statusLabels, optionName } from "@/domain/presentation";
 import { browserApi } from "@/lib/browser-api";
 import { Alert, Button, Card, Textarea } from "./ui";
 import { SupportResult } from "./support-result";
 import { SupportField } from "./support-field";
 import { AssistanceHistory, RequestProgress } from "./support-history";
 import { AiPending, ContentSkeleton } from "./loading-feedback";
+import { reviewerMessages } from "@/domain/reviewer-messages";
+import { mergeTrackedRequest } from "@/domain/tracking-state";
 export function RequestDetail({ id }: { id: string }) {
   const [request, setRequest] = useState<SupportRequest | null>(null),
     [error, setError] = useState("");
@@ -63,11 +66,7 @@ export function RequestDetail({ id }: { id: string }) {
           `/api/support/requests/${id}`,
         );
         if (current) {
-          setRequest((previous) =>
-            previous?.id === latest.id && latest.version > previous.version
-              ? latest
-              : previous,
-          );
+          setRequest(previous => mergeTrackedRequest(previous, latest));
         }
       } catch {
         // Retry on the next tick without clearing drafts or an action error.
@@ -93,12 +92,10 @@ export function RequestDetail({ id }: { id: string }) {
     setPending(true);
     setError("");
     try {
-      setRequest(
-        await browserApi<SupportRequest>(
-          `/api/support/requests/${id}/${path}`,
-          { ...body, version: request.version },
-        ),
+      const updated = await browserApi<SupportRequest>(
+        `/api/support/requests/${id}/${path}`, { ...body, version: request.version },
       );
+      setRequest({ ...updated, ...(updated.incidentId === request.incidentId ? { incident: request.incident } : {}) });
       setClarification("");
       setFollowup("");
       setFields({});
@@ -144,6 +141,7 @@ export function RequestDetail({ id }: { id: string }) {
       {!request && !error && <ContentSkeleton label="Đang tải yêu cầu…" />}
       {request && (
         <>
+          <IncidentUpdates incident={request.incident} />
           <Card className="request-status" data-guide="sender-result">
             <p role="status">
               Trạng thái: <strong>{statusLabels[request.status]}</strong>
@@ -190,16 +188,24 @@ export function RequestDetail({ id }: { id: string }) {
           </Card>
           <Card>
             <h2>Vấn đề bạn đã gửi</h2>
+            {request.input.requesterMode === "guest" && request.input.guestDepartment && <p>Phòng ban giả lập (phiên khách): {optionName(request.input.guestDepartment)}</p>}
             <blockquote className="original-question">
               {request.originalQuestion ||
                 request.input.rawText ||
                 "Yêu cầu theo danh mục"}
             </blockquote>
           </Card>
-          {request.events.at(-1)?.actor.includes("reviewer") && (
+          {reviewerMessages(request.events).length > 0 && (
             <Card>
-              <h2>Phản hồi của nhân viên</h2>
-              <p>{request.events.at(-1)?.explanation}</p>
+              <section aria-label="Tin nhắn từ nhân viên" aria-live="polite" aria-relevant="additions">
+                <h2>Phản hồi của nhân viên</h2>
+                <ol className="reviewer-messages">
+                  {reviewerMessages(request.events).map(message => <li key={message.id}>
+                    <div><strong>Nhân viên hỗ trợ</strong><time dateTime={message.timestamp}>{new Date(message.timestamp).toLocaleString("vi-VN")}</time></div>
+                    <p>{message.text}</p>
+                  </li>)}
+                </ol>
+              </section>
             </Card>
           )}
           {active &&

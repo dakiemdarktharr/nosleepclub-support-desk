@@ -1,9 +1,11 @@
+import { publicFaqTopic } from "@/domain/shared-support";
 import type { CanonicalRequest, SupportInput } from "@/domain/contracts";
 import { normalize, safeDeterministicGuidance } from "@/domain/text";
 
 // This only avoids optional paraphrasing AFTER extraction and policy checks.
 // A detailed/new question or follow-up still uses the normal answer path.
 export function reviewedGuideAnswers(input: SupportInput, canonical: CanonicalRequest, round = 0) {
+  if (round === 0 && canonical.intentLabel === "WIFI_NOT_WORKING" && publicFaqTopic(input.rawText) === "wifi" && safeDeterministicGuidance(input, canonical)) return true;
   if (round !== 0 || canonical.intentLabel !== "VPN_NOT_CONNECTING" ||
       !safeDeterministicGuidance(input, canonical)) return false;
   const clauses = normalize(input.rawText).split(/[.!?;\n]+/).map(value => value.trim()).filter(Boolean);

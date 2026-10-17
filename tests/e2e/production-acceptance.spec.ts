@@ -30,7 +30,15 @@ for (const [name, text, action, intent] of [
       expect(preview.assistance.stepByStepInstructions.at(-1)).toMatch(/Chỉ khi.*sẵn sàng/);
     }
     if (name === "dns") expect(preview.assistance.answer.label).toBe(preview.canonical.conversation.label);
-    if (name === "vpn") expect(preview.assistance).toMatchObject({ source: "deterministic", generationReason: "REVIEWED_TEMPLATE_SUFFICIENT" });
+    if (name === "vpn") {
+      expect(preview.assistance.generationReason).toBe("REVIEWED_TEMPLATE_SUFFICIENT");
+      expect(["deterministic", "cache"]).toContain(preview.assistance.source);
+      if (preview.assistance.source === "cache") {
+        expect(preview.assistance.cache.kind).toBe("FAQ");
+        expect(preview.assistance.cache.similarity).toBeGreaterThanOrEqual(.8);
+        expect(Date.parse(preview.assistance.cache.expiresAt)).toBeGreaterThan(Date.now());
+      }
+    }
     const savedResponse = page.waitForResponse(r => r.url().endsWith("/api/support/requests") && r.request().method() === "POST");
     await page.locator('[data-guide="sender-confirm"]').click();
     const saved = (await (await savedResponse).json()).data;

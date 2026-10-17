@@ -44,7 +44,7 @@ Nút **URL / QR** giúp sao chép URL hoặc mở app trên điện thoại. Hư
 ### Người gửi yêu cầu
 
 1. Vào **Gửi yêu cầu**, chọn **Mô tả vấn đề** hoặc **Chọn theo danh mục**.
-2. Nếu dùng tài khoản, chọn **Phòng ban** và nhập **Mã nhân viên**; phiên đăng nhập tự điền ID. Luồng **không cần tài khoản** bỏ các ô này, không tạo hay mượn danh tính nhân viên.
+2. Nếu dùng tài khoản, chọn **Phòng ban** và nhập **Mã nhân viên**; phiên đăng nhập tự điền ID và phòng ban đã cấu hình. Luồng **không cần tài khoản** bỏ các ô này, tự chọn một trong sáu phòng ban giả lập và ghi rõ trên form. Phòng ban giữ nguyên khi tải lại/gửi tiếp trong tab; chọn lại nút đăng nhập khách ở trang đầu sẽ nhận phòng ban khác. Trình duyệt chặn sessionStorage vẫn dùng được, nhưng reload có thể đổi phòng ban. Đây chỉ là ngữ cảnh demo, không tạo hay mượn danh tính/quyền nhân viên. Hồ sơ đã lưu giữ phòng ban của lúc gửi.
 3. Viết điều đang gặp, ví dụ “VPN không kết nối” hoặc “Máy in bị kẹt”. Không cần đặt thành câu hỏi; không cần biết trước nhóm hỗ trợ. Các trường nâng cao chỉ bổ sung khi có dữ kiện.
 4. Bấm **Gửi** để xem trước cách hệ thống hiểu yêu cầu, hướng dẫn hoặc câu hỏi làm rõ. Preview **chưa tạo hồ sơ yêu cầu**; dùng **Quay lại sửa** nếu cần.
 5. Chọn **Xác nhận và gửi yêu cầu**, hoặc **Lưu và tiếp tục trò chuyện** khi đang trong nhánh hội thoại.
@@ -73,7 +73,7 @@ Không gian reviewer hỗ trợ hiện là **public demo**, tách khỏi quyền
 [Rà soát mới](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/REPO-AUDIT-2026-10-14.md) · [Readiness kỹ thuật](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/TECHNICAL-READINESS.md) · [Đánh giá trước đó](https://github.com/dakiemdarktharr/vng-support/blob/cd50d826003f2e49e8d52b3e695ad6fe74fe15b7/docs/archive/COMPETITION-READINESS.md) · [Protocol held-out/người dùng](INDEPENDENT-EVALUATION-PROTOCOL.md) · [Nội dung 5 slide, video và checklist](SUBMISSION-CONTENT.md). Các bằng chứng độc lập/người dùng còn thiếu được ghi `NOT COLLECTED`; không suy ra 9,5/10 từ số test đạt.
 
 1. Mở **Kiểm thử / Verify**, chọn bộ và bấm **Chạy toàn bộ test** một lần.
-2. Xem expected/actual, rule, thời điểm và liên kết hồ sơ; mở audit để đối chiếu quyết định. Có thể dừng, xem lại và tiếp tục lượt chạy đã lưu.
+2. Thanh tiến trình cam hiển thị số ca đã có kết quả, tính cả PASS và FAIL; không phải dự đoán thời gian. Khi khởi tạo hoặc đọc lại kết quả, thanh chuyển sang đang chờ. Xem expected/actual, rule, thời điểm và liên kết hồ sơ; mở audit để đối chiếu quyết định. Có thể dừng, xem lại và tiếp tục lượt chạy đã lưu, kể cả sau lỗi kết nối.
 3. Nhập tình huống mới trong Verify hoặc form hỗ trợ. Input mới đi qua luồng xử lý ứng dụng, không nhận kết quả theo case ID.
 
 | Bộ | Số case | Nội dung |
@@ -83,3 +83,15 @@ Không gian reviewer hỗ trợ hiện là **public demo**, tách khỏi quyền
 | `judge-15` | 15 | Thiếu dữ kiện, ngoài quy định, vượt thẩm quyền, xung đột và prompt injection. |
 
 Verify tạo request qua API và đọc lại hồ sơ, audit, queue, metrics trước khi đánh dấu PASS. Đây là kiểm tra có ghi dữ liệu; provider OpenAI được cấu hình có thể phát sinh API call. Kết quả mock chỉ chứng minh luồng mô phỏng. Xem [hướng dẫn giám khảo](JUDGE-ONBOARDING.md), [các bộ dữ liệu](JUDGE-DATASETS.md) và [brief cuộc thi](../Challenge_Brief_OrganizationAI_VN.docx.md).
+
+## Xử lý nhiều yêu cầu giống nhau
+
+Người gửi sự cố mạng/điện nhập mã khu vực chung nếu biết; ví dụ giả lập `DEMO-HQ`. Nếu chưa biết, bỏ trống và tiếp tục gửi riêng. Hồ sơ theo dõi hiển thị cập nhật nhóm, thời điểm và lịch sử; nhóm hết hạn sau 24 giờ hoặc đóng không có nghĩa vấn đề cá nhân đã hết.
+
+Admin mở **Sự cố chung**, xem hồ sơ đại diện rồi chọn thông báo tiến độ phù hợp. Thông báo hiển thị cho mọi hồ sơ liên kết; app không tự gửi email. Bỏ chọn **Gộp sự cố trùng** để xem các hồ sơ riêng. Dùng **Đã xử lý tự động** để kiểm tra cả quyết định auto trước đó.
+
+Trong ô lý do, bấm **AI soạn 3 gợi ý tin nhắn**, chọn một câu rồi sửa cho đúng tình huống, chẳng hạn “Bạn giúp mình gửi thêm mã lỗi để mình kiểm tra chính xác hơn nhé”. Chọn gợi ý chưa gửi tin nhắn. Bấm thao tác phù hợp như **Hỏi thêm thông tin** để lưu quyết định và gửi nội dung vào hồ sơ người gửi. Người gửi mở trang theo dõi sẽ thấy **Phản hồi của nhân viên**, thời điểm và toàn bộ lịch sử; trang đang mở tự cập nhật khi có mạng. Tin nhắn vẫn còn sau reload và sau phản hồi tiếp theo. Đây là tin nhắn trong app, không phải email, push hoặc xác nhận người gửi đã đọc.
+
+Gợi ý 1 dùng để hỏi thêm thông tin còn thiếu. Gợi ý 2 giải đáp ngắn gọn; gợi ý 3 trình bày cách xử lý từng bước. Hai câu trả lời dựa trên vấn đề cụ thể và giữ đủ bước an toàn, không tự thêm thao tác mới. Với yêu cầu cần quyền hoặc chưa đủ dữ kiện, nội dung giải thích giới hạn và cách tiếp tục, không hứa đã giải quyết. Ô tin nhắn nhận tối đa 2.000 ký tự để chứa hướng dẫn đầy đủ; việc chọn câu trả lời không tự duyệt hoặc đóng hồ sơ.
+
+Câu hỏi VPN/Wi-Fi phổ biến có thể dùng mẫu được kiểm duyệt từ cache. Mật khẩu Wi-Fi và thông tin riêng không được chia sẻ qua cache. Nói rõ bước đang vướng giúp hỗ trợ tiếp chính xác; cảm xúc không tự cấp quyền hoặc đổi ưu tiên. Bạn luôn có thể chủ động yêu cầu nhân viên hỗ trợ.

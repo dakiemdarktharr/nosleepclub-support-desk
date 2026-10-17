@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { IncidentUpdates } from "./incident-panel";
+import { ReviewDrafts } from "./review-drafts";
+import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
 import { useState, type KeyboardEvent } from "react";
 import {
   ArrowLeft,
@@ -178,12 +181,13 @@ export function ReviewDetail({
             >
               {statusLabels[request.status]}
             </Badge>
-            {saved && <small>Đã lưu quyết định vào nhật ký</small>}
+            {saved && <small>Đã lưu quyết định và gửi tin nhắn vào hồ sơ người gửi</small>}
           </div>
         </div>
       </header>
       <div className="it-detail-grid">
         <div className="it-request-content">
+          <IncidentUpdates incident={request.incident} />
           <section
             className="it-surface it-intake"
             aria-labelledby="it-intake-heading"
@@ -194,8 +198,10 @@ export function ReviewDetail({
               </h2>
               <small>Đã che thông tin nhạy cảm</small>
             </div>
+            {request.supportNeed && <p className="it-field-hint">{request.supportNeed.note} Lượt báo còn vướng: {request.supportNeed.reportedFailedRounds}. Không tự tăng ưu tiên.</p>}
             <p className="it-request-text">{request.input.rawText}</p>
             <dl className="it-request-fields">
+              {request.input.requesterMode === "guest" && request.input.guestDepartment && <div><dt>Phòng ban giả lập (phiên khách)</dt><dd>{optionName(request.input.guestDepartment)} · Không xác minh danh tính</dd></div>}
               {Object.entries(request.input.fields).map(([key, value]) => (
                 <div key={key}>
                   <dt>{labelForField(key)}</dt>
@@ -239,15 +245,16 @@ export function ReviewDetail({
                 <span>{approveBlock}</span>
               </div>
             )}
+            <ReviewDrafts key={`${request.id}:${request.version}`} id={request.id} version={request.version} onChoose={setReason} />
             <label className="it-reason">
               Lý do (không bắt buộc khi duyệt yêu cầu)
               <Textarea
-                rows={3}
-                maxLength={1000}
+                rows={reason.length > 300 ? 8 : 3}
+                maxLength={REVIEW_MESSAGE_MAX_LENGTH}
                 value={reason}
                 data-guide="reviewer-reason"
                 aria-describedby="it-reason-hint"
-                placeholder="Ghi kết quả kiểm tra và lý do xử lý…"
+                placeholder="Bạn giúp mình bổ sung mã lỗi để mình kiểm tra chính xác hơn nhé…"
                 onChange={(event) => setReason(event.target.value)}
               />
             </label>
@@ -255,9 +262,9 @@ export function ReviewDetail({
               {pending
                 ? "Đang lưu quyết định…"
                 : reasonReady
-                  ? "Lý do sẽ được lưu vào nhật ký."
+                  ? "Tin nhắn này sẽ gửi vào trang theo dõi của người gửi và lưu trong nhật ký khi bạn xác nhận thao tác."
                   : "Có thể duyệt ngay. Các thao tác khác cần lý do tối thiểu 8 ký tự."}
-              <span>{reason.length}/1000</span>
+              <span>{reason.length}/{REVIEW_MESSAGE_MAX_LENGTH}</span>
             </p>
             <div data-guide="reviewer-actions">
               <div className="it-primary-actions">
