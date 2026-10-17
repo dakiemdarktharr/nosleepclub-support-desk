@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 export type SupportStage = "validationAuth" | "inputValidation" | "extraction" | "policy" |
   "retrieval" | "generation" | "outputValidation" | "persistence" | "sentiment";
 export type ModelMeasurement = {
-  purpose: "extraction" | "assistance" | "sentiment" | "review-draft";
+  purpose: "extraction" | "assistance" | "sentiment" | "review-draft" | "review-summary";
   model: string;
   attempts: number;
   latencyMs: number;

@@ -185,7 +185,7 @@ test("reviewer rejection requires a reason and records audit", async ({
 
     .fill("Không đủ scope và approval trong demo.");
   await page.getByRole("button", { name: "Từ chối", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Yêu cầu đã bị từ chối");
+  await expect(page.locator(".it-current-status")).toContainText("Yêu cầu đã bị từ chối");
   await expect(
     page.getByRole("button", { name: "Duyệt yêu cầu", exact: true }),
   ).toBeDisabled();
@@ -199,7 +199,7 @@ test("reviewer rejection requires a reason and records audit", async ({
   expect(detail.data.status).toBe("REJECTED");
   expect(detail.data.events.at(-1).actor).toBe("public-demo-reviewer");
   await page.reload();
-  await expect(page.getByRole("status")).toContainText("Yêu cầu đã bị từ chối");
+  await expect(page.locator(".it-current-status")).toContainText("Yêu cầu đã bị từ chối");
   await page.getByRole("link", { name: "← Danh sách yêu cầu" }).click();
   await expect(
     page.getByRole("link", { name: text, exact: false }),

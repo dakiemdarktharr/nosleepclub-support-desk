@@ -343,7 +343,7 @@ Operator chỉ áp dụng trên database identity đã xác nhận, qua terminal
 node scripts/identity-demo-roster.mjs --file data/demo-identities.json --apply --sync-departments --demo-id-only --database "$env:IDENTITY_MONGODB_DB" --actor operator-demo
 ```
 
-Lệnh đối chiếu đúng 40 ID, tên, batch, profile version, role và scope trước khi bổ sung phòng ban còn trống. Không đổi ID, role hay scope; gặp phòng ban đã có nhưng khác manifest sẽ rollback cả batch. Chạy lại không tạo audit thừa. Lưu receipt ngoài Git. Commit này không tự chạy migration trên Production. Phiên đăng nhập đọc phòng ban từ Mongo, điền vào form và server dùng giá trị đó; người chưa có phòng ban vẫn dùng lựa chọn hiện có.
+Lệnh đối chiếu đúng 40 ID, tên, batch, profile version, role và scope trước khi bổ sung phòng ban còn trống. Không đổi ID, role hay scope; gặp phòng ban đã có nhưng khác manifest sẽ rollback cả batch. Chạy lại không tạo audit thừa. Lưu receipt ngoài Git. Chỉ chạy migration trên Production khi chủ repo cho phép. Lượt ngày 17/10/2026 đã đồng bộ 40/40 phòng ban trên vng_main, giữ nguyên quyền; xem README và receipt của lượt đó. Phiên đăng nhập đọc phòng ban từ Mongo, điền vào form và server dùng giá trị đó; người chưa có phòng ban vẫn dùng lựa chọn hiện có.
 
 ## Vận hành cache và sự cố chung
 
@@ -352,3 +352,12 @@ Giữ `MONGODB_URI` và `MONGODB_DB` hiện có cho Support. App tạo index tr�
 Sự cố chỉ liên kết trong 24 giờ tính từ khi tạo nhóm. Sau 24 giờ hoặc khi đóng, yêu cầu mới tạo nhóm khác. Audit/cập nhật cũ được giữ để theo dõi; không xóa lịch sử theo TTL cache. Cập nhật dùng mẫu server có giới hạn an toàn, không cho gửi secrets hay lệnh tùy ý đến mọi người. Đánh dấu sự cố chung đã khắc phục không tự đóng ticket cá nhân. Màn hình theo dõi polling khi tab đang mở và online; không phải dịch vụ thông báo ngoài app. Danh sách nhóm hiển thị tối đa 50 nhóm đang mở mới nhất, hồ sơ vẫn tra cứu được riêng.
 
 Cache FAQ chỉ lưu mô tả công khai thuộc grammar đóng và hash template. Mỗi hit đối chiếu template hiện hành + policy, ngưỡng Dice trên tập từ >= 0,8; sửa template/policy tự vô hiệu hóa bản cũ. Không chia sẻ nội dung tự do/credential/entitlement. Verify và fault injection bỏ qua cache mới. Không thay model, rate limit hoặc quota. Đây chưa phải kiểm chứng tải 3.000 người hay bảo vệ DDoS đa vùng.
+
+
+## Tóm tắt hồ sơ cho reviewer
+
+POST `/api/review/:id/summary` yêu cầu quyền reviewer demo và version hiện hành; dùng cùng `AI_PROVIDER`/`AI_MODEL` đang cấu hình (Production: Luna). Một lượt inference, timeout 12 giây, tối đa 500 token đầu ra; schema và trích dẫn được kiểm tra trước khi hiển thị. Lỗi AI báo chưa có tóm tắt; nguyên văn và workflow vẫn dùng được. Bản tóm tắt không đi vào policy, routing, approval hoặc tin nhắn người gửi.
+
+Cache Mongo trong `v3_support_reviewer_summaries`, TTL 24 giờ. Khóa gồm request ID, nội dung đã redact, phiên bản prompt, provider/model; thay nội dung làm mất hiệu lực, đổi trạng thái mà không đổi nội dung dùng lại được. Mỗi lần đọc kiểm tra version và hạn dùng; không cache lỗi. Chỉ chế độ support memory-demo dùng cache bộ nhớ local. Mongo cache lỗi được coi là miss; kết quả hợp lệ vừa sinh vẫn hiển thị, không ghi fallback Production vào bộ nhớ. Single-flight chỉ trong cùng process; nhiều instance đồng thời có thể gọi trùng trước khi cache được lưu.
+
+Khi kiểm thử Production, lưu ID ticket và bản ghi summary thuộc đúng ticket đó trong manifest; sau khi lưu bằng chứng, chỉ dọn các ID thử do lượt kiểm tra tạo. Không xóa cache/ticket theo điều kiện rộng. Giữ các giới hạn đăng nhập ID-only/reviewer công khai của demo.

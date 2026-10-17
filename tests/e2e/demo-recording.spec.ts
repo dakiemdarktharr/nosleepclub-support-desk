@@ -61,17 +61,18 @@ test("record a raw demo and verify reviewer override, stop and audit", async ({
     await page
       .getByRole("button", { name: "Điều chỉnh quyết định", exact: true })
       .click();
-    await expect(page.getByRole("status")).toContainText(
+    await expect(page.locator(".it-current-status")).toContainText(
       "Cần bạn bổ sung thông tin",
     );
     await page
       .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
       .fill("Dừng hồ sơ demo sau khi kiểm tra thao tác điều chỉnh.");
     await page.getByRole("button", { name: "Dừng xử lý", exact: true }).click();
-    await expect(page.getByRole("status")).toContainText("Đã dừng xử lý");
+    await expect(page.locator(".it-current-status")).toContainText("Đã dừng xử lý");
     await expect(
       page.getByRole("button", { name: "Duyệt yêu cầu", exact: true }),
     ).toBeDisabled();
+    await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
     await page.locator("#request-audit").scrollIntoViewIfNeeded();
     const detail = await (
       await context.request.get(`/api/support/requests/${id}`)

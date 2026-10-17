@@ -27,6 +27,7 @@ test("judge can enter from home, run De A, inspect audit and try a new input wit
   await expect(page.locator("main")).not.toContainText("Rule, evidence");
   const requestId = new URL(page.url()).pathname.split("/").at(-1);
   await page.goto(`/review?requestId=${requestId}`);
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   await page.getByRole("tab", { name: /^Lịch sử xử lý/ }).click();
   await page.getByText("Rule, evidence và thông tin còn thiếu", { exact: true }).last().click();
   await expect(page.locator(".support-timeline")).toContainText("SEC-002");
