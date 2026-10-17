@@ -1,4 +1,4 @@
-import { statusLabels } from "@/domain/presentation";
+import { displayId, statusLabels } from "@/domain/presentation";
 import { labelForField } from "@/domain/catalog";
 import type { SupportRequest, AuditEvent } from "@/domain/contracts";
 import { AnswerBubble } from "./answer-bubble";
@@ -125,7 +125,7 @@ export function AuditTimeline({ events }: { events: AuditEvent[] }) {
             <summary className="cursor-pointer">
               Rule, evidence và thông tin còn thiếu
             </summary>
-            <p className="break-all">Request: {event.requestId}</p>
+            <p>Mã yêu cầu: {displayId(event.requestId)}</p>
             <p>
               {event.requestKind} · {event.riskLevel} · {event.bucket}
             </p>

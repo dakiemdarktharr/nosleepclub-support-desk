@@ -16,10 +16,10 @@ import { employeeIdPattern, normalizeEmployeeId } from "@/domain/employee-identi
 const querySchema = z.object({
   cursor: z.coerce.number().int().min(0).max(1000000).default(0),
   limit: z.coerce.number().int().min(1).max(100).default(30),
-  // The UI displays HT- plus the first eight UUID characters. Search the same
-  // identifier in both Mongo and memory instead of treating HT- as raw text.
+  // The UI displays HT- plus the first eight UUID characters. Normalize its
+  // casing so this code searches consistently in Mongo and in-memory storage.
   q: z.string().trim().max(200).default("").transform((value) =>
-    /^HT-[a-f0-9]{8}$/i.test(value) ? value.slice(3) : value,
+    /^HT-[a-f0-9]{8}$/i.test(value) ? value.slice(3).toLowerCase() : value,
   ),
   employeeId: z.preprocess(
     (value) =>

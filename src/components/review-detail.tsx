@@ -459,7 +459,7 @@ export function ReviewDetail({
             <details className="it-reference">
               <summary>Mã đối chiếu kỹ thuật</summary>
               <p>
-                {request.id} · phiên bản {request.version}
+                {displayId(request.id)} · phiên bản {request.version}
               </p>
             </details>
           </div>

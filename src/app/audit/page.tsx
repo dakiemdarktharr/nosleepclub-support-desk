@@ -124,7 +124,7 @@ export default function AuditPage() {
               maxLength={200}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ví dụ: VPN hoặc mã yêu cầu"
+              placeholder="Ví dụ: VPN hoặc HT-AB12CD34"
             />
           </label>
           <label>

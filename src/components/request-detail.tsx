@@ -182,8 +182,8 @@ export function RequestDetail({ id }: { id: string }) {
               {copied ? "Đã sao chép liên kết" : "Sao chép liên kết theo dõi"}
             </Button>
             <details>
-              <summary>Mã đầy đủ</summary>
-              <p className="break-all">{id}</p>
+              <summary>Mã yêu cầu</summary>
+              <p>{displayId(id)}</p>
             </details>
           </Card>
           <Card>
