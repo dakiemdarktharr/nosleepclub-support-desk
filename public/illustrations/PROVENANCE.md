@@ -1,5 +1,9 @@
 # Support mascot illustration
 
+## Homepage shadow styling — 2026-10-17
+
+Base: `945dd08c135ca445f7a1d7b79c0b744fa2fa3ca5`. AI assistance: Codex. The homepage uses two warm CSS drop shadows following the PNG's transparent silhouette and a soft radial contact shadow beneath the feet. Mobile uses smaller drop-shadow offsets and blur. The PNG artwork is unchanged. Local production build (including lint/type validation), docs links and diff whitespace passed; six existing desktop/mobile checks passed for transparency, keyboard navigation and reduced motion. Both homepage screenshots were visually inspected.
+
 The original `vng-support-mascot.png` was generated on 2026-09-21 with the built-in imagegen tool under the user's approved mascot direction. The current asset is `vng-support-mascot-navi-wave.png`, an AI-generated adaptation using the official NAVI reference supplied by the user (see the edit records below). It is not an official VNG asset or claim of endorsement. The reference posters are not bundled in this repository. Local Nunito license remains in src/app/fonts; no Gilroy imported.
 
 Research references:

@@ -962,7 +962,24 @@ body:has(.it-workspace) { background: var(--paper); }
 .role-welcome .entry-card:hover { transform:none; border-color:var(--orange); box-shadow:0 8px 26px #2021240d; }
 .role-welcome .entry-primary:hover { background:#e94f16; }
 .role-welcome .welcome-art { position:relative; width:100%; max-width:480px; isolation:isolate; }
-.role-welcome .welcome-art img { width:100%; position:relative; z-index:1; }
+.role-welcome .welcome-art img {
+  width:100%;
+  position:relative;
+  z-index:1;
+  filter:drop-shadow(0 10px 14px rgb(136 67 24 / 18%)) drop-shadow(0 2px 3px rgb(136 67 24 / 10%));
+}
+.role-welcome .welcome-art::after {
+  content:"";
+  position:absolute;
+  left:27%;
+  right:27%;
+  top:84%;
+  height:5%;
+  background:radial-gradient(ellipse, rgb(110 63 25 / 22%), rgb(110 63 25 / 8%) 45%, transparent 72%);
+  filter:blur(3px);
+  pointer-events:none;
+  z-index:0;
+}
 .mascot-orbit { position:absolute; inset:18% 2% 6%; border-radius:50%; background:#fff0e6; z-index:0; }
 .mascot-orbit::after { content:""; position:absolute; inset:-18px; border:1px solid #f7d6c4; border-radius:50%; }
 .role-welcome .hello-note { left:10%; top:4%; z-index:2; font-size:21px; padding:14px 22px; box-shadow:0 8px 20px #20212408; }
@@ -1026,6 +1043,7 @@ input:not([type="checkbox"]),textarea { transition:border-color 150ms,box-shadow
   .role-welcome .entry-card > strong { font-size:18px; }
   .role-welcome .entry-icon { flex-basis:42px; width:42px; height:42px; }
   .role-welcome .welcome-art { max-width:260px; margin:10px auto; }
+  .role-welcome .welcome-art img { filter:drop-shadow(0 6px 9px rgb(136 67 24 / 18%)) drop-shadow(0 1px 2px rgb(136 67 24 / 10%)); }
   .role-welcome .hello-note { font-size:16px; padding:10px 15px; }
   .login-page .identity-login { padding:28px 24px; }
   .flow-steps li { padding:8px; }
