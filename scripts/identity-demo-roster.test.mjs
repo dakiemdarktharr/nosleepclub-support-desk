@@ -17,9 +17,9 @@ for (const [name, mutate] of [
   ['policy bypass expectation', r => { r.accounts[3].expectedAccess = 'IN_SCOPE'; }],
 ]) test(`rejects ${name}`, () => { const roster = input(); mutate(roster); assert.throws(() => validateRoster(roster)); });
 
-test('current roster covers six departments and distinct scoped permissions without wildcard/admin roles', () => {
+test('current roster covers all nine sender-form departments and distinct scoped permissions without wildcard/admin roles', () => {
   const rows = validateRoster(input()).accounts;
-  assert.equal(new Set(rows.map(r => r.department)).size, 6);
+  assert.equal(new Set(rows.map(r => r.department)).size, 9);
   assert.ok(rows.every(r => r.department));
   assert.ok(new Set(rows.map(r => JSON.stringify([r.scopes[0].environment, r.scopes[0].resource, r.scopes[0].operation]))).size >= 10);
   assert.deepEqual(rows.reduce((out, r) => ({ ...out, [r.expectedAccess]: (out[r.expectedAccess] || 0) + 1 }), {}), { IN_SCOPE: 29, BEYOND_AUTHORITY: 9, SECURITY_RISK: 2 });

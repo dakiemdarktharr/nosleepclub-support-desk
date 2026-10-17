@@ -1,5 +1,25 @@
 import { freshTest as test, expect } from "./fixtures";
 
+test("Marketing guest department survives validation, submission and tracking", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("vng-guest-department-v1", "marketing"));
+  await page.goto("/guest");
+  await expect(page.getByRole("status", { name: "Phòng ban phiên khách" })).toContainText("Marketing");
+  await page.getByLabel("Mô tả yêu cầu", { exact: true }).fill("Máy in báo kẹt giấy. Tôi cần kiểm tra gì an toàn?");
+  const preview = page.waitForResponse(r => r.url().endsWith("/api/support/preview"));
+  await page.getByRole("button", { name: "Gửi", exact: true }).click();
+  expect((await preview).status()).toBe(200);
+  const saved = page.waitForResponse(r => r.url().endsWith("/api/support/requests") && r.request().method() === "POST");
+  await page.locator('[data-guide="sender-confirm"]').click();
+  const response = await saved;
+  expect(response.status()).toBe(201);
+  const row = (await response.json()).data;
+  expect(row.input.guestDepartment).toBe("marketing");
+  expect(row.input.fields.employeeId).toBeUndefined();
+  await expect(page).toHaveURL(new RegExp("/requests/" + row.id + "$"));
+  await page.reload();
+  await expect(page.getByText("Phòng ban giả lập (phiên khách):", { exact: false })).toContainText("Marketing");
+});
+
 test("fresh guest enters by keyboard, submits without employee identity and can track the request", async ({ page, context }, info) => {
   await context.addCookies([{ name: "vng_identity", value: "a".repeat(64), domain: "127.0.0.1", path: "/" }]);
   const identityCalls: string[] = [];

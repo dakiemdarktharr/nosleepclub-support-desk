@@ -1,4 +1,5 @@
 import type { ServiceGroup } from "./contracts";
+import { departmentOptions } from "./departments";
 
 type Service = {
   label: string;
@@ -142,17 +143,7 @@ export const commonFields = words(
   "impact environment urgency desiredOutcome approvalStatus dataSensitivity department employeeId incidentSite",
 );
 export const fieldOptions: Record<string, string[]> = {
-  department: [
-    "it",
-    "engineering",
-    "product",
-    "sales",
-    "marketing",
-    "finance",
-    "human_resources",
-    "operations",
-    "other",
-  ],
+  department: [...departmentOptions],
   resetType: ["unknown", "restart", "factory_reset"],
   environment: ["unknown", "sandbox", "development", "staging", "production"],
   environmentIfKnown: [

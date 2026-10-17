@@ -52,7 +52,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "engineering"
+      "department": "it"
     },
     {
       "id": "namlh",
@@ -86,7 +86,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "engineering"
+      "department": "product"
     },
     {
       "id": "longdb",
@@ -120,7 +120,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "engineering"
+      "department": "marketing"
     },
     {
       "id": "tridm",
@@ -154,7 +154,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "product"
+      "department": "marketing"
     },
     {
       "id": "anhnm",
@@ -188,7 +188,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "product"
+      "department": "sales"
     },
     {
       "id": "ngocvm",
@@ -324,7 +324,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "engineering"
+      "department": "marketing"
     },
     {
       "id": "dungha",
@@ -358,7 +358,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "engineering"
+      "department": "finance"
     },
     {
       "id": "sontt",
@@ -426,7 +426,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "product"
+      "department": "sales"
     },
     {
       "id": "khoilam",
@@ -443,7 +443,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "it"
+      "department": "sales"
     },
     {
       "id": "nganpnb",
@@ -545,7 +545,7 @@
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
       "profileVersion": 2,
-      "department": "operations"
+      "department": "it"
     },
     {
       "id": "lamndp",
@@ -562,7 +562,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "engineering"
+      "department": "human_resources"
     },
     {
       "id": "quyendnt",
@@ -613,7 +613,7 @@
       ],
       "expectedAccess": "IN_SCOPE",
       "profileVersion": 2,
-      "department": "operations"
+      "department": "human_resources"
     },
     {
       "id": "thanhmthd",
@@ -630,7 +630,7 @@
       ],
       "expectedAccess": "BEYOND_AUTHORITY",
       "profileVersion": 2,
-      "department": "it"
+      "department": "other"
     },
     {
       "id": "nhungcnth",
@@ -647,7 +647,7 @@
       ],
       "expectedAccess": "SECURITY_RISK",
       "profileVersion": 2,
-      "department": "it"
+      "department": "product"
     },
     {
       "id": "kietltmq",
@@ -664,7 +664,7 @@
       ],
       "expectedAccess": "SECURITY_RISK",
       "profileVersion": 2,
-      "department": "it"
+      "department": "sales"
     },
     {
       "id": "trangtlnd",

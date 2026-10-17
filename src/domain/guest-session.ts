@@ -1,5 +1,6 @@
+import { departmentOptions } from "./departments";
 /** Unverified display context only. Never an employee identity or entitlement. */
-export const guestDepartments = ["it", "engineering", "product", "operations", "finance", "human_resources"] as const;
+export const guestDepartments = departmentOptions;
 export type GuestDepartment = (typeof guestDepartments)[number];
 export function isGuestDepartment(value: unknown): value is GuestDepartment {
   return typeof value === "string" && guestDepartments.some(department => department === value);
