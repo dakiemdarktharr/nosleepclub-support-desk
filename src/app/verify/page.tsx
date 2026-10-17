@@ -213,8 +213,6 @@ export default function VerifyPage() {
         </fieldset>
         {pack === cachePackId && <Card>
           <h2 className="text-xl font-bold">{cachePackName}</h2>
-          <p>4 nhóm × 7 cách viết tự nhiên và 14 câu đối chứng. HIT: dùng lại đúng nhóm; MISS: nhóm chưa có cache; BYPASS: cần xử lý riêng.</p>
-          <p className="text-sm">Dữ liệu giả lập. Mỗi case nạp lại câu đầu nhóm vào cache biệt lập, kiểm tra cùng logic của ứng dụng; không gọi Luna hoặc tạo ticket. Kết quả được lưu để mở lại và tiếp tục. Không phải phép đo tốc độ hay độ bền MongoDB.</p>
           <details className="mt-3">
             <summary>Xem 42 câu và kỳ vọng</summary>
             <ul className="space-y-2 mt-2">
