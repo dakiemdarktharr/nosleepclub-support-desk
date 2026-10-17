@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { redact } from "@/domain/redaction";
-import { normalize } from "@/domain/text";
 import {
   classifyPostAnswerFeedback,
   explicitFeedbackChoice,
@@ -8,7 +7,7 @@ import {
 } from "@/domain/feedback";
 import type { SentimentAssessment } from "@/domain/contracts";
 import { sentimentFallbackReason } from "@/domain/sentiment-diagnostics";
-import { observedFeedbackText } from "@/domain/interaction-feedback";
+import { isEmotionCueNegated, observedFeedbackText } from "@/domain/interaction-feedback";
 import { callModel, ModelFailure } from "@/lib/support-model";
 import type { ModelOptions } from "@/lib/support-model";
 import { startSupportStage } from "./support-telemetry";
@@ -103,10 +102,7 @@ function assertedCue(text: string, patterns: RegExp[]): string | undefined {
   text = observedFeedbackText(text);
   for (const pattern of patterns) {
     for (const match of text.matchAll(new RegExp(pattern.source, "gi"))) {
-      const prefix = normalize(text.slice(0, match.index));
-      // Scope negation to the cue, not another clause. Never change policy's
-      // risk parser from a sentiment fix.
-      if (/\b(?:khong|chua|not|never)(?:\s+(?:he|con|cam|thay|rat|really|very|feel|feeling|at|all)){0,3}$/.test(prefix))
+      if (isEmotionCueNegated(text.slice(0, match.index)))
         continue;
       return match[0];
     }

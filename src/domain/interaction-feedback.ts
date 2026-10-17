@@ -1,4 +1,4 @@
-import { asserted, normalize } from "./text";
+import { normalize } from "./text";
 
 /** Quoted examples, role play and labeling instructions are not observations of the sender. */
 export function observedFeedbackText(text: string): string {
@@ -16,9 +16,18 @@ export function reportsUnresolvedHelp(text: string): boolean {
   return terseFailure.test(value) || unresolved.test(value) && relatesToHelp.test(value);
 }
 
+/** Share local emotion negation with sentiment fallback, independently of the security parser. */
+export function isEmotionCueNegated(prefix: string): boolean {
+  return /\b(?:khong|chua|not|never|no|without)(?:\s+(?:he|con|cam|thay|rat|co|can|muon|phai|la|really|very|feel|feeling|at|all|need|want|to)){0,6}$/.test(normalize(prefix));
+}
+
 export function expressesFrustration(text: string): boolean {
-  return asserted(normalize(observedFeedbackText(text)),
-    /\b(?:buc minh|tuc gian|tuc qua|that vong|met moi|bat luc|frustrated|angry|fed up|useless|vo ich)\b/);
+  const observed = normalize(observedFeedbackText(text));
+  const cues = /\b(?:buc minh|tuc gian|tuc qua|that vong|met moi|bat luc|frustrated|angry|fed up|useless|vo ich|(?:cho|doi) (?:qua )?lau)\b/g;
+  for (const match of observed.matchAll(cues)) {
+    if (!isEmotionCueNegated(observed.slice(0, match.index))) return true;
+  }
+  return false;
 }
 
 export function declinesHumanSupport(text: string): boolean {

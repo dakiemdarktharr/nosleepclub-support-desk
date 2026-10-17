@@ -86,6 +86,14 @@ it("does not claim to assess an empty structured request", () => {
 
 it.each([
   ["Tôi không bực mình; chỉ cần biết bước tiếp theo.", "neutral"],
+  ["Tôi không cảm thấy bực mình.", "neutral"],
+  ["Tôi không hề cảm thấy bực mình.", "neutral"],
+  ["Tôi không còn cảm thấy rất bực mình.", "neutral"],
+  ["Tôi không muốn bực mình.", "neutral"],
+  ["Tôi không chờ quá lâu.", "neutral"],
+  ["Tôi không phải chờ quá lâu.", "neutral"],
+  ["Chờ quá lâu.", "negative"],
+  ["Tôi không cảm thấy bực mình, nhưng chờ quá lâu.", "negative"],
   ["I am not frustrated. The screen is blank.", "neutral"],
   ["Tôi không rất hài lòng.", "neutral"],
   ["Không cần đổi máy; tôi vẫn bực mình.", "negative"],

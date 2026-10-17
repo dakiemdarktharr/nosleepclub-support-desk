@@ -55,6 +55,44 @@ it("hands off two distinct failed support rounds plus expressed frustration, pre
   expect(await getSupportRequest(next.id)).toEqual(next);
   await expect(reply(first, "Tôi rất bực mình")).rejects.toMatchObject({ status: 409 });
 });
+it.each([
+  "tôi không cảm thấy bực mình",
+  "tôi không hề cảm thấy bực mình",
+  "tôi không còn cảm thấy rất bực mình",
+  "tôi không muốn bực mình",
+  "I am not feeling very angry",
+  "tôi không chờ quá lâu",
+  "tôi không phải chờ quá lâu",
+  'Ví dụ: "chờ quá lâu".',
+  "Giả vờ tôi đang chờ quá lâu.",
+])("does not accelerate handoff for negated or hypothetical frustration: %s", async emotion => {
+  const first = await reply(await create(), "Tôi đã thử bước đầu nhưng vẫn chưa kết nối được.");
+  const next = await reply(first, `Tôi làm theo bước tiếp theo nhưng vẫn chưa kết nối được. ${emotion}`);
+  expect(next.status).toBe("AUTO_APPROVED");
+  expect(next.supportNeed).toMatchObject({ reportedFailedRounds: 2, handoffRecommended: false });
+  expect(next.decision?.ruleIds).not.toContain("HANDOFF-002");
+  expect(next.assistance).toHaveLength(first.assistance.length + 1);
+});
+it.each([
+  "chờ quá lâu",
+  "đợi quá lâu",
+  "tôi không cảm thấy bực mình, nhưng chờ quá lâu",
+])("hands off two failed rounds with an asserted waiting complaint: %s", async emotion => {
+  const first = await reply(await create(), "Tôi đã thử bước đầu nhưng vẫn chưa kết nối được.");
+  const next = await reply(first, `Tôi làm theo bước tiếp theo nhưng vẫn chưa kết nối được, ${emotion}.`);
+  expect(next.status).toBe("ESCALATED");
+  expect(next.supportNeed).toMatchObject({ reportedFailedRounds: 2, handoffRecommended: true, priorityChanged: false });
+  expect(next.decision).toMatchObject({ handlingMode: "HUMAN_REVIEW", ruleIds: expect.arrayContaining(["HANDOFF-002"]) });
+  expect(next.assistance).toEqual(first.assistance);
+  expect(next.events.at(-1)).toMatchObject({ action: "HANDOFF", ruleIds: expect.arrayContaining(["HANDOFF-002"]) });
+  expect(await getSupportRequest(next.id)).toEqual(next);
+});
+it("a waiting complaint still requires two failed support rounds", async () => {
+  const next = await reply(await create(), "Tôi đã thử bước đầu nhưng vẫn chưa kết nối được, chờ quá lâu.");
+  expect(next.status).toBe("AUTO_APPROVED");
+  expect(next.supportNeed).toMatchObject({ reportedFailedRounds: 1, handoffRecommended: false });
+  expect(next.decision?.ruleIds).not.toContain("HANDOFF-002");
+});
 it("neutral users also reach a person after three distinct unsuccessful conversational rounds", async () => {
   let row = await create("tôi không vào acc youtube được");
   for (const text of ["Tôi đã thử hướng dẫn đầu nhưng vẫn chưa được.", "Tôi làm theo bước tiếp theo nhưng vẫn chưa được.", "Tôi đã thử hướng dẫn cuối nhưng vẫn không hoạt động."]) row = await reply(row, text);

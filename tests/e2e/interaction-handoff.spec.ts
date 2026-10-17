@@ -1,5 +1,35 @@
 import { test, expect } from "./fixtures";
 
+for (const { emotion, handoff } of [
+  { emotion: "tôi không cảm thấy bực mình", handoff: false },
+  { emotion: "chờ quá lâu", handoff: true },
+]) {
+  test(`two failed rounds respect the current emotion: ${emotion}`, async ({ page, request }) => {
+    const response = await request.post("/api/support/requests", { data: { requesterMode: "guest", rawText: "VPN không kết nối", confirmed: true, idempotencyKey: crypto.randomUUID() } });
+    expect(response.status()).toBe(201);
+    const row = (await response.json()).data;
+    await page.goto(`/requests/${row.id}`);
+    for (const question of [
+      "Tôi đã thử bước đầu nhưng vẫn chưa kết nối được.",
+      `Tôi làm theo bước tiếp theo nhưng vẫn chưa kết nối được, ${emotion}.`,
+    ]) {
+      await page.getByLabel("Hỏi tiếp", { exact: true }).fill(question);
+      await page.getByRole("button", { name: "Gửi câu hỏi", exact: true }).click();
+      if (handoff && question.includes(emotion)) {
+        await expect(page.getByText("Trạng thái:")).toContainText("Đang chờ nhân viên hỗ trợ");
+      } else {
+        await expect(page.getByLabel("Hỏi tiếp", { exact: true })).toHaveValue("");
+        await expect(page.getByText("Trạng thái:")).toContainText("Đã có hướng dẫn");
+      }
+    }
+    const saved = (await (await request.get(`/api/support/requests/${row.id}`)).json()).data;
+    expect(saved.supportNeed).toMatchObject({ reportedFailedRounds: 2, handoffRecommended: handoff });
+    expect(saved.decision.ruleIds.includes("HANDOFF-002")).toBe(handoff);
+    await page.reload();
+    await expect(page.getByText("Trạng thái:")).toContainText(handoff ? "Đang chờ nhân viên hỗ trợ" : "Đã có hướng dẫn");
+  });
+}
+
 test("role play alone keeps guidance, failed interactions with frustration reach the reviewer", async ({ page, request }) => {
   const response = await request.post("/api/support/requests", { data: { requesterMode: "guest", rawText: "VPN không kết nối", confirmed: true, idempotencyKey: crypto.randomUUID() } });
   expect(response.status()).toBe(201);
