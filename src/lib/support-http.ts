@@ -127,7 +127,7 @@ export function enforceDemoRateLimit(
   if (process.env.NODE_ENV !== "production") return;
   const now = Date.now();
   const windowMs = 60_000;
-  // Cache verification has no model calls or support-ticket writes. Allow one
+  // Cache verification has no model calls. Allow one
   // complete 42-case run; ordinary intake/mutation limits remain unchanged.
   const limit = scope === "cache-verify" ? 60 : scope === "intake" ? 30 : 15;
   const client =

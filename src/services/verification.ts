@@ -43,7 +43,7 @@ export async function validateVerificationInput(input: SupportInput) {
   const run = await getVerifyRun(input.verifyRunId);
   requireJudgePack(run.pack);
   if (run.pack === cachePackId)
-    throw new SupportError("VERIFY_INPUT_MISMATCH", "Bộ cache chạy biệt lập, không tạo hồ sơ hỗ trợ.", 409);
+    throw new SupportError("VERIFY_INPUT_MISMATCH", "Chạy bộ cache từ trang Kiểm thử để tạo hồ sơ đúng với từng case.", 409);
   const entry = run.cases.find((item) => item.caseId === input.verifyCaseId);
   const fixture = supportVerifyCases.find(
     (item) => item.id === input.verifyCaseId,
@@ -85,7 +85,18 @@ export async function executeVerifyCase(
   const run = await getVerifyRun(id);
   requireJudgePack(run.pack);
   const existing = run.results.find((item) => item.caseId === caseId);
-  if (existing) return run;
+  if (existing) {
+    if (run.pack !== cachePackId || existing.requestId) return run;
+    // Explicit POST can restore queue records for older runs without changing
+    // their historical cache outcomes, pass/fail, or evaluation timestamps.
+    const entry = run.cases.find(item => item.caseId === caseId);
+    if (!entry) throw new SupportError("UNKNOWN_CASE", "Case không thuộc lần kiểm thử.", 422);
+    const linked = await runCacheVerificationCase(caseId, { runId: id, requestId: entry.requestId });
+    return updateVerifyRun(id, draft => {
+      const saved = draft.results.find(item => item.caseId === caseId);
+      if (saved) saved.requestId = linked.requestId;
+    });
+  }
   if (run.status !== "RUNNING")
     throw new SupportError(
       "RUN_NOT_ACTIVE",
@@ -100,7 +111,7 @@ export async function executeVerifyCase(
       "Case không thuộc lần kiểm thử.",
       422,
     );
-  const result = run.pack === cachePackId ? await runCacheVerificationCase(caseId) : await runSupportCase(fixture, fetcher, {
+  const result = run.pack === cachePackId ? await runCacheVerificationCase(caseId, { runId: id, requestId: entry.requestId }) : await runSupportCase(fixture, fetcher, {
     runId: id,
     requestId: entry.requestId,
   });

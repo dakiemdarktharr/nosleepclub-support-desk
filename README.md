@@ -42,6 +42,8 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 
 - **Trả lời chung**: hàng đợi hiện nhóm như **7 yêu cầu về lỗi kết nối VPN**. Mở nhóm để xem từng yêu cầu và nhập một câu trả lời cho toàn bộ người gửi. Tin nhắn hiện ở hồ sơ theo dõi của từng người, giữ trạng thái riêng. Nhóm thay đổi thì tải lại trước khi gửi. [Cách dùng và hợp đồng gửi](docs/GROUP-REPLIES.md).
 
+- **Nhóm từ bộ test cache**: chạy 42 câu để tạo bốn nhóm 7 yêu cầu và 14 hồ sơ đối chứng trong hàng đợi, nhãn **Case Verify**. Bấm **Xem yêu cầu cần xử lý** để mở đúng lần chạy và trả lời chung. Lần chạy cũ dùng cùng nút để bổ sung hồ sơ còn thiếu. [Chi tiết](docs/TEST-CACHE-SYSTEM.md).
+
 - **Chi tiết yêu cầu gọn hơn**: mặc định chỉ hiện **Yêu cầu nguyên văn** (đã che thông tin nhạy cảm) và **Tóm tắt yêu cầu** bằng Luna. Bản tóm tắt có dẫn chứng kiểm tra trên nội dung đã lưu, giữ thông tin bổ sung/phủ định; không dùng để quyết định quyền hay tự gửi cho người yêu cầu. Nếu AI lỗi, nguyên văn và thao tác xử lý vẫn dùng được. Mở **Xem lịch sử & bằng chứng** để xem hướng dẫn đã gửi, phòng ban, thời điểm, policy, audit và sentiment. Cache tóm tắt riêng từng hồ sơ/nội dung/model trong 24 giờ, không chia sẻ giữa các hồ sơ.
 
 - **Admin → Đã xử lý tự động**: xem cả hồ sơ từng được auto-approve, kể cả đã hoàn tất hoặc đã chuyển người. Đối chiếu evidence, hướng dẫn và audit trước khi điều chỉnh theo guard hiện có.

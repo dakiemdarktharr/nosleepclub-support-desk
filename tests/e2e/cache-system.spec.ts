@@ -39,7 +39,7 @@ test("test cache system runs 42 real cases and restores grouped statistics", asy
   expect(data.results.filter((row: { cache: { actual: string } }) => row.cache.actual === "HIT")).toHaveLength(24);
   expect(data.results.filter((row: { cache: { actual: string } }) => row.cache.actual === "MISS")).toHaveLength(4);
   expect(data.results.filter((row: { cache: { actual: string } }) => row.cache.actual === "BYPASS")).toHaveLength(14);
-  expect(data.results.every((row: { pass: boolean; requestId?: string }) => row.pass && !row.requestId)).toBe(true);
+  expect(data.results.every((row: { pass: boolean; requestId?: string }) => row.pass && row.requestId)).toBe(true);
   await expectGroupedResults(page);
   await page.reload();
   await expect(page.getByLabel("Bộ kiểm thử")).toHaveValue("test-cache-system");
@@ -59,6 +59,29 @@ test("test cache system runs 42 real cases and restores grouped statistics", asy
   await page.getByRole("region", { name: "Thống kê kết quả cache", exact: true }).screenshot({ path: `artifacts/cache-groups-${info.project.name}.png` });
   await page.getByLabel("Bộ kiểm thử").selectOption("de-a-v3");
   await expect(page.getByRole("region", { name: "Thống kê kết quả cache", exact: true })).toHaveCount(0);
+  await page.goto(saved);
+  await page.evaluate(() => sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ filter: "pending", origin: "support", queue: "OUT_OF_POLICY", search: "old filter", employeeId: "old-employee" })));
+  await page.getByRole("button", { name: "Xem yêu cầu cần xử lý", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/review\\?verifyRunId=${runId}`));
+  for (const title of ["lỗi kết nối VPN", "VPN ngắt kết nối", "lỗi kết nối Wi-Fi", "máy in offline"]) {
+    await expect(page.locator(".it-request-row").filter({ hasText: `7 yêu cầu về ${title}` })).toHaveCount(1);
+  }
+  await expect(page.getByLabel("Nguồn yêu cầu")).toHaveValue("verify");
+  await expect(page.getByLabel("Hiển thị", { exact: true })).toHaveValue("all");
+  await page.locator(".it-request-row").filter({ hasText: "7 yêu cầu về máy in offline" }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `artifacts/cache-queue-${info.project.name}.png`, fullPage: true });
+  await page.locator(".it-request-row").filter({ hasText: "7 yêu cầu về máy in offline" }).click();
+  const members = page.getByRole("region", { name: "Yêu cầu trong nhóm" });
+  await expect(members.getByRole("link")).toHaveCount(7);
+  const memberIds = await members.getByRole("link").evaluateAll(links => links.map(link => new URL((link as HTMLAnchorElement).href).searchParams.get("requestId")));
+  await page.getByLabel("Nội dung trả lời").fill("Bạn kiểm tra nguồn và kết nối máy in rồi thử in lại nhé.");
+  await page.getByRole("button", { name: "Gửi cho 7 yêu cầu", exact: true }).click();
+  await expect(page.getByRole("main").getByRole("status")).toContainText("Đã gửi đến 7 yêu cầu.");
+  for (const id of memberIds) {
+    const tracker = await request.get(`/api/support/requests/${id}`);
+    expect(tracker.ok()).toBe(true);
+    expect((await tracker.json()).data.sharedReplies).toEqual([expect.objectContaining({ text: "Bạn kiểm tra nguồn và kết nối máy in rồi thử in lại nhé." })]);
+  }
 });
 
 test("partial cache groups show unrun requests and update correctly when resumed", async ({ page, request }) => {

@@ -318,6 +318,7 @@ export type SupportSummary = Pick<
   "id" | "version" | "status" | "createdAt" | "updatedAt"
 > & {
   employeeId?: string;
+  verifyRunId?: string;
   title: string;
   serviceGroup: ServiceGroup;
   action: Action | null;

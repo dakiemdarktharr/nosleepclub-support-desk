@@ -37,12 +37,13 @@ const querySchema = z.object({
   origin: z.enum(["all", "support", "verify"]).default("all"),
   queue: z.enum(["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"]).default("all"),
   requestId: z.string().uuid().optional(),
+  verifyRunId: z.string().uuid().optional(),
 });
 export function parseSupportQuery(url: string) {
   const params = new URL(url).searchParams;
   return querySchema.parse(
     Object.fromEntries(
-      ["cursor", "limit", "q", "employeeId", "status", "origin", "requestId", "queue"]
+      ["cursor", "limit", "q", "employeeId", "status", "origin", "requestId", "queue", "verifyRunId"]
         .filter((key) => params.has(key))
         .map((key) => [key, params.get(key)]),
     ),
@@ -62,6 +63,7 @@ const pending = ["ESCALATED", "APPROVED_BY_HUMAN"];
 function filterFor(query: SupportQuery): Filter<Row> {
   const filter: Filter<Row> = {};
   if (query.requestId) filter._id = query.requestId;
+  if (query.verifyRunId) filter.$and = [{ "data.input.verifyRunId": query.verifyRunId }];
   if (query.employeeId)
     filter["data.input.fields.employeeId"] = query.employeeId;
   if (query.queue !== "all") filter["data.decision.uncertaintyClass"] = query.queue;
@@ -96,6 +98,7 @@ async function memoryRows(query: SupportQuery) {
 export function matchesSupportQuery(row: GroupCandidate, query: SupportQuery) {
   return (
       (!query.requestId || row.id === query.requestId) &&
+      (!query.verifyRunId || row.input.verifyRunId === query.verifyRunId) &&
       (!query.employeeId ||
         normalizeEmployeeId(row.input.fields.employeeId ?? "") ===
           query.employeeId) &&
@@ -118,6 +121,7 @@ export function summarizeSupport(row: GroupCandidate): SupportSummary {
     createdAt: row.createdAt, updatedAt: row.updatedAt,
     title: (row.originalQuestion || row.input.rawText || "Yêu cầu theo danh mục").slice(0, 140),
     employeeId: row.input.fields.employeeId,
+    verifyRunId: row.input.verifyRunId,
     serviceGroup: row.canonical?.serviceGroup ?? "OTHER",
     action: row.decision?.action ?? null,
     uncertaintyClass: row.decision?.uncertaintyClass,
@@ -145,6 +149,7 @@ export async function supportPage(
             "data.originalQuestion": 1,
             "data.input.rawText": 1,
             "data.input.fields.employeeId": 1,
+            "data.input.verifyRunId": 1,
             "data.canonical.serviceGroup": 1,
             "data.decision.action": 1,
             "data.decision.uncertaintyClass": 1,
@@ -180,6 +185,7 @@ export async function supportPage(
         "Yêu cầu theo danh mục"
       ).slice(0, 140),
       employeeId: row.input.fields.employeeId,
+      verifyRunId: row.input.verifyRunId,
       serviceGroup: row.canonical?.serviceGroup ?? "OTHER",
       action: row.decision?.action ?? null,
       uncertaintyClass: row.decision?.uncertaintyClass,

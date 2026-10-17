@@ -1,6 +1,7 @@
 "use client";
 import type { VerifyRun } from "@/domain/verification";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supportVerifyCases, verifyPersistence, judgePackIds } from "@/lib/support-verify";
 import { Alert, Button, Card, Textarea } from "@/components/ui";
@@ -16,6 +17,7 @@ import { cachePackId, cachePackName, cacheVerificationCases } from "@/domain/cac
 import { CacheGroupResults } from "@/components/cache-group-results";
 
 export default function VerifyPage() {
+  const router = useRouter();
   const [pack, setPack] = useState("de-a-v3"),
     [running, setRunning] = useState(false);
   const [readback, setReadback] = useState("");
@@ -43,6 +45,31 @@ export default function VerifyPage() {
   const busy = running || loading;
   const results = currentRun?.results ?? [];
   const cacheRun = currentRun?.pack === cachePackId ? currentRun : null;
+  function exposeQueue() {
+    try {
+      sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ filter: "all", origin: "all", queue: "all", search: "", employeeId: "" }));
+    } catch { /* The queue link also sets its own filters when storage is unavailable. */ }
+  }
+  async function openCacheRequests() {
+    if (!cacheRun || activeOperation.current || loadingRun.current) return;
+    activeOperation.current = true;
+    setLoading(true);
+    setError("");
+    let row = cacheRun;
+    try {
+      for (const result of cacheRun.results.filter(item => !item.requestId)) {
+        row = await browserApi<VerifyRun>(`/api/support/verify-runs/${row.id}/cases`, { caseId: result.caseId });
+        setCurrentRun(row);
+      }
+      exposeQueue();
+      router.push(`/review?verifyRunId=${row.id}`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Không mở được yêu cầu. Vui lòng thử lại.");
+    } finally {
+      activeOperation.current = false;
+      setLoading(false);
+    }
+  }
   async function loadRun(id: string) {
     const sequence = ++loadSequence.current;
     loadingRun.current = true;
@@ -96,6 +123,7 @@ export default function VerifyPage() {
           { caseId: entry.caseId },
         );
         setCurrentRun(row);
+        if (row.pack === cachePackId) exposeQueue();
       }
     } catch (error) {
       setError(
@@ -242,6 +270,9 @@ export default function VerifyPage() {
             >
               Liên kết kết quả đã lưu
             </Link>
+            {cacheRun && cacheRun.results.length > 0 && <Button disabled={busy} onClick={() => void openCacheRequests()}>
+              Xem yêu cầu cần xử lý
+            </Button>}
             {running && !judging ? (
               <Button variant="danger" onClick={() => void stopRun()}>
                 Dừng sau case hiện tại

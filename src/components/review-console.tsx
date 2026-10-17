@@ -28,7 +28,7 @@ import { ReviewDetail } from "@/components/review-detail";
 import { StaffWorkspace } from "@/components/staff-workspace";
 import type { SupportQueueItem } from "@/domain/request-groups";
 
-export function ReviewConsole({ requestId }: { requestId?: string }) {
+export function ReviewConsole({ requestId, initialVerifyRunId }: { requestId?: string; initialVerifyRunId?: string }) {
   const sequence = useRef(0);
   const detailSequence = useRef(0);
   const employeeSuggestionSequence = useRef(0);
@@ -39,14 +39,15 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     [pending, setPending] = useState(false),
     [error, setError] = useState("");
   const [groupIncidents, setGroupIncidents] = useState(true);
-  const [filter, setFilter] = useState("pending");
+  const [filter, setFilter] = useState("all");
+  const [verifyRunId, setVerifyRunId] = useState(initialVerifyRunId);
   const [search, setSearch] = useState("");
   const [employeeId, setEmployeeId] = useState("");
   const [employeeSuggestions, setEmployeeSuggestions] = useState<string[]>([]);
   const [employeeSuggestionsOpen, setEmployeeSuggestionsOpen] = useState(false);
   const [activeEmployeeSuggestion, setActiveEmployeeSuggestion] = useState(-1);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
-  const [origin, setOrigin] = useState("support");
+  const [origin, setOrigin] = useState("all");
   const [queue, setQueue] = useState("all");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
@@ -55,7 +56,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
   useEffect(() => {
     try {
       const saved: unknown = JSON.parse(sessionStorage.getItem("vng-review-filters-v1") || "null");
-      if (saved && typeof saved === "object") {
+      if (!initialVerifyRunId && saved && typeof saved === "object") {
         if ("filter" in saved && typeof saved.filter === "string" && ["pending", "knowledge", "all", "auto"].includes(saved.filter)) setFilter(saved.filter);
         if ("origin" in saved && typeof saved.origin === "string" && ["support", "verify", "all"].includes(saved.origin)) setOrigin(saved.origin);
         if ("queue" in saved && typeof saved.queue === "string" && ["all", "OUT_OF_POLICY", "AUTHORITY_REQUIRED"].includes(saved.queue)) setQueue(saved.queue);
@@ -64,7 +65,8 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
       }
     } catch { /* Storage may be disabled; filtering still works in memory. */ }
     setFiltersReady(true);
-  }, []);
+    if (initialVerifyRunId) setOrigin("verify");
+  }, [initialVerifyRunId]);
   useEffect(() => {
     if (!filtersReady || requestId) return;
     try { sessionStorage.setItem("vng-review-filters-v1", JSON.stringify({ filter, origin, queue, search, employeeId })); }
@@ -72,6 +74,8 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
   }, [filter, origin, queue, search, employeeId, filtersReady, requestId]);
   function clearFilters() {
     setSearch(""); setEmployeeId(""); setFilter("all"); setOrigin("all"); setQueue("all");
+    setVerifyRunId(undefined);
+    if (verifyRunId) window.history.replaceState(null, "", "/review");
     setSelectedEmployeeId(""); setEmployeeSuggestions([]); setEmployeeSuggestionsOpen(false);
   }
   const visibleRequests = requests;
@@ -97,6 +101,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
           limit: "30",
           ...(employeeId.trim() ? { employeeId: employeeId.trim() } : {}),
           ...(cursor ? { cursor } : {}),
+          ...(verifyRunId ? { verifyRunId } : {}),
         });
         const page = await browserApi<ResultPage<SupportQueueItem>>(
           `/api/support/requests?${params}`,
@@ -117,7 +122,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
         if (current === sequence.current) setLoading(false);
       }
     },
-    [search, employeeId, filter, origin, queue, groupIncidents],
+    [search, employeeId, filter, origin, queue, groupIncidents, verifyRunId],
   );
   useEffect(() => {
     if (requestId || !filtersReady) return;
@@ -406,7 +411,8 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                     ? "Đang tải danh sách…"
                     : `${requests.length}/${total} mục`}
                 </span>
-                {(search || employeeId || filter !== "all" || origin !== "all" || queue !== "all") && (
+                {verifyRunId && <span>Lần kiểm thử này</span>}
+                {(verifyRunId || search || employeeId || filter !== "all" || origin !== "all" || queue !== "all") && (
                   <Button variant="quiet" onClick={clearFilters}><X size={14} />Xóa bộ lọc</Button>
                 )}
               </div>
@@ -463,6 +469,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                             <small>Nơi tiếp nhận: {request.assignedTeam}</small>
                           )}
                           <div className="it-row-tags">
+                            {request.verifyRunId && <Badge>Case Verify</Badge>}
                             {request.hasKnowledgeCandidate && (
                               <Badge tone="warning">Gợi ý tri thức</Badge>
                             )}

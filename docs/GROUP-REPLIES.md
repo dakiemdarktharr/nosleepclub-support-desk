@@ -14,7 +14,7 @@ Base triển khai: `14de9b1`. AI assistance: OpenAI Codex.
 
 Nhận diện lại nội dung hiện tại bằng cùng bộ nhận diện FAQ đóng dùng cho cache: VPN không kết nối, VPN ngắt kết nối, Wi-Fi không kết nối và máy in offline. Sự cố mạng/điện đã được liên kết theo khu vực dùng chung mã sự cố. Không gộp yêu cầu truy cập, nội dung riêng tư, nhiều vấn đề, rủi ro, phạm vi tài nguyên cụ thể hoặc lỗi phân tích. Trạng thái, phiên bản policy, hàng đợi và nơi nhận phải khớp. Verify được tách theo từng lượt chạy.
 
-Server đọc các trường phục vụ phân nhóm của hồ sơ hiện có, gộp trước khi phân trang. Tìm kiếm khớp một thành viên sẽ hiển thị toàn bộ nhóm, cùng số lượng và danh sách người nhận khi mở. Không giới hạn nhóm ở 30 hoặc 200 hồ sơ đầu. Không cần sửa dữ liệu lịch sử hoặc tạo ticket từ bộ kiểm thử cache. Cách hiện tại đọc các bản ghi rút gọn để hỗ trợ hồ sơ cũ, cần đo và chuyển sang chỉ mục nhóm khi dữ liệu tăng lớn.
+Server đọc các trường phục vụ phân nhóm của hồ sơ hiện có, gộp trước khi phân trang. Tìm kiếm khớp một thành viên sẽ hiển thị toàn bộ nhóm, cùng số lượng và danh sách người nhận khi mở. Không giới hạn nhóm ở 30 hoặc 200 hồ sơ đầu. Bộ kiểm thử cache lưu hồ sơ của các câu đã chạy để mở và trả lời chung tại đây, nguồn Case Verify và tách theo từng lượt chạy. [Cách mở kết quả mới và cũ](TEST-CACHE-SYSTEM.md). Cách hiện tại đọc các bản ghi rút gọn để hỗ trợ hồ sơ cũ, cần đo và chuyển sang chỉ mục nhóm khi dữ liệu tăng lớn.
 
 ## Hợp đồng gửi
 

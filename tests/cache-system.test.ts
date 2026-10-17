@@ -6,7 +6,9 @@ import { runCacheVerificationCase } from "@/services/cache-verification";
 import { changeVerifyRun, createVerifyRun, executeVerifyCase, validateVerificationInput } from "@/services/verification";
 import { completeAnalysis, prepareInput } from "@/services/support";
 import { resetSharedFaqForTest } from "@/lib/shared-faq-cache";
-import { getVerifyRun } from "@/lib/verify-repository";
+import { getVerifyRun, updateVerifyRun } from "@/lib/verify-repository";
+import { getRequestGroup, groupedSupportPage, sendGroupReply, sharedRepliesForRequest } from "@/lib/support-groups";
+import { parseSupportQuery } from "@/lib/support-query";
 import { resetSupportTestStore, listSupportRequests } from "@/lib/support-repository";
 
 beforeEach(() => {
@@ -78,7 +80,7 @@ it.each([
   "Máy in offline nhưng không phải máy của tôi", "VPN ngắt kết nối, không chỉ vậy",
 ])("rejects unresolved qualifiers/negations/additional tasks: %s", text => expect(faqTopic(text)).toBeNull());
 
-it("replays cold/warm cases independently and persists results across stop/resume without tickets or HTTP/model calls", async () => {
+it("replays independent cache checks and saves 42 idempotent queue records across stop/resume without model or HTTP calls", async () => {
   const run = await createVerifyRun({ pack: cachePackId });
   const network = vi.fn<typeof fetch>();
   const initialTickets = await listSupportRequests();
@@ -98,8 +100,45 @@ it("replays cold/warm cases independently and persists results across stop/resum
   expect(completed.results.filter(row => row.cache?.actual === "BYPASS")).toHaveLength(14);
   expect(await executeVerifyCase(run.id, { caseId: run.cases[0].caseId }, network)).toEqual(completed);
   expect(network).not.toHaveBeenCalled();
-  expect(await listSupportRequests()).toEqual(initialTickets);
+  const tickets = await listSupportRequests(true);
+  expect(tickets).toHaveLength(initialTickets.length + 42);
+  expect(tickets.every(row => row.input.verifyRunId === run.id && row.events.some(event => event.actor === "cache-verification"))).toBe(true);
+  expect(new Set(tickets.map(row => row.id)).size).toBe(42);
+  const page = await groupedSupportPage(parseSupportQuery(`http://local?origin=verify&verifyRunId=${run.id}&limit=100`));
+  const groups = page.items.filter(row => row.group);
+  expect(groups).toHaveLength(4);
+  expect(groups.every(row => row.group?.count === 7 && row.status === "AUTO_APPROVED")).toBe(true);
+  expect(page.total).toBe(18);
+  expect((await groupedSupportPage(parseSupportQuery("http://local?origin=support"))).total).toBe(0);
+  const group = await getRequestGroup(groups[0].group!.id);
+  const sendId = crypto.randomUUID();
+  await sendGroupReply(group.id, { sendId, membership: group.membership, text: "Bạn kiểm tra kết nối và thử lại nhé." }, "reviewer");
+  for (const member of group.members) expect(await sharedRepliesForRequest(member.id)).toContainEqual(expect.objectContaining({ id: sendId }));
   expect((await analyze(dataset.groups[0].requests[0])).assistance?.source).not.toBe("cache");
+});
+
+it("restores older cache runs into the queue without rewriting historical results or duplicating records", async () => {
+  const run = await createVerifyRun({ pack: cachePackId });
+  const network = vi.fn<typeof fetch>();
+  for (const entry of run.cases.slice(0, 7)) await executeVerifyCase(run.id, { caseId: entry.caseId }, network);
+  const legacy = await updateVerifyRun(run.id, draft => {
+    for (const result of draft.results) delete result.requestId;
+    draft.status = "STOPPED";
+  });
+  resetSupportTestStore();
+  for (const result of legacy.results) await executeVerifyCase(run.id, { caseId: result.caseId }, network);
+  const restored = await getVerifyRun(run.id);
+  expect(restored.results.map(result => {
+    const historical = { ...result };
+    delete historical.requestId;
+    return historical;
+  })).toEqual(legacy.results);
+  expect(restored.status).toBe("STOPPED");
+  const page = await groupedSupportPage(parseSupportQuery(`http://local?verifyRunId=${run.id}`));
+  expect(page.items).toHaveLength(1);
+  expect(page.items[0].group?.count).toBe(7);
+  for (const result of restored.results) await executeVerifyCase(run.id, { caseId: result.caseId }, network);
+  expect(await listSupportRequests()).toHaveLength(7);
 });
 
 it("does not allow the cache verification pack to bypass normal Verify input validation", async () => {
