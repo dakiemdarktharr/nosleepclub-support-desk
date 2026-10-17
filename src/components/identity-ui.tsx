@@ -30,7 +30,7 @@ export function LoginPanel() {
       } catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa đăng nhập được. Thử lại."); }
       finally { setBusy(false); }
     }}>
-      <label htmlFor="login-id">ID nhân viên</label><input id="login-id" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={32} value={id} disabled={busy} onChange={(event) => setId(event.target.value)} placeholder="Ví dụ: alphanvgl" />
+      <label htmlFor="login-id">ID nhân viên</label><input id="login-id" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={32} value={id} disabled={busy} onChange={(event) => setId(event.target.value)} />
       {error && <Alert tone="error">{error}</Alert>}
       <Button disabled={busy}>{busy ? "Đang xử lý…" : "Đăng nhập"}</Button>
     </form>
