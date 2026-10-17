@@ -966,15 +966,17 @@ body:has(.it-workspace) { background: var(--paper); }
   width:100%;
   position:relative;
   z-index:1;
+  transform:scale(1.2);
+  transform-origin:50% 55%;
   filter:drop-shadow(0 16px 18px rgb(105 54 26 / 34%)) drop-shadow(0 4px 5px rgb(84 42 20 / 24%));
 }
 .role-welcome .welcome-art::after {
   content:"";
   position:absolute;
-  left:26%;
-  right:26%;
-  top:84%;
-  height:6%;
+  left:21%;
+  right:21%;
+  top:90%;
+  height:7%;
   background:radial-gradient(ellipse, rgb(94 49 24 / 46%), rgb(94 49 24 / 20%) 45%, transparent 75%);
   filter:blur(3px);
   pointer-events:none;
