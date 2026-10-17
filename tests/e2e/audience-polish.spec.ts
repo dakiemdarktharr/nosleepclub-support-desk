@@ -68,6 +68,7 @@ test("sender sees safe guidance and progress; staff retains sentiment, expected 
     fullPage: true,
   });
   await page.goto(`/review?requestId=${saved.id}`);
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   await expect(
     page.getByRole("region", { name: "Phân tích cảm xúc nội bộ" }),
   ).toContainText("Trung tính");
@@ -117,6 +118,7 @@ test("legacy requests remain readable without inventing an intake sentiment", as
     await route.fulfill({ response, json: body });
   });
   await page.goto(`/review?requestId=${data.id}`);
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   await expect(
     page.getByRole("region", { name: "Chẩn đoán nội bộ" }),
   ).toContainText("chưa lưu phân tích cảm xúc");

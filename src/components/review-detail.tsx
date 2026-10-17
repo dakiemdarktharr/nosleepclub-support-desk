@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { IncidentUpdates } from "./incident-panel";
 import { ReviewDrafts } from "./review-drafts";
+import { ReviewSummary } from "./review-summary";
 import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
 import { useState, type KeyboardEvent } from "react";
 import {
@@ -99,6 +100,7 @@ export function ReviewDetail({
 }) {
   const [tab, setTab] = useState<Tab>("evidence");
   const [saved, setSaved] = useState(false);
+  const [recordOpen, setRecordOpen] = useState(false);
   const decision = request.decision;
   const canonical = request.canonical;
   const reasonReady = reason.trim().length >= 8;
@@ -187,47 +189,15 @@ export function ReviewDetail({
       </header>
       <div className="it-detail-grid">
         <div className="it-request-content">
-          <IncidentUpdates incident={request.incident} />
-          <section
-            className="it-surface it-intake"
-            aria-labelledby="it-intake-heading"
-          >
+          <section className="it-surface it-intake" aria-labelledby="it-intake-heading">
             <div className="it-section-heading">
-              <h2 id="it-intake-heading" data-guide="reviewer-evidence">
-                Nội dung yêu cầu
-              </h2>
+              <h2 id="it-intake-heading" data-guide="reviewer-evidence">Yêu cầu nguyên văn</h2>
               <small>Đã che thông tin nhạy cảm</small>
             </div>
-            {request.supportNeed && <p className="it-field-hint">{request.supportNeed.note} Lượt báo còn vướng: {request.supportNeed.reportedFailedRounds}. Không tự tăng ưu tiên.</p>}
-            <p className="it-request-text">{request.input.rawText}</p>
-            <dl className="it-request-fields">
-              {request.input.requesterMode === "guest" && request.input.guestDepartment && <div><dt>Phòng ban giả lập (phiên khách)</dt><dd>{optionName(request.input.guestDepartment)} · Không xác minh danh tính</dd></div>}
-              {Object.entries(request.input.fields).map(([key, value]) => (
-                <div key={key}>
-                  <dt>{labelForField(key)}</dt>
-                  <dd>{optionName(value)}</dd>
-                </div>
-              ))}
-              <div>
-                <dt>Tiếp nhận lúc</dt>
-                <dd>
-                  {new Date(request.createdAt).toLocaleString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                  })}
-                </dd>
-              </div>
-            </dl>
+            <p className="it-request-text whitespace-pre-wrap">{request.originalQuestion || request.input.rawText || "Người gửi chọn yêu cầu theo danh mục."}</p>
+            {!request.originalQuestion && !request.input.rawText && <dl className="it-request-fields">{Object.entries(request.input.fields).filter(([key]) => !["employeeId", "department"].includes(key)).map(([key, value]) => <div key={key}><dt>{labelForField(key)}</dt><dd>{optionName(value)}</dd></div>)}</dl>}
           </section>
-          {decision && canonical && (
-            <div className="it-decision">
-              <SupportResult
-                decision={decision}
-                canonical={canonical}
-                audience="reviewer"
-                compact
-              />
-            </div>
-          )}
+          <ReviewSummary key={request.id} id={request.id} version={request.version} />
         </div>
         <aside
           className="it-action-panel it-surface"
@@ -309,6 +279,9 @@ export function ReviewDetail({
             Thao tác chỉ cập nhật hồ sơ mô phỏng. Dừng xử lý chặn bước tiếp
             theo; lịch sử vẫn được giữ.
           </p>
+          <Button variant="quiet" data-guide="reviewer-history" aria-expanded={recordOpen} aria-controls="review-full-record" onClick={() => setRecordOpen(value => !value)}>
+            {recordOpen ? "Ẩn hồ sơ chi tiết" : "Xem lịch sử & bằng chứng"}
+          </Button>
           <Button
             className="it-reload"
             variant="quiet"
@@ -319,7 +292,7 @@ export function ReviewDetail({
             Tải lại hồ sơ
           </Button>
         </aside>
-        <section className="it-record it-surface" aria-label="Hồ sơ xử lý">
+        <section id="review-full-record" hidden={!recordOpen} className="it-record it-surface" aria-label="Hồ sơ xử lý">
           <div role="tablist" aria-label="Thông tin hồ sơ" className="it-tabs">
             {tabs.map((item, index) => (
               <button
@@ -331,9 +304,6 @@ export function ReviewDetail({
                 tabIndex={tab === item.id ? 0 : -1}
                 onClick={() => setTab(item.id)}
                 onKeyDown={(event) => selectTab(event, index)}
-                data-guide={
-                  item.id === "history" ? "reviewer-history" : undefined
-                }
               >
                 <item.icon size={16} />
                 <span>{item.label}</span>
@@ -352,6 +322,26 @@ export function ReviewDetail({
             className="it-tab-content"
           >
             <h2>Thông tin đối chiếu</h2>
+            <IncidentUpdates incident={request.incident} />
+            {request.supportNeed && <p className="it-field-hint">{request.supportNeed.note} Lượt báo còn vướng: {request.supportNeed.reportedFailedRounds}. Không tự tăng ưu tiên.</p>}
+            <dl className="it-request-fields">
+              {request.input.requesterMode === "guest" && request.input.guestDepartment && <div><dt>Phòng ban giả lập (phiên khách)</dt><dd>{optionName(request.input.guestDepartment)} · Không xác minh danh tính</dd></div>}
+              {Object.entries(request.input.fields).map(([key, value]) => (
+                <div key={key}>
+                  <dt>{labelForField(key)}</dt>
+                  <dd>{optionName(value)}</dd>
+                </div>
+              ))}
+              <div>
+                <dt>Tiếp nhận lúc</dt>
+                <dd>
+                  {new Date(request.createdAt).toLocaleString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                  })}
+                </dd>
+              </div>
+            </dl>
+            {decision && canonical && <SupportResult decision={decision} canonical={canonical} audience="reviewer" compact />}
             {request.knowledgeCandidate && (
               <section
                 className="it-knowledge-candidate"

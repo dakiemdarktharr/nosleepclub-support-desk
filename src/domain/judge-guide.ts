@@ -46,10 +46,10 @@ export const guideStages: Record<string, { role: GuideRole; steps: GuideStep[] }
   "reviewer-detail": {
     role: "reviewer",
     steps: [
-      { target: "reviewer-evidence", title: "3. Đọc bằng chứng trước", text: "Đối chiếu nội dung, quyết định, rủi ro và thông tin còn thiếu. Mở phần quy tắc để xem lý do hệ thống xử lý như vậy." },
+      { target: "reviewer-evidence", title: "3. Đọc yêu cầu", text: "Đọc nguyên văn và bản tóm tắt bằng Luna. Bản tóm tắt chỉ giúp đọc nhanh; mở Xem lịch sử & bằng chứng để đối chiếu quy tắc, thông tin còn thiếu và hướng dẫn đã gửi." },
       { target: "reviewer-reason", title: "4. Nhập lý do", text: "Khi duyệt yêu cầu, bạn có thể bỏ qua ô lý do và bấm Tiếp theo. Các thao tác khác cần lý do tối thiểu 8 ký tự; lý do được ghi cùng quyết định.", advanceOn: "input" },
       { target: "reviewer-actions", title: "5. Chọn quyết định phù hợp", text: "Có thể hỏi thêm, từ chối, dừng hoặc duyệt khi được phép. Nút bị mờ là thao tác chưa đủ điều kiện. Điều chỉnh quyết định cần chọn trạng thái đích trước.", advanceOn: "click" },
-      { target: "reviewer-history", title: "6. Kiểm tra nhật ký", text: "Xem trạng thái mới, người thao tác và lý do vừa ghi. Hướng dẫn không tự duyệt hay gửi quyết định thay bạn." },
+      { target: "reviewer-history", title: "6. Kiểm tra nhật ký", text: "Mở Xem lịch sử & bằng chứng, chọn Lịch sử xử lý để xem trạng thái mới, người thao tác và tin nhắn vừa gửi. Hướng dẫn không tự duyệt hay gửi quyết định thay bạn." },
     ],
   },
 };

@@ -38,6 +38,7 @@ test("redesigned workspace preserves the knowledge-review filter and candidate e
     ),
   ).toBe(true);
   await match.click();
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   const candidate = page.getByRole("region", {
     name: "Gợi ý tri thức chờ rà soát",
   });
@@ -62,7 +63,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
   const { data: row } = await response.json();
   await page.goto(`/review?requestId=${row.id}`);
   await expect(
-    page.getByRole("heading", { name: "Nội dung yêu cầu" }),
+    page.getByRole("heading", { name: "Yêu cầu nguyên văn" }),
   ).toBeVisible();
   const approve = page.getByRole("button", {
     name: "Duyệt yêu cầu",
@@ -82,6 +83,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   const evidenceTab = page.getByRole("tab", { name: "Thông tin & bằng chứng" });
   await evidenceTab.focus();
   await page.keyboard.press("ArrowRight");
@@ -112,7 +114,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
     page.getByRole("button", { name: "Điều chỉnh quyết định", exact: true }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Dừng xử lý", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Đã dừng xử lý");
+  await expect(page.locator(".it-current-status")).toContainText("Đã dừng xử lý");
   await expect(
     page.getByRole("tab", { name: /Lịch sử xử lý/ }),
   ).toHaveAttribute("aria-selected", "true");
@@ -177,6 +179,7 @@ test("queue search opens the matching request and missing information still prev
   await page
     .getByRole("button", { name: "Hỏi thêm thông tin", exact: true })
     .click();
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   await expect(
     page.getByRole("tabpanel", { name: /Lịch sử xử lý/ }),
   ).toContainText("Cần thêm nguồn và phạm vi dữ liệu cụ thể.");

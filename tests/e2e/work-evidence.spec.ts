@@ -18,6 +18,7 @@ test("missing business artefact shows a structured request and stays out of revi
   await expect(page.getByLabel("Thông tin làm rõ", { exact: true })).toBeVisible();
   const id = new URL(page.url()).pathname.split("/").at(-1);
   await page.goto(`/review?requestId=${id}`);
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   await expect(page.getByRole("region", { name: "Yêu cầu bổ sung dữ liệu" })).toContainText("Nguồn đã kiểm tra");
   await expect(page.getByRole("region", { name: "Yêu cầu bổ sung dữ liệu" })).toContainText("chưa có connector");
 });

@@ -66,7 +66,7 @@ export class ModelFailure extends Error {
   }
 }
 export type ModelCall = {
-  purpose: "extraction" | "assistance" | "sentiment" | "review-draft";
+  purpose: "extraction" | "assistance" | "sentiment" | "review-draft" | "review-summary";
   instructions: string;
   data: string;
   model: string;
@@ -224,12 +224,12 @@ export async function callModel(
   const totalMs = Math.max(1, Math.min(options.timeoutMs ?? 12000, 12000));
   // Sentiment is optional observation and keeps its existing single-call budget.
   // Extraction/prose may retry once, only with this already configured model and credential.
-  const maxAttempts = ["sentiment", "review-draft"].includes(call.purpose) || totalMs < 1000 ? 1 : 2;
+  const maxAttempts = ["sentiment", "review-draft", "review-summary"].includes(call.purpose) || totalMs < 1000 ? 1 : 2;
   let attempts = 0;
   let retryReason: string | undefined;
   let failureReason: string | undefined;
   let usage: ModelMeasurement["usage"];
-  const finishStage = startSupportStage(call.purpose === "assistance" || call.purpose === "review-draft" ? "generation" : call.purpose);
+  const finishStage = startSupportStage(call.purpose === "assistance" || call.purpose === "review-draft" || call.purpose === "review-summary" ? "generation" : call.purpose);
   try {
     while (attempts < maxAttempts) {
       const remainingMs = totalMs - (Date.now() - startedAt);

@@ -205,7 +205,7 @@ test("reviewer tour is independent and never executes a decision automatically",
   await page.getByLabel("Hiển thị", { exact: true }).selectOption("all");
   await expect(tip).toContainText("2. Mở một hồ sơ");
   await page.locator(`a[href="/review?requestId=${row.id}"]`).click();
-  await expect(tip).toContainText("3. Đọc bằng chứng trước");
+  await expect(tip).toContainText("3. Đọc yêu cầu");
   await tip.getByRole("button", { name: "Tiếp theo" }).click();
   await page.getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)").fill("Dừng yêu cầu demo để kiểm tra nhật ký.");
   await expect(tip).toContainText("5. Chọn quyết định phù hợp");
@@ -214,6 +214,8 @@ test("reviewer tour is independent and never executes a decision automatically",
   await page.screenshot({ path: `artifacts/judge-reviewer-${info.project.name}.png` });
   await page.getByRole("button", { name: "Dừng xử lý", exact: true }).click();
   await expect(tip).toContainText("6. Kiểm tra nhật ký");
+  await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
+  await expect(page.locator("#request-audit")).toBeVisible();
   await expect(page.locator("#request-audit")).toContainText("Dừng yêu cầu demo để kiểm tra nhật ký.");
   await tip.getByRole("button", { name: "Hoàn tất hướng dẫn" }).click();
   await page.getByRole("link", { name: "VNG Support", exact: true }).click();

@@ -38,6 +38,8 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 
 ## Hỗ trợ hàng loạt và giám sát tự động
 
+- **Chi tiết yêu cầu gọn hơn**: mặc định chỉ hiện **Yêu cầu nguyên văn** (đã che thông tin nhạy cảm) và **Tóm tắt yêu cầu** bằng Luna. Bản tóm tắt có dẫn chứng kiểm tra trên nội dung đã lưu, giữ thông tin bổ sung/phủ định; không dùng để quyết định quyền hay tự gửi cho người yêu cầu. Nếu AI lỗi, nguyên văn và thao tác xử lý vẫn dùng được. Mở **Xem lịch sử & bằng chứng** để xem hướng dẫn đã gửi, phòng ban, thời điểm, policy, audit và sentiment. Cache tóm tắt riêng từng hồ sơ/nội dung/model trong 24 giờ, không chia sẻ giữa các hồ sơ.
+
 - **Admin → Đã xử lý tự động**: xem cả hồ sơ từng được auto-approve, kể cả đã hoàn tất hoặc đã chuyển người. Đối chiếu evidence, hướng dẫn và audit trước khi điều chỉnh theo guard hiện có.
 - **AI soạn 3 gợi ý tin nhắn** trong chi tiết reviewer: **1 câu hỏi bổ sung + 2 phương án giải đáp** (ngắn gọn/từng bước), dựa trên đúng câu hỏi gốc và lịch sử đã che dữ liệu nhạy cảm. Model đang cấu hình (giữ Luna) soạn lời dẫn gần gũi “bạn/mình”; server giữ đầy đủ nội dung xử lý đã kiểm duyệt. Thiếu dữ kiện/quyền thì giải thích giới hạn và bước tiếp theo, không bịa đã khắc phục. Chọn và sửa bản nháp, rồi xác nhận thao tác xử lý để gửi. Tin nhắn được lưu cùng quyết định/audit, xuất hiện trong **Phản hồi của nhân viên** trên trang theo dõi và còn nguyên sau reload hoặc sự kiện mới. Lỗi AI dùng mẫu server, hiển thị đúng nguồn; chưa xác nhận thì chưa gửi.
 - **Sự cố chung**: với mô tả ngắn như “Sự cố sập mạng” hoặc “Cúp điện công ty”, nhập cùng mã khu vực với đồng nghiệp. Cùng loại sự cố và khu vực được liên kết trong tối đa 24 giờ; thiếu khu vực thì giữ yêu cầu riêng. Admin cập nhật “đang kiểm tra / đang theo dõi / đã khắc phục” một lần cho cả nhóm; mỗi người nhận thông tin qua màn hình theo dõi, vẫn giữ mã và trạng thái riêng. Bỏ chọn “Gộp sự cố” để xem từng hồ sơ. Không có email/push notification.
@@ -56,6 +58,16 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 ![Phiên khách hiển thị phòng ban được chọn ngẫu nhiên, không có ô chọn phòng ban](docs/images/guest-department.png)
 
 [Hợp đồng và giới hạn](docs/BATCH-SUPPORT-CONTRACT.md) · [Báo cáo kiểm thử](docs/BATCH-SUPPORT-VALIDATION.md).
+
+## Kiểm chứng Production ngày 17/10/2026
+
+Đã đồng bộ 40/40 phòng ban và giữ nguyên quyền. Trên commit 6edafe2: tóm tắt Luna thật 3/3 ca, cache sau reload 3/3, tin nhắn reviewer đến đúng hồ sơ người gửi 3/3. Gợi ý trả lời ở lượt này: 1 bộ từ Luna, 2 bộ dùng mẫu dự phòng; không coi fallback là model thành công. Đã dọn chính xác các ID thử. [Báo cáo, kiểm thử và giới hạn](docs/DEPARTMENTS-LUNA-PRODUCTION-2026-10-17.md).
+
+Ảnh dưới chụp **Production với dữ liệu giả lập**, bản tóm tắt do OpenAI/gpt-6-luna trả về; không phải feedback người dùng thật.
+
+[![Chi tiết reviewer chỉ hiện nguyên văn và tóm tắt bằng Luna](docs/images/review-summary-desktop.png)](docs/images/review-summary-desktop.png)
+
+[Ảnh giao diện trên điện thoại](docs/images/review-summary-mobile.png).
 
 ## ID demo
 
