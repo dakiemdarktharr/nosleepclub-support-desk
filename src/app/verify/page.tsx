@@ -13,6 +13,7 @@ import { StaffWorkspace } from "@/components/staff-workspace";
 import { VerifyProgress } from "@/components/verify-progress";
 import { AiPending } from "@/components/loading-feedback";
 import { cachePackId, cachePackName, cacheVerificationCases } from "@/domain/cache-verification";
+import { CacheGroupResults } from "@/components/cache-group-results";
 
 export default function VerifyPage() {
   const [pack, setPack] = useState("de-a-v3"),
@@ -41,6 +42,7 @@ export default function VerifyPage() {
   const [loading, setLoading] = useState(false);
   const busy = running || loading;
   const results = currentRun?.results ?? [];
+  const cacheRun = currentRun?.pack === cachePackId ? currentRun : null;
   async function loadRun(id: string) {
     const sequence = ++loadSequence.current;
     loadingRun.current = true;
@@ -285,7 +287,8 @@ export default function VerifyPage() {
           {results.filter((result) => !result.pass).length}
         </p>
         {error && <Alert tone="error">{error}</Alert>}
-        {!!results.length && (
+        {cacheRun && <CacheGroupResults run={cacheRun} />}
+        {!cacheRun && !!results.length && (
           <div
             className="overflow-x-auto"
             tabIndex={0}
@@ -329,7 +332,7 @@ export default function VerifyPage() {
           </div>
         )}
         <div className="space-y-3">
-          {results.map((result) => (
+          {!cacheRun && results.map((result) => (
             <Card key={result.caseId}>
               <div className="flex flex-wrap justify-between gap-2">
                 <h2 className="font-bold">{result.caseId}</h2>

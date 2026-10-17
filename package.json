@@ -11,12 +11,12 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:cache": "vitest run tests/rag-cache-storage.test.ts tests/shared-faq-cache.test.ts tests/rag-answer.test.ts tests/review-summary.test.ts tests/preview-performance.test.ts tests/support-resilience.test.ts tests/cache-system.test.ts",
+    "test:cache": "vitest run tests/rag-cache-storage.test.ts tests/shared-faq-cache.test.ts tests/rag-answer.test.ts tests/review-summary.test.ts tests/preview-performance.test.ts tests/support-resilience.test.ts tests/cache-system.test.ts tests/cache-result-groups.test.ts",
     "evaluate:sentiment": "vitest run tests/sentiment-evaluation.test.ts",
     "evaluate:enterprise": "vitest run tests/enterprise-128-evaluation.test.ts && node scripts/enterprise-128-summary.mjs",
     "test:e2e": "playwright test",
     "test:persistence": "node --test scripts/mongo-restart.integration.test.mjs",
-    "test:cache-system": "vitest run tests/cache-system.test.ts"
+    "test:cache-system": "vitest run tests/cache-system.test.ts tests/cache-result-groups.test.ts"
   },
   "dependencies": {
     "lucide-react": "0.468.0",

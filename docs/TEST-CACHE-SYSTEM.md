@@ -8,6 +8,10 @@ Tích hợp thêm commit sentiment `e3bff3e` từ GitHub main trước khi kiể
 
 Vào **Admin → Kiểm thử → Bộ kiểm thử → test cache system → Chạy toàn bộ test (42)**. Mở **Xem 42 câu và kỳ vọng** để đọc dữ liệu trước khi chạy. Có thể dừng, tải lại liên kết kết quả, hoặc tiếp tục; kết quả nằm trong lịch sử Verify.
 
+Kết quả được gộp thành bốn nhóm, ví dụ **VPN không kết nối — 7 yêu cầu cùng nội dung**. Mỗi nhóm báo số yêu cầu, đã kiểm tra/chưa chạy, nhận diện đúng nhóm, PASS/FAIL và HIT/MISS/BYPASS. Bấm **Xem 7 yêu cầu và kết quả** để xem từng cách viết; mở **Chi tiết kiểm tra** để đối chiếu mã ca và các check. Mười bốn câu đối chứng nằm trong mục riêng, không được tính là một nhóm câu giống nhau.
+
+Số yêu cầu là số case thuộc lần chạy đã lưu, gồm câu gốc và các cách viết tương tự; không cộng thêm các câu mồi chuẩn bị cache. Nhận diện đúng nhóm và kết quả cache lấy từ kết quả thực tế đã lưu, không suy từ kỳ vọng. Lần chạy dở chỉ tính số ca đã có kết quả; tiếp tục hoặc reload cập nhật cùng báo cáo. Case cũ không còn trong dataset vẫn hiện ở mục chưa phân nhóm.
+
 | Nhóm | Số câu | Kỳ vọng |
 | --- | ---: | --- |
 | VPN không kết nối | 7 | 1 MISS, 6 HIT |
