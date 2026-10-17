@@ -220,7 +220,7 @@ export type ConversationAnswer = {
   ignoredOverride: boolean;
 };
 export type Assistance = {
-  cache?: { kind: "FAQ"; createdAt: string; expiresAt: string; similarity: number };
+  cache?: { kind: "FAQ"; createdAt: string; expiresAt: string; similarity: number; matchedBy?: "intent-symptom"; topic?: string };
   generationReason?: "REVIEWED_TEMPLATE_SUFFICIENT";
   model?: CanonicalRequest["model"];
   fallbackReason?: string;

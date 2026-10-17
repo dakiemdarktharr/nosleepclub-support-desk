@@ -1,4 +1,5 @@
 import { normalize } from "./text";
+import { faqTopic } from "./faq-intent";
 import { intentName } from "./presentation";
 import type { Assistance, CanonicalRequest } from "./contracts";
 import { guidanceRules, type GuidanceTopic } from "./policy-source";
@@ -168,7 +169,7 @@ export function guidanceTemplate(
       : "";
   const vpnTimeout =
     topic === "vpn" && /timeout|timed out|het thoi gian/.test(context);
-  const vpnDisconnect = topic === "vpn" && /ngat ket noi|rot ket noi|disconnect|drops? connection/.test(context);
+  const vpnDisconnect = topic === "vpn" && (faqTopic(context) === "vpn:disconnect" || /ngat ket noi|rot ket noi|disconnect|drops? connection/.test(context));
   const printer = request.intentLabel === "DEVICE_PRINTER" ? printerGuidance(context) : undefined;
   const guideSteps = printer?.steps ?? specificSteps[request.intentLabel] ?? steps[topic];
   const summary = printer?.summary ?? (vpnTimeout

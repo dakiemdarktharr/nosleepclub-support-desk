@@ -2,7 +2,7 @@ import { test, expect } from "./fixtures";
 import type { SupportRequest } from "../../src/domain/contracts";
 
 for (const source of ["draft", "manual"] as const) {
-  test(`reviewer sends a ${source} message while approval is blocked and sender receives it`, async ({ page, request, context }, info) => {
+  test(`reviewer sends a ${source} message without approving and sender receives it`, async ({ page, request, context }, info) => {
     const created = await request.post("/api/support/requests", { data: {
       requesterMode: "guest", rawText: "Need database access", confirmed: true, idempotencyKey: crypto.randomUUID(),
     } });
@@ -19,8 +19,8 @@ for (const source of ["draft", "manual"] as const) {
     const approve = page.getByRole("button", { name: "Duyệt yêu cầu", exact: true });
     const composer = page.getByLabel("Tin nhắn cho người gửi");
     await expect(send).toBeDisabled();
-    await expect(approve).toBeDisabled();
-    await expect(page.locator(".it-block-notice")).toContainText("Bạn vẫn có thể gửi tin nhắn");
+    await expect(approve).toBeEnabled();
+    await expect(page.locator(".it-block-notice")).toHaveCount(0);
     let message: string;
     if (source === "draft") {
       const option = page.locator(".review-draft-option").first();
@@ -47,7 +47,7 @@ for (const source of ["draft", "manual"] as const) {
     await expect(page.getByText("Đã gửi tin nhắn vào hồ sơ người gửi. Trạng thái yêu cầu được giữ nguyên.")).toBeVisible();
     await expect(composer).toHaveValue("");
     await expect(send).toBeDisabled();
-    await expect(approve).toBeDisabled();
+    await expect(approve).toBeEnabled();
     await sender.bringToFront();
     await expect(sender.getByRole("region", { name: "Tin nhắn từ nhân viên" })).toContainText(message, { timeout: 10000 });
     await sender.reload();

@@ -56,13 +56,10 @@ function blockedReason(
   action: ReviewAction,
   target: RequestStatus,
 ) {
-  if (action === "APPROVE" && request.status === "NEEDS_INFORMATION") {
-    return "Cần bổ sung đủ thông tin trước khi duyệt hoặc hoàn tất.";
-  }
   if (!canReview(request.status, action))
     return "Thao tác không áp dụng cho trạng thái hiện tại.";
+  if (action === "APPROVE") return "";
   const approval =
-    action === "APPROVE" ||
     action === "FULFILL" ||
     (action === "OVERRIDE" && target === "APPROVED_BY_HUMAN");
   if (approval && request.decision?.bucket === "SECURITY_RISK")
@@ -70,7 +67,7 @@ function blockedReason(
   if (approval && request.decision?.ruleIds.includes("FAIL-003"))
     return "Chưa thể duyệt vì bằng chứng hoặc phạm vi AI trích xuất chưa được xác minh. Cần bổ sung thông tin để kiểm tra lại.";
   if (
-    ["APPROVE", "FULFILL"].includes(action) &&
+    action === "FULFILL" &&
     (request.status === "NEEDS_INFORMATION" ||
       request.decision?.action === "NEEDS_INFORMATION" ||
       request.decision?.missingFields.length)
@@ -171,7 +168,7 @@ export function ReviewDetail({
       <Button
         variant={variant}
         disabled={
-          pending || drafting || (needsReason && !reasonReady) || Boolean(block)
+          pending || (drafting && action !== "APPROVE") || (needsReason && !reasonReady) || Boolean(block)
         }
         title={
           block ||
@@ -240,7 +237,7 @@ export function ReviewDetail({
           id="review-actions"
           aria-label="Thao tác xử lý"
         >
-          <fieldset disabled={pending || drafting}>
+          <fieldset disabled={pending}>
             <legend>Thao tác xử lý</legend>
             {approveBlock && (
               <div className="it-block-notice">
@@ -251,6 +248,7 @@ export function ReviewDetail({
             <label className="it-reason">
               Tin nhắn cho người gửi
               <Textarea
+                disabled={drafting}
                 rows={reason.length > 300 ? 8 : 3}
                 maxLength={REVIEW_MESSAGE_MAX_LENGTH}
                 value={reason}
@@ -282,6 +280,7 @@ export function ReviewDetail({
                 <label>
                   Trạng thái sau điều chỉnh
                   <select
+                    disabled={drafting}
                     value={target}
                     onChange={(event) =>
                       setTarget(event.target.value as RequestStatus)

@@ -122,26 +122,15 @@ it("keeps legitimate Kubernetes log viewing available", () => {
   });
   expect(evaluatePolicy(canonical).action).toBe("AUTO_APPROVE");
 });
-it.each(["APPROVE", "OVERRIDE"])(
-  "blocks %s on incomplete access even with public reviewer",
-  async (action) => {
-    const row = await submitSupport(input("Need database read access"));
-    await expect(
-      reviewSupport(
-        row.id,
-        {
-          version: row.version,
-          action,
-          target: "APPROVED_BY_HUMAN",
-          reason: "Judge regression check",
-        },
-        "reviewer-demo",
-      ),
-    ).rejects.toMatchObject({
-      code: action === "APPROVE" ? "INVALID_TRANSITION" : "MISSING_INFORMATION",
-    });
-  },
-);
+it("manual approval of incomplete access preserves facts; generic override stays guarded", async () => {
+  const row = await submitSupport(input("Need database read access"));
+  await expect(reviewSupport(row.id, {
+    version: row.version, action: "OVERRIDE", target: "APPROVED_BY_HUMAN", reason: "Judge regression check",
+  }, "reviewer-demo")).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
+  const approved = await reviewSupport(row.id, { version: row.version, action: "APPROVE" }, "reviewer-demo");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(row.decision);
+});
 it("all 20 concurrent idempotent responses have a final decision and single audit", async () => {
   const value = input("VPN không kết nối");
   const rows = await Promise.all(
@@ -270,7 +259,7 @@ it.each([
     expect(row.decision?.action).toBe("ESCALATE");
   },
 );
-it("operation cannot launder access intent or bypass approval", async () => {
+it("operation cannot launder access intent or bypass fulfillment authority", async () => {
   const row = await submitSupport({
     ...input(""),
     mode: "structured",
@@ -291,17 +280,13 @@ it("operation cannot launder access intent or bypass approval", async () => {
   expect(row.decision?.action).toBe("ESCALATE");
   expect(row.canonical?.riskSignals).toContain("CONFLICT");
   expect(row.decision?.ruleIds).toContain("AUTH-006");
-  await expect(
-    reviewSupport(
-      row.id,
-      {
-        version: row.version,
-        action: "APPROVE",
-        reason: "Judge regression check",
-      },
-      "reviewer-demo",
-    ),
-  ).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
+  const approved = await reviewSupport(row.id, { version: row.version, action: "APPROVE" }, "reviewer-demo");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(row.decision);
+  expect(approved.canonical).toEqual(row.canonical);
+  await expect(reviewSupport(row.id, {
+    version: approved.version, action: "FULFILL", reason: "Attempt simulated fulfillment",
+  }, "reviewer-demo")).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
 });
 it("model ambiguity asks for clarification without inventing conflicting facts", async () => {
   const value = input("Restart laptop");
@@ -398,15 +383,11 @@ it("structured cluster-admin intent still requires verified authority", async ()
   expect(row.decision?.action).toBe("ESCALATE");
   expect(row.decision?.bucket).toBe("BEYOND_AUTHORITY");
   expect(row.decision?.ruleIds).toContain("AUTH-003");
-  await expect(
-    reviewSupport(
-      row.id,
-      {
-        version: row.version,
-        action: "APPROVE",
-        reason: "Judge regression check",
-      },
-      "reviewer-demo",
-    ),
-  ).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
+  const approved = await reviewSupport(row.id, { version: row.version, action: "APPROVE" }, "reviewer-demo");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(row.decision);
+  expect(approved.canonical).toEqual(row.canonical);
+  await expect(reviewSupport(row.id, {
+    version: approved.version, action: "FULFILL", reason: "Attempt simulated fulfillment",
+  }, "reviewer-demo")).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
 });

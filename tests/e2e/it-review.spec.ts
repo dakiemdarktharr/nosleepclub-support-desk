@@ -69,8 +69,8 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
     name: "Duyệt yêu cầu",
     exact: true,
   });
-  await expect(approve).toBeDisabled();
-  await expect(approve).toHaveAttribute("title", /rủi ro bảo mật/);
+  await expect(approve).toBeEnabled();
+  await expect(approve).toHaveAttribute("title", "Duyệt yêu cầu");
   if (!isMobile) {
     const box = await page
       .getByLabel("Tin nhắn cho người gửi")
@@ -106,7 +106,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
   await page
     .getByLabel("Tin nhắn cho người gửi")
     .fill(reason);
-  await expect(approve).toBeDisabled();
+  await expect(approve).toBeEnabled();
   await page
     .getByLabel("Trạng thái sau điều chỉnh")
     .selectOption("APPROVED_BY_HUMAN");
@@ -135,7 +135,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
   });
 });
 
-test("queue search opens the matching request and missing information still prevents approval", async ({
+test("queue search opens the matching request and missing information still allows manual approval", async ({
   page,
   request,
 }, info) => {
@@ -172,10 +172,10 @@ test("queue search opens the matching request and missing information still prev
     .fill("Cần thêm nguồn và phạm vi dữ liệu cụ thể.");
   await expect(
     page.getByRole("button", { name: "Duyệt yêu cầu", exact: true }),
-  ).toBeDisabled();
+  ).toBeEnabled();
   await expect(
     page.getByRole("button", { name: "Duyệt yêu cầu", exact: true }),
-  ).toHaveAttribute("title", /bổ sung đủ thông tin/);
+  ).toHaveAttribute("title", "Duyệt yêu cầu");
   await page
     .getByRole("button", { name: "Hỏi thêm thông tin", exact: true })
     .click();

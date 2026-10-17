@@ -5,6 +5,7 @@ import official from "../../mlai26_new/data/verify/verify_cases.json";
 import synthetic from "../../mlai26_new/data/ground-truth/synthetic_tickets.json";
 import extended from "../../mlai26_new/data/ground-truth/extended_ticket_cases.json";
 import crossFunction from "../../mlai26_new/data/ground-truth/enterprise_cross_function_cases.json";
+import { cachePackId, cacheVerificationCases, type CacheCheck } from "@/domain/cache-verification";
 import {
   pendingReview,
   type AuditEvent,
@@ -39,8 +40,10 @@ export const judgePackIds: readonly string[] = [
   "de-a-v3",
   "submission-4",
   "judge-15",
+  cachePackId,
 ];
 export const supportVerifyCases: VerifyCase[] = [
+  ...cacheVerificationCases.map(row => ({ id: row.id, pack: cachePackId, rawText: row.rawText, expected_action: row.expected, expected_bucket: "FAQ_CACHE" })),
   ...judge.map((row) => ({
     ...row,
     fields: row.fields
@@ -73,6 +76,7 @@ export const supportVerifyCases: VerifyCase[] = [
   ...originals(crossFunction, "ground-truth-original"),
 ];
 export type VerifyResult = {
+  cache?: CacheCheck;
   caseId: string;
   timestamp: string;
   requestId?: string;

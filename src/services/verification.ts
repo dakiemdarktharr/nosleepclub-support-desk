@@ -10,6 +10,8 @@ import {
 } from "@/lib/verify-repository";
 import { SupportError } from "@/lib/support-repository";
 import { supportInputSchema } from "@/domain/input";
+import { cachePackId } from "@/domain/cache-verification";
+import { runCacheVerificationCase } from "./cache-verification";
 
 export async function createVerifyRun(value: unknown) {
   const { pack } = z
@@ -34,12 +36,14 @@ export async function createVerifyRun(value: unknown) {
 }
 function requireJudgePack(pack: string) {
   if (!judgePackIds.includes(pack))
-    throw new SupportError("UNKNOWN_PACK", "Chỉ chạy bộ chung 4 trường hợp, bộ Đề A 5 trường hợp hoặc bộ 15 tình huống. Kết quả cũ chỉ dùng để đối chiếu lịch sử.", 422);
+    throw new SupportError("UNKNOWN_PACK", "Bộ kiểm thử không còn được hỗ trợ. Kết quả cũ chỉ dùng để đối chiếu lịch sử.", 422);
 }
 export async function validateVerificationInput(input: SupportInput) {
   if (!input.verifyRunId) return;
   const run = await getVerifyRun(input.verifyRunId);
   requireJudgePack(run.pack);
+  if (run.pack === cachePackId)
+    throw new SupportError("VERIFY_INPUT_MISMATCH", "Bộ cache chạy biệt lập, không tạo hồ sơ hỗ trợ.", 409);
   const entry = run.cases.find((item) => item.caseId === input.verifyCaseId);
   const fixture = supportVerifyCases.find(
     (item) => item.id === input.verifyCaseId,
@@ -96,7 +100,7 @@ export async function executeVerifyCase(
       "Case không thuộc lần kiểm thử.",
       422,
     );
-  const result = await runSupportCase(fixture, fetcher, {
+  const result = run.pack === cachePackId ? await runCacheVerificationCase(caseId) : await runSupportCase(fixture, fetcher, {
     runId: id,
     requestId: entry.requestId,
   });

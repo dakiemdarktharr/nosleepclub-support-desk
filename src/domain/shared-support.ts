@@ -1,5 +1,6 @@
 import { normalize } from "./text";
 import { redact } from "./redaction";
+import { faqTopic } from "./faq-intent";
 
 export const INCIDENT_TTL_MS = 24 * 60 * 60_000;
 export const FAQ_TTL_MS = 7 * INCIDENT_TTL_MS;
@@ -26,9 +27,5 @@ export function lexicalSimilarity(a: string, b: string) {
 }
 /** FAQ cache contains no open-ended prose, identities, network names or secrets. */
 export function publicFaqTopic(text: string): string | null {
-  if (redact(text).markers.length) return null;
-  const n = normalize(text).replace(/[.!?,]/g, " ").replace(/\s+/g, " ").trim();
-  if (/^vpn (?:khong ket noi|lien tuc ngat ket noi|bi ngat ket noi lien tuc)(?: (?:toi nen kiem tra gi(?: truoc)?|huong dan toi kiem tra an toan|huong dan kiem tra an toan))?$/.test(n)) return "vpn";
-  if (/^(?:wifi|wi fi) (?:khong ket noi|khong vao duoc|khong hoat dong)(?: (?:toi nen kiem tra gi(?: truoc)?|huong dan kiem tra an toan))?$/.test(n)) return "wifi";
-  return null;
+  return faqTopic(text);
 }

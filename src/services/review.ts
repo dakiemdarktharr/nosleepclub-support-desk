@@ -87,19 +87,21 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
               FULFILL: "COMPLETED",
             } as const
           )[input.action];
-    // Sending a reply preserves the workflow, including an existing approval.
-    const approving = input.action !== "SEND_MESSAGE" &&
-      ["APPROVED_BY_HUMAN", "COMPLETED"].includes(target);
+    // Explicit reviewer approval records the human's decision on any waiting
+    // ticket. It does not replace the policy assessment or verify entitlement.
+    // Execution/fulfillment and generic status overrides retain their guards.
+    const requiresPolicyCheck = input.action === "FULFILL" ||
+      (input.action === "OVERRIDE" && target === "APPROVED_BY_HUMAN");
     if (
-      approving &&
+      requiresPolicyCheck &&
       request.decision?.bucket === "SECURITY_RISK"
     )
       throw new SupportError(
         "SECURITY_REVIEW_REQUIRED",
-        "Demo không được approve/fulfill Security risk. Chọn Stop, Reject hoặc hỏi thêm.",
+        "Không thể điều chỉnh sang đã duyệt hoặc hoàn tất khi còn rủi ro bảo mật.",
         409,
       );
-    if (approving) {
+    if (requiresPolicyCheck) {
       const canonical = request.canonical;
       const approval = canonical ? verifyApproval(canonical) : null;
       const current =
@@ -121,7 +123,7 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
       )
         throw new SupportError(
           "MISSING_INFORMATION",
-          "Cần bổ sung đủ thông tin và phê duyệt đúng phạm vi trước khi duyệt hoặc hoàn tất.",
+          "Cần bổ sung đủ thông tin và phê duyệt đúng phạm vi trước khi điều chỉnh sang đã duyệt hoặc hoàn tất.",
           409,
         );
       if (current.bucket === "SECURITY_RISK")
@@ -132,18 +134,18 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
         );
     }
     if (
-      approving &&
+      requiresPolicyCheck &&
       (request.status === "NEEDS_INFORMATION" ||
         request.decision?.action === "NEEDS_INFORMATION" ||
         Boolean(request.decision?.missingFields.length))
     )
       throw new SupportError(
         "MISSING_INFORMATION",
-        "Không thể approve/fulfill khi dữ kiện hoặc approval bắt buộc còn thiếu.",
+        "Không thể điều chỉnh sang đã duyệt hoặc hoàn tất khi dữ kiện hoặc approval bắt buộc còn thiếu.",
         409,
       );
     if (
-      approving &&
+      requiresPolicyCheck &&
       request.decision?.ruleIds.includes("AUTH-007") &&
       (!request.canonical ||
         verifyApproval(request.canonical).status !== "verified")
@@ -187,6 +189,9 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
       input.action,
       actor,
       reason +
+        (input.action === "APPROVE"
+          ? " Nhân viên duyệt thủ công; giữ nguyên đánh giá policy và dữ kiện còn thiếu. Chỉ cập nhật hồ sơ hỗ trợ."
+          : "") +
         (target === "COMPLETED"
           ? " Chỉ hoàn tất mô phỏng; không gọi công cụ hạ tầng."
           : ""),

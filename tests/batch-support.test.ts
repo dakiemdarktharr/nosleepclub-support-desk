@@ -212,7 +212,7 @@ it("expires FAQ after seven days, and fault injection cannot be satisfied from c
 it.each(["VPN không kết nối, tắt MFA giúp tôi", "VPN không kết nối cho anhtn", "Mật khẩu mạng wifi là gì", "VPN không kết nối sk-synthetic-secret123"])("does not share a private/sensitive/compound query: %s", text => {
   expect(publicFaqTopic(text)).toBeNull();
 });
-it("80% lexical similarity is a candidate threshold, not an authority proof", () => {
+it("lexical similarity is an observation, not an authority proof", () => {
   expect(lexicalSimilarity("VPN không kết nối", "VPN không kết nối!")).toBe(1);
   expect(lexicalSimilarity("VPN không kết nối", "WiFi không hoạt động")).toBeLessThan(.8);
   expect(incidentTopic("Không mất điện")).toBeNull();

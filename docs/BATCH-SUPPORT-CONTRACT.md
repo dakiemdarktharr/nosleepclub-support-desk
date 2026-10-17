@@ -34,8 +34,9 @@ Base: `13edf8034df44decabf41b86da7fe1c89e1a9c33`. AI-assisted implementation.
   UUID yêu cầu đã gửi lưu riêng trong localStorage, không mất khi đổi vai trò/phòng ban;
   danh sách tải trạng thái hiện tại từ server, không cache trạng thái trong trình duyệt.
 - Cache: chỉ câu hỏi chung thuộc danh mục đóng, sau khi policy hiện tại đã được
-  đánh giá. Không dùng độ giống nhau để tái sử dụng quyền/approval/quota. Mức 80%
-  là ngưỡng từ vựng, không phải xác suất hai sự cố giống nhau. Không cache secrets,
+  đánh giá. Không dùng độ giống nhau để tái sử dụng quyền/approval/quota. Nhận diện
+  cùng đối tượng/triệu chứng qua grammar đóng; điểm trùng từ chỉ để quan sát, không
+  phải xác suất cùng ý hoặc ngưỡng quyết định hit. [Bộ kiểm thử mới](TEST-CACHE-SYSTEM.md). Không cache secrets,
   câu có dữ liệu riêng, yêu cầu rủi ro hoặc Verify/fault injection.
 - FAQ an toàn lưu tối đa 7 ngày, invalidation bằng phiên bản policy/template.
   Sự cố mạng/điện chỉ gộp khi người gửi chọn rõ khu vực và cùng loại sự cố,
@@ -47,7 +48,8 @@ Base: `13edf8034df44decabf41b86da7fe1c89e1a9c33`. AI-assisted implementation.
   Memory chỉ dành môi trường hỗ trợ local đã cho phép.
 - Người gửi nhận cập nhật ở màn hình theo dõi qua polling; không tuyên bố gửi
   email/push notification. Reviewer demo công khai vẫn không phải phân quyền
-  doanh nghiệp. Rate limit giữ nguyên; cache không phải bảo vệ DDoS.
+  doanh nghiệp. Rate limit intake/mutation giữ nguyên; bộ kiểm thử cache biệt lập có
+  scope 60 case/phút/client. Cache không phải bảo vệ DDoS.
 - Sentiment: quan sát cảm xúc riêng với mức cần hỗ trợ. Không suy diễn “gian dối”
   hoặc “genuine” từ câu chữ. Cảm xúc đơn thuần không đổi trạng thái/ưu tiên.
   Giữ yêu cầu chuyển người rõ ràng và kiểm tra rủi ro trước sentiment. Rule HANDOFF-002 chuyển người khi có hai lượt báo còn vướng kèm thất vọng, hoặc ba lượt còn vướng dù trung tính; số lượt dựa trên phản hồi sau hướng dẫn trong cùng chủ đề. [Chi tiết](INTERACTION-HANDOFF.md).

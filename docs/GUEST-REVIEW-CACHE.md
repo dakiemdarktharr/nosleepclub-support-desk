@@ -14,6 +14,8 @@ Base: `cbedebf96a17dd81ed81431e16e6a62c8d8d186f` từ GitHub `main`. Thay đổi
 
 ## Bộ kiểm chứng cache
 
+Bổ sung **[test cache system](TEST-CACHE-SYSTEM.md)** trong trang Kiểm thử: 4 nhóm × 7 cách diễn đạt cùng ý và 14 câu đối chứng. `npm run test:cache-system` chạy riêng bộ này; `npm run test:cache` chạy cả các guard cache dưới đây.
+
 Chạy `npm run test:cache`. Provider là mock hoặc hàm model giả lập trong test; Mongo được giả lập tại boundary, không gọi model/Mongo thật.
 
 | Nhóm | Kiểm tra và kết quả bắt buộc |

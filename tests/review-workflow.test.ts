@@ -114,23 +114,23 @@ it("review actions are versioned, keep the policy result, and block invalid tran
   ).toHaveLength(1);
   expect(canReview("STOPPED", "APPROVE")).toBe(false);
   expect(canReview("COMPLETED", "OVERRIDE")).toBe(false);
-  expect(canReview("NEEDS_INFORMATION", "APPROVE")).toBe(false);
+  expect(canReview("NEEDS_INFORMATION", "APPROVE")).toBe(true);
 });
-it("security risk cannot be approved or overridden into approval", async () => {
+it("manual approval preserves security assessment and cannot fulfill or override it", async () => {
   const request = await create("Open public RDP port 3389");
-  for (const action of ["APPROVE", "OVERRIDE"])
-    await expect(
-      reviewSupport(
-        request.id,
-        {
-          action,
-          target: "APPROVED_BY_HUMAN",
-          version: request.version,
-          reason: "Synthetic permission review",
-        },
-        "reviewer",
-      ),
-    ).rejects.toMatchObject({ code: "SECURITY_REVIEW_REQUIRED" });
+  await expect(reviewSupport(request.id, {
+    action: "OVERRIDE", target: "APPROVED_BY_HUMAN", version: request.version,
+    reason: "Synthetic permission review",
+  }, "reviewer")).rejects.toMatchObject({ code: "SECURITY_REVIEW_REQUIRED" });
+  const approved = await reviewSupport(request.id, {
+    action: "APPROVE", version: request.version,
+  }, "reviewer");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(request.decision);
+  expect(approved.canonical).toEqual(request.canonical);
+  await expect(reviewSupport(request.id, {
+    action: "FULFILL", version: approved.version, reason: "Attempt simulated fulfillment",
+  }, "reviewer")).rejects.toMatchObject({ code: "SECURITY_REVIEW_REQUIRED" });
 });
 it("reject and override require a meaningful reason; sensitive reasons are redacted", async () => {
   const request = await create("Grant production admin");
@@ -153,32 +153,22 @@ it("reject and override require a meaningful reason; sensitive reasons are redac
   );
   expect(JSON.stringify(rejected)).not.toContain(secret);
 });
-it("cannot approve or override a request with unresolved facts", async () => {
+it("manual approval preserves missing facts while override and fulfillment require them", async () => {
   const request = await create("Need database access");
   expect(request.status).toBe("NEEDS_INFORMATION");
-  await expect(
-    reviewSupport(
-      request.id,
-      {
-        action: "APPROVE",
-        version: request.version,
-        reason: "Trying to bypass missing facts",
-      },
-      "reviewer",
-    ),
-  ).rejects.toMatchObject({ code: "INVALID_TRANSITION" });
-  await expect(
-    reviewSupport(
-      request.id,
-      {
-        action: "OVERRIDE",
-        target: "APPROVED_BY_HUMAN",
-        version: request.version,
-        reason: "Trying to bypass missing facts",
-      },
-      "reviewer",
-    ),
-  ).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
+  await expect(reviewSupport(request.id, {
+    action: "OVERRIDE", target: "APPROVED_BY_HUMAN", version: request.version,
+    reason: "Trying to bypass missing facts",
+  }, "reviewer")).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
+  const approved = await reviewSupport(request.id, {
+    action: "APPROVE", version: request.version,
+  }, "reviewer");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(request.decision);
+  expect(approved.canonical).toEqual(request.canonical);
+  await expect(reviewSupport(request.id, {
+    action: "FULFILL", version: approved.version, reason: "Attempt simulated fulfillment",
+  }, "reviewer")).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
 });
 it("reset clarification produces restart guidance and retains prior audit", async () => {
   const request = await create("Làm sao reset máy?");
@@ -269,22 +259,19 @@ it("only an approved simulation can complete; stopped work cannot resume", async
   ).rejects.toMatchObject({ code: "INVALID_TRANSITION" });
 });
 
-it("does not accept a reviewer click as a substitute for verified DBA/Data approval", async () => {
+it("manual approval does not fabricate verified DBA/Data authority for fulfillment", async () => {
   const request = await createCompleteEscalation();
   expect(request.decision?.ruleIds).toContain("AUTH-001");
   expect(request.decision?.missingFields).toEqual([]);
-  await expect(
-    reviewSupport(
-      request.id,
-      {
-        version: request.version,
-        action: "APPROVE",
-        reason: "Reviewed controlled demo destination",
-      },
-      "reviewer-demo",
-    ),
-  ).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
-  expect((await getSupportRequest(request.id))?.status).toBe("ESCALATED");
+  const approved = await reviewSupport(request.id, {
+    version: request.version, action: "APPROVE",
+  }, "reviewer-demo");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(request.decision);
+  expect(approved.canonical).toEqual(request.canonical);
+  await expect(reviewSupport(request.id, {
+    version: approved.version, action: "FULFILL", reason: "Attempt simulated fulfillment",
+  }, "reviewer-demo")).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
 });
 it("recovers an abandoned receipt without duplicating the decision audit", async () => {
   const request = await create("Restart my laptop");

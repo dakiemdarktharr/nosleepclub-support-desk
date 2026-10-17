@@ -44,7 +44,7 @@ it.each(["Need database access", "Open public RDP port 3389", "VPN không kết 
   },
 );
 
-it("sending from an escalated request with missing facts does not unlock approval", async () => {
+it("sending a message preserves the state until the reviewer explicitly approves", async () => {
   const original = await create("Need database access");
   const row = await feedbackSupport(original.id, { version: original.version, choice: "ADMIN" });
   expect(row.status).toBe("ESCALATED");
@@ -52,10 +52,13 @@ it("sending from an escalated request with missing facts does not unlock approva
   const updated = await reviewSupport(row.id, {
     version: row.version, action: "SEND_MESSAGE", reason: "Bạn bổ sung phạm vi truy cập nhé.",
   }, "public-demo-reviewer");
-  await expect(reviewSupport(row.id, {
-    version: updated.version, action: "APPROVE",
-  }, "public-demo-reviewer")).rejects.toMatchObject({ code: "MISSING_INFORMATION" });
   expect((await getSupportRequest(row.id))?.status).toBe("ESCALATED");
+  const approved = await reviewSupport(row.id, {
+    version: updated.version, action: "APPROVE",
+  }, "public-demo-reviewer");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(row.decision);
+  expect(approved.events.filter(event => event.action === "APPROVE")).toHaveLength(1);
 });
 
 it("can send another message after human approval without reapproving or fulfilling", async () => {

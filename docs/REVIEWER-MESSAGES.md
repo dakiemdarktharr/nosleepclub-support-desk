@@ -2,7 +2,7 @@
 
 Base commit: `25e3c393d29c9b081be893495d6deb7c415b5d85`.
 
-Nút duyệt bị khóa khi hồ sơ thiếu dữ kiện bắt buộc, cần xác minh bằng chứng/phạm vi hoặc có rủi ro bảo mật. Với nhánh `FAIL-003`, giao diện giải thích rằng bằng chứng hoặc phạm vi AI trích xuất chưa xác minh được. Viết lời nhắn không bổ sung bằng chứng vào policy và không tự mở khóa duyệt.
+Hợp đồng duyệt đã cập nhật theo yêu cầu mới: **Duyệt yêu cầu** dùng được với mọi hồ sơ đang chờ nhân viên hoặc chờ bổ sung. Nhân viên bấm duyệt sẽ chuyển trạng thái sang `APPROVED_BY_HUMAN`; không cần nhập tin nhắn hoặc chờ AI. Policy và dữ kiện ban đầu vẫn giữ nguyên. Viết/gửi lời nhắn không tự duyệt hồ sơ. Xem [hợp đồng duyệt thủ công](HUMAN-REVIEW-APPROVAL.md).
 
 Nút **Gửi cho người gửi** gửi nội dung trong ô **Tin nhắn cho người gửi**, dù được chọn từ gợi ý hay tự nhập. Thao tác giữ nguyên trạng thái và quyết định policy. **Gửi yêu cầu bổ sung** vẫn là thao tác riêng, chuyển sang `NEEDS_INFORMATION` để người gửi bổ sung rồi phân tích lại. Hướng dẫn và bản nháp vẫn chỉ gửi khi nhân viên bấm nút xác nhận.
 
@@ -19,9 +19,9 @@ Nút **Gửi cho người gửi** gửi nội dung trong ô **Tin nhắn cho ng�
 
 Thay đổi giới hạn ở domain review action, service review, giao diện reviewer, tài liệu sử dụng và regression tests. Giữ nguyên Ground Truth, policy và cấu hình triển khai.
 
-`tests/reviewer-messages.test.ts` kiểm tra lưu/đọc tin, trạng thái và policy không đổi, guard duyệt, phiên bản, redaction, giới hạn nội dung, hồ sơ đã đóng và quyền API. `tests/e2e/reviewer-messages.spec.ts` kiểm tra chọn gợi ý/tự soạn khi duyệt bị khóa, polling/reload bên người gửi, gửi lỗi và thử lại trên desktop/mobile.
+`tests/reviewer-messages.test.ts` kiểm tra lưu/đọc tin, trạng thái và policy không đổi, duyệt thủ công độc lập với gửi tin, phiên bản, redaction, giới hạn nội dung, hồ sơ đã đóng và quyền API. `tests/e2e/reviewer-messages.spec.ts` kiểm tra chọn gợi ý/tự soạn mà không tự duyệt, polling/reload bên người gửi, gửi lỗi và thử lại trên desktop/mobile.
 
-Kết quả local trước commit:
+Kết quả lịch sử của thay đổi gửi tin nhắn (trước cập nhật duyệt thủ công):
 
 - `npm test`: 1.503 pass, 1 skip; chạy ngoài Windows sandbox sau khi lượt trong sandbox bị chặn ghi cache Vitest (`EPERM`, chưa chạy test).
 - `npm run typecheck`, `npm run lint`, `npm run build`, `npm run check:docs` và `git diff --check`: đạt.

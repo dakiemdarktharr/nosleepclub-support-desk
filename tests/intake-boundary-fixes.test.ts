@@ -105,14 +105,18 @@ it("keeps two independent diagnostic problems separate", async () => {
   expect(row.decision?.action).not.toBe("AUTO_APPROVE");
 });
 
-it("prevents a reviewer from approving a newly recognized MFA removal request", async () => {
+it("manual approval retains MFA removal risk and cannot fulfill it", async () => {
   const row = await submitSupport(input("Vô hiệu hóa kiểm soát MFA trên tài khoản công ty."));
-  for (const action of ["APPROVE", "OVERRIDE"])
-    await expect(reviewSupport(row.id, { version: row.version, action, reason: "Synthetic reviewer decision",
-      ...(action === "OVERRIDE" ? { target: "APPROVED_BY_HUMAN" } : {}) }, "synthetic-reviewer"))
-      .rejects.toMatchObject({ code: "SECURITY_REVIEW_REQUIRED" });
+  await expect(reviewSupport(row.id, { version: row.version, action: "OVERRIDE",
+    reason: "Synthetic reviewer decision", target: "APPROVED_BY_HUMAN" }, "synthetic-reviewer"))
+    .rejects.toMatchObject({ code: "SECURITY_REVIEW_REQUIRED" });
+  const approved = await reviewSupport(row.id, { version: row.version, action: "APPROVE" }, "synthetic-reviewer");
+  expect(approved.status).toBe("APPROVED_BY_HUMAN");
+  expect(approved.decision).toEqual(row.decision);
+  await expect(reviewSupport(row.id, { version: approved.version, action: "FULFILL",
+    reason: "Attempt simulated fulfillment" }, "synthetic-reviewer"))
+    .rejects.toMatchObject({ code: "SECURITY_REVIEW_REQUIRED" });
 });
-
 it("invalidates previews fingerprinted before the extraction-boundary revision", async () => {
   const preview = await previewSupport({ ...input("VPN không kết nối"), confirmed: false });
   const cached = (await getSupportPreview(preview.input.previewId!))!;

@@ -14,9 +14,9 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-it("offers the four, five, and fifteen case judge packs with distinct case IDs", async () => {
-  expect(judgePackIds).toEqual(["de-a-v3", "submission-4", "judge-15"]);
-  for (const [pack, count] of [["de-a-v3", 5], ["submission-4", 4], ["judge-15", 15]] as const) {
+it("offers the existing judge packs and isolated cache suite with distinct case IDs", async () => {
+  expect(judgePackIds).toEqual(["de-a-v3", "submission-4", "judge-15", "test-cache-system"]);
+  for (const [pack, count] of [["de-a-v3", 5], ["submission-4", 4], ["judge-15", 15], ["test-cache-system", 42]] as const) {
     const run = await createVerifyRun({ pack });
     expect(run.cases).toHaveLength(count);
     expect(new Set(run.cases.map(row => row.caseId)).size).toBe(count);

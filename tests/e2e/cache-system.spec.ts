@@ -1,0 +1,31 @@
+import { expect, test } from "./fixtures";
+
+test("test cache system runs 42 real cases and restores the persisted cache results", async ({ page, request }) => {
+  await page.goto("/verify");
+  await page.getByLabel("Bộ kiểm thử").selectOption({ label: "test cache system" });
+  await expect(page.getByRole("heading", { name: "test cache system" })).toBeVisible();
+  await page.getByText("Xem 42 câu và kỳ vọng", { exact: true }).click();
+  await expect(page.getByText("Bạn ơi, VPN của mình không kết nối được. Nhờ bạn hướng dẫn với.", { exact: false }).first()).toBeVisible();
+  await page.getByText("Xem 42 câu và kỳ vọng", { exact: true }).click();
+  await page.getByRole("button", { name: "Chạy toàn bộ test (42)" }).click();
+  const progress = page.getByRole("progressbar", { name: "Tiến độ kiểm thử" });
+  await expect(progress).toHaveAttribute("aria-valuenow", "42", { timeout: 45_000 });
+  await expect(page.getByRole("status")).toContainText("Pass: 42 · Fail: 0");
+  const saved = page.url();
+  const runId = new URL(saved).searchParams.get("run");
+  expect(runId).toBeTruthy();
+  const response = await request.get(`/api/support/verify-runs/${runId}`);
+  expect(response.ok()).toBe(true);
+  const { data } = await response.json();
+  expect(data.status).toBe("COMPLETE");
+  expect(data.results.filter((row: { cache: { actual: string } }) => row.cache.actual === "HIT")).toHaveLength(24);
+  expect(data.results.filter((row: { cache: { actual: string } }) => row.cache.actual === "MISS")).toHaveLength(4);
+  expect(data.results.filter((row: { cache: { actual: string } }) => row.cache.actual === "BYPASS")).toHaveLength(14);
+  expect(data.results.every((row: { pass: boolean; requestId?: string }) => row.pass && !row.requestId)).toBe(true);
+  await page.reload();
+  await expect(page.getByLabel("Bộ kiểm thử")).toHaveValue("test-cache-system");
+  await expect(progress).toHaveAttribute("aria-valuenow", "42");
+  await expect(page.getByRole("status")).toContainText("Pass: 42 · Fail: 0");
+  await expect(page.getByText("Cache kỳ vọng: HIT · thực tế: HIT", { exact: true }).first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

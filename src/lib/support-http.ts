@@ -122,12 +122,14 @@ export async function requireEmployeeIdentity(value: unknown, request?: Request)
 }
 export function enforceDemoRateLimit(
   request: Request,
-  scope: "intake" | "mutation",
+  scope: "intake" | "mutation" | "cache-verify",
 ) {
   if (process.env.NODE_ENV !== "production") return;
   const now = Date.now();
   const windowMs = 60_000;
-  const limit = scope === "intake" ? 30 : 15;
+  // Cache verification has no model calls or support-ticket writes. Allow one
+  // complete 42-case run; ordinary intake/mutation limits remain unchanged.
+  const limit = scope === "cache-verify" ? 60 : scope === "intake" ? 30 : 15;
   const client =
     request.headers.get("x-real-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

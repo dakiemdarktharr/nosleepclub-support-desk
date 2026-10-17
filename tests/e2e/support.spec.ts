@@ -256,7 +256,8 @@ test("Verify preserves original labels, reports unverified access and accepts ne
     "5/5 · Pass: 5 · Fail: 0",
   );
   await expect(page.getByRole("table")).toBeVisible();
-  await expect(page.getByLabel("Bộ kiểm thử").locator("option")).toHaveCount(3);
+  await expect(page.getByLabel("Bộ kiểm thử").locator("option")).toHaveCount(4);
+  await expect(page.getByLabel("Bộ kiểm thử").locator("option[value='test-cache-system']")).toHaveText("test cache system");
   await page.getByLabel("Bộ kiểm thử").selectOption("submission-4");
   await page
     .getByRole("button", { name: "Chạy toàn bộ test (4)", exact: true })
@@ -311,7 +312,7 @@ test("Verify preserves original labels, reports unverified access and accepts ne
     page.getByRole("link", { name: "Xem hướng dẫn / chuyển admin" }),
   ).toBeVisible();
 });
-test("security request cannot be approved and secret is absent from API/audit", async ({
+test("manual approval preserves the security assessment and redaction", async ({
   page,
   request,
 }) => {
@@ -328,14 +329,21 @@ test("security request cannot be approved and secret is absent from API/audit", 
   expect(body).not.toContain(secret);
   const { data } = JSON.parse(body);
   expect(data.decision.bucket).toBe("SECURITY_RISK");
-  const rejected = await request.post(`/api/review/${data.id}`, {
+  const approved = await request.post(`/api/review/${data.id}`, {
     data: {
       action: "APPROVE",
       version: data.version,
-      reason: "Security risk must remain blocked",
+      reason: "Manual review of the synthetic request",
     },
   });
-  expect(rejected.status()).toBe(409);
+  expect(approved.status()).toBe(200);
+  const result = (await approved.json()).data;
+  expect(result.status).toBe("APPROVED_BY_HUMAN");
+  expect(result.decision).toEqual(data.decision);
+  const fulfillment = await request.post("/api/review/" + data.id, { data: {
+    action: "FULFILL", version: result.version, reason: "Attempt simulated fulfillment",
+  } });
+  expect(fulfillment.status()).toBe(409);
   const events = await request.get(`/api/support/events?requestId=${data.id}`);
   expect(await events.text()).not.toContain(secret);
   await page.goto(`/requests/${data.id}`);

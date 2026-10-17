@@ -12,6 +12,7 @@ import { employeeIdentityError } from "@/domain/employee-identity";
 import { StaffWorkspace } from "@/components/staff-workspace";
 import { VerifyProgress } from "@/components/verify-progress";
 import { AiPending } from "@/components/loading-feedback";
+import { cachePackId, cachePackName, cacheVerificationCases } from "@/domain/cache-verification";
 
 export default function VerifyPage() {
   const [pack, setPack] = useState("de-a-v3"),
@@ -176,11 +177,12 @@ export default function VerifyPage() {
           </div>
         </header>
         <Alert>
-          Ba bộ dữ liệu mô phỏng: 4 trường hợp kiểm thử chung, 5 trường hợp Đề A
+          Các bộ dữ liệu mô phỏng: 4 trường hợp kiểm thử chung, 5 trường hợp Đề A
           gồm 3 tự động xử lý và 2 chuyển tiếp, cùng 15 tình huống gồm thiếu
           thông tin, ngoài quy định và vượt thẩm quyền. Mỗi bộ chạy bằng một nút,
           qua cùng API xử lý yêu cầu và kiểm tra lại nhật ký. Đây không phải kết
-          quả thử nghiệm người dùng thật.
+          quả thử nghiệm người dùng thật. Bộ test cache system kiểm tra riêng
+          các cách diễn đạt cùng ý và trường hợp không được dùng chung cache.
         </Alert>
         <fieldset disabled={busy} className="flex flex-wrap items-end gap-3">
           <label>
@@ -202,12 +204,27 @@ export default function VerifyPage() {
               <option value="judge-15">
                 Bộ dữ liệu kiểm thử — 15 tình huống
               </option>
+              <option value={cachePackId}>{cachePackName}</option>
             </select>
           </label>
           <Button onClick={() => void run(false)}>
             Chạy toàn bộ test ({cases.length})
           </Button>
         </fieldset>
+        {pack === cachePackId && <Card>
+          <h2 className="text-xl font-bold">{cachePackName}</h2>
+          <p>4 nhóm × 7 cách viết tự nhiên và 14 câu đối chứng. HIT: dùng lại đúng nhóm; MISS: nhóm chưa có cache; BYPASS: cần xử lý riêng.</p>
+          <p className="text-sm">Dữ liệu giả lập. Mỗi case nạp lại câu đầu nhóm vào cache biệt lập, kiểm tra cùng logic của ứng dụng; không gọi Luna hoặc tạo ticket. Kết quả được lưu để mở lại và tiếp tục. Không phải phép đo tốc độ hay độ bền MongoDB.</p>
+          <details className="mt-3">
+            <summary>Xem 42 câu và kỳ vọng</summary>
+            <ul className="space-y-2 mt-2">
+              {cacheVerificationCases.map(item => <li key={item.id}>
+                <strong>{item.group} · {item.expected}</strong>: {item.rawText}
+                <p className="text-sm text-slate-600">{item.reason}</p>
+              </li>)}
+            </ul>
+          </details>
+        </Card>}
         {!judging && (busy || currentRun) && <VerifyProgress
           completed={results.length} total={currentRun?.cases.length ?? cases.length}
           pending={running} loading={loading} starting={running && !currentRun} />}
@@ -254,7 +271,7 @@ export default function VerifyPage() {
                     disabled={busy}
                     onClick={() => void loadRun(row.id)}
                   >
-                    {row.pack} · {row.completed}/{row.total} ·{" "}
+                    {row.pack === cachePackId ? cachePackName : row.pack} · {row.completed}/{row.total} ·{" "}
                     {row.id.slice(0, 8)}
                   </button>
                 </li>
@@ -299,7 +316,7 @@ export default function VerifyPage() {
                   <tr key={result.caseId}>
                     <td className="p-2">{result.caseId}</td>
                     <td className="p-2">{result.expected.action}</td>
-                    <td className="p-2">{result.actual?.action ?? "ERROR"}</td>
+                    <td className="p-2">{result.cache?.actual ?? result.actual?.action ?? "ERROR"}</td>
                     <td className="p-2">{result.pass ? "PASS" : "FAIL"}</td>
                     <td className="p-2 whitespace-nowrap">
                       {new Date(result.timestamp).toLocaleTimeString("vi-VN")}
@@ -328,6 +345,13 @@ export default function VerifyPage() {
                 Tình huống: {supportVerifyCases.find((item) => item.id === result.caseId)?.rawText ?? "Xem input trong hồ sơ đã lưu."}
               </p>
               <p className="text-xs text-slate-500">{result.timestamp}</p>
+              {result.cache && <div className="rounded border p-3 space-y-1">
+                <p>Nhóm: {result.cache.group}</p>
+                <p>Cache kỳ vọng: {result.cache.expected} · thực tế: {result.cache.actual}</p>
+                <p>Chủ đề nhận diện: {result.cache.topic ?? "Không thuộc FAQ dùng chung"} · câu mồi: {result.cache.seeds}</p>
+                {result.cache.lexicalSimilarity !== undefined && <p>Trùng từ: {Math.round(result.cache.lexicalSimilarity * 100)}%. Ghép cache theo cùng đối tượng và triệu chứng; số này không phải độ tin cậy AI.</p>}
+                <p>{result.cache.checks.join(" · ")}</p>
+              </div>}
               <p>
                 Expected: {result.expected.action} · {result.expected.bucket}{" "}
                 {result.expected.rule && `· ${result.expected.rule}`}
@@ -347,10 +371,10 @@ export default function VerifyPage() {
                 </details>
               </>}
               <p>{result.actual?.adminReason ?? result.error}</p>
-              <p>
+              {!result.cache && <p>
                 Kiểm tra lưu trữ:{" "}
                 {result.persistence?.checks.join(" · ") ?? result.error}
-              </p>
+              </p>}
               <ul>
                 {[
                   ...(result.actual?.questions ?? []),

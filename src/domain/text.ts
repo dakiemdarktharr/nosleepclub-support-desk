@@ -1,3 +1,6 @@
+import { normalize } from "./text-normalization";
+export { normalize } from "./text-normalization";
+import { faqTopic, faqIntents } from "./faq-intent";
 import { allFields, catalog, validIntent } from "./catalog";
 import type {
   CanonicalRequest,
@@ -15,7 +18,7 @@ import { extractNetworkFacts, isSingleNetworkPort, isSingleNetworkProtocol, netw
 
 // Extraction fixes do not change rule definitions, but previously parsed
 // previews must be re-evaluated before confirmation under the new boundary.
-export const INTAKE_REVISION = "support-intake-v2";
+export const INTAKE_REVISION = "support-intake-v3-faq-intent";
 
 // One vocabulary for extracting a labelled fact and keeping it with its request.
 const factLabels: Record<string, string> = {
@@ -29,20 +32,6 @@ const factLabels: Record<string, string> = {
   dataSensitivity: "dataSensitivity|data classification|phân loại dữ liệu",
   resourceLifecycle: "resourceLifecycle|resource lifecycle|vòng đời tài nguyên",
 };
-
-export function normalize(text: string) {
-  return text
-    .normalize("NFKC")
-    .replace(/[\u200B-\u200F\u2060\uFEFF]/g, "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase()
-    .replace(/[_-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 // Only documented lexical equivalences; never infer a new resource or authority.
 export function normalizeFact(value: string) {
@@ -692,6 +681,8 @@ export function safeDeterministicGuidance(input: SupportInput, baseline: Canonic
       baseline.ambiguities.length || baseline.subrequests.length ||
       !["GUIDANCE", "SAFE_DIAGNOSTIC"].includes(baseline.requestKind) ||
       !["guidance", "diagnose", "restart", "answer"].includes(baseline.requestedAction)) return false;
+  const publicTopic = Object.keys(input.fields).some(key => !isEmployeeIdentityField(key)) ? null : faqTopic(input.rawText);
+  if (publicTopic && faqIntents[publicTopic] === baseline.intentLabel) return true;
   const text = normalize(input.rawText);
   // An unrecognized comma/colon continuation may be a second task. During an
   // outage, require the complete clause to be known context, not just a keyword.
@@ -859,6 +850,8 @@ function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
 // Specific symptom/subject pairs compete by specificity before broad catalog hints.
 // Mentions of an unaffected system are not requests to change that system.
 function classify(text: string): [ServiceGroup, string, RequestKind] {
+  const topic = faqTopic(text);
+  if (topic) return [topic.startsWith("printer:") ? "DEVICE_BOOT" : "NETWORK_VPN", faqIntents[topic], "SAFE_DIAGNOSTIC"];
   const relevant = text.replace(
     /\b(?:vpn|wi fi|wifi|mfa)\s+(?:is working|works fine|van binh thuong|binh thuong|khong bi loi|van vao web duoc)\b/g,
     " ",
@@ -1404,7 +1397,9 @@ export function extractIntake(
       else requests.push(fragment);
       return requests;
     }, []);
-  let subrequests = parts.length > 1 ? parts.map(extractText) : [];
+  // The closed FAQ parser consumes the full input, including polite follow-up
+  // phrasing; those phrases are not independent requests. Unknown text still splits.
+  let subrequests = parts.length > 1 && !faqTopic(input.rawText) ? parts.map(extractText) : [];
   if (
     extracted.intentLabel === "DEVICE_RESTART_GUIDANCE" &&
     /(?:khong|not)\s+factory reset/.test(normalize(input.rawText))
