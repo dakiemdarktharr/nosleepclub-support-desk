@@ -28,6 +28,7 @@ const reviewSchema = z
   .object({
     version: z.number().int().nonnegative(),
     action: z.enum([
+      "SEND_MESSAGE",
       "APPROVE",
       "REJECT",
       "REQUEST_INFORMATION",
@@ -42,11 +43,14 @@ const reviewSchema = z
   })
   .strict()
   .superRefine((input, ctx) => {
-    if (input.action !== "APPROVE" && input.reason.length < 8)
+    const minimumLength = input.action === "SEND_MESSAGE" ? 1 : 8;
+    if (input.action !== "APPROVE" && input.reason.length < minimumLength)
       ctx.addIssue({
         code: "custom",
         path: ["reason"],
-        message: "Cần lý do cụ thể tối thiểu 8 ký tự.",
+        message: input.action === "SEND_MESSAGE"
+          ? "Nhập tin nhắn trước khi gửi."
+          : "Cần lý do cụ thể tối thiểu 8 ký tự.",
       });
     if (input.action === "OVERRIDE" && !input.target)
       ctx.addIssue({
@@ -78,12 +82,16 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
               APPROVE: "APPROVED_BY_HUMAN",
               REJECT: "REJECTED",
               REQUEST_INFORMATION: "NEEDS_INFORMATION",
+              SEND_MESSAGE: request.status,
               STOP: "STOPPED",
               FULFILL: "COMPLETED",
             } as const
           )[input.action];
+    // Sending a reply preserves the workflow, including an existing approval.
+    const approving = input.action !== "SEND_MESSAGE" &&
+      ["APPROVED_BY_HUMAN", "COMPLETED"].includes(target);
     if (
-      ["APPROVED_BY_HUMAN", "COMPLETED"].includes(target) &&
+      approving &&
       request.decision?.bucket === "SECURITY_RISK"
     )
       throw new SupportError(
@@ -91,7 +99,7 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
         "Demo không được approve/fulfill Security risk. Chọn Stop, Reject hoặc hỏi thêm.",
         409,
       );
-    if (["APPROVED_BY_HUMAN", "COMPLETED"].includes(target)) {
+    if (approving) {
       const canonical = request.canonical;
       const approval = canonical ? verifyApproval(canonical) : null;
       const current =
@@ -124,7 +132,7 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
         );
     }
     if (
-      ["APPROVED_BY_HUMAN", "COMPLETED"].includes(target) &&
+      approving &&
       (request.status === "NEEDS_INFORMATION" ||
         request.decision?.action === "NEEDS_INFORMATION" ||
         Boolean(request.decision?.missingFields.length))
@@ -135,7 +143,7 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
         409,
       );
     if (
-      ["APPROVED_BY_HUMAN", "COMPLETED"].includes(target) &&
+      approving &&
       request.decision?.ruleIds.includes("AUTH-007") &&
       (!request.canonical ||
         verifyApproval(request.canonical).status !== "verified")
@@ -186,7 +194,7 @@ export async function reviewSupport(id: string, value: unknown, actor: string) {
     event.redactions = [
       ...new Set([...event.redactions, ...redactedReason.markers]),
     ];
-    // One atomic write stores the decision, audit and requester-facing message.
+    // One atomic write stores the status, audit and requester-facing message.
     // A generated/selected draft alone never reaches this mutation.
     event.senderMessage = reason;
     request.events.push(event);

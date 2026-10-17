@@ -1,7 +1,7 @@
 import type { AuditEvent } from "./contracts";
 export const REVIEW_MESSAGE_MAX_LENGTH = 2000;
 
-const reviewActions = new Set(["APPROVE", "REJECT", "REQUEST_INFORMATION", "STOP", "OVERRIDE", "FULFILL"]);
+const reviewActions = new Set(["SEND_MESSAGE", "APPROVE", "REJECT", "REQUEST_INFORMATION", "STOP", "OVERRIDE", "FULFILL"]);
 
 /** Include older reviewer replies without relying on the last audit event. */
 export function reviewerMessages(events: AuditEvent[]) {

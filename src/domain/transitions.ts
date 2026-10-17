@@ -1,5 +1,6 @@
 import type { RequestStatus } from "./contracts";
 export type ReviewAction =
+  | "SEND_MESSAGE"
   | "APPROVE"
   | "REJECT"
   | "REQUEST_INFORMATION"

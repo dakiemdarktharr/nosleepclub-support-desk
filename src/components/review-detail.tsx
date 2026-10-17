@@ -18,6 +18,7 @@ import {
   X,
   OctagonPause,
   RefreshCw,
+  Send,
 } from "lucide-react";
 import type { RequestStatus, SupportRequest } from "@/domain/contracts";
 import { canReview, type ReviewAction } from "@/domain/transitions";
@@ -40,6 +41,7 @@ const tabs = [
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 const labels: Record<ReviewAction, string> = {
+  SEND_MESSAGE: "Gửi cho người gửi",
   APPROVE: "Duyệt yêu cầu",
   REJECT: "Từ chối",
   REQUEST_INFORMATION: "Hỏi thêm thông tin",
@@ -65,6 +67,8 @@ function blockedReason(
     (action === "OVERRIDE" && target === "APPROVED_BY_HUMAN");
   if (approval && request.decision?.bucket === "SECURITY_RISK")
     return "Yêu cầu có rủi ro bảo mật. Chọn hỏi thêm, từ chối hoặc dừng xử lý.";
+  if (approval && request.decision?.ruleIds.includes("FAIL-003"))
+    return "Chưa thể duyệt vì bằng chứng hoặc phạm vi AI trích xuất chưa được xác minh. Cần bổ sung thông tin để kiểm tra lại.";
   if (
     ["APPROVE", "FULFILL"].includes(action) &&
     (request.status === "NEEDS_INFORMATION" ||
@@ -101,7 +105,7 @@ export function ReviewDetail({
   onReload: () => Promise<void>;
 }) {
   const [tab, setTab] = useState<Tab>("evidence");
-  const [saved, setSaved] = useState(false);
+  const [savedAction, setSavedAction] = useState<ReviewAction | null>(null);
   const [recordOpen, setRecordOpen] = useState(false);
   const [information, setInformation] = useState<InformationDraft | null>(null);
   const [drafting, setDrafting] = useState(false);
@@ -114,7 +118,6 @@ export function ReviewDetail({
   }, [request.id, request.version]);
   const decision = request.decision;
   const canonical = request.canonical;
-  const reasonReady = reason.trim().length >= 8;
   const approveBlock = blockedReason(request, "APPROVE", target);
   async function askForInformation() {
     if (drafting) return;
@@ -129,8 +132,9 @@ export function ReviewDetail({
     } finally { if (current === draftSequence.current) setDrafting(false); }
   }
   async function act(action: ReviewAction) {
+    setSavedAction(null);
     if (await onAct(action)) {
-      setSaved(true);
+      setSavedAction(action);
       setTab("history");
     }
   }
@@ -153,7 +157,9 @@ export function ReviewDetail({
     const block = blockedReason(request, action, target);
     const composeInformation = action === "REQUEST_INFORMATION" && !information;
     const needsReason = action !== "APPROVE" && !composeInformation;
+    const reasonReady = reason.trim().length >= (action === "SEND_MESSAGE" ? 1 : 8);
     const Icon = {
+      SEND_MESSAGE: Send,
       APPROVE: Check,
       REQUEST_INFORMATION: CircleHelp,
       REJECT: X,
@@ -170,7 +176,9 @@ export function ReviewDetail({
         title={
           block ||
           (needsReason && !reasonReady
-            ? "Nhập lý do tối thiểu 8 ký tự để thực hiện."
+            ? action === "SEND_MESSAGE"
+              ? "Nhập tin nhắn trước khi gửi."
+              : "Nhập lý do tối thiểu 8 ký tự để thực hiện."
             : labels[action])
         }
         onClick={() => void (composeInformation ? askForInformation() : act(action))}
@@ -208,7 +216,9 @@ export function ReviewDetail({
             >
               {statusLabels[request.status]}
             </Badge>
-            {saved && <small>Đã lưu quyết định và gửi tin nhắn vào hồ sơ người gửi</small>}
+            {savedAction && <small>{savedAction === "SEND_MESSAGE"
+              ? "Đã gửi tin nhắn vào hồ sơ người gửi. Trạng thái yêu cầu được giữ nguyên."
+              : "Đã lưu quyết định và gửi tin nhắn vào hồ sơ người gửi"}</small>}
           </div>
         </div>
       </header>
@@ -235,7 +245,7 @@ export function ReviewDetail({
             {approveBlock && (
               <div className="it-block-notice">
                 <ShieldAlert size={17} />
-                <span>{approveBlock}</span>
+                <span>{approveBlock}{canReview(request.status, "SEND_MESSAGE") && " Bạn vẫn có thể gửi tin nhắn cho người gửi bên dưới."}</span>
               </div>
             )}
             <label className="it-reason">
@@ -254,7 +264,9 @@ export function ReviewDetail({
             {information && <p role="status" className="it-field-hint">{information.source === "openai" ? `Bản nháp từ ${information.model || "AI"}` : information.source === "mock" ? "Bản nháp mô phỏng" : "Mẫu hỏi bổ sung dự phòng"}. Bạn có thể sửa trước khi gửi.</p>}
             <div data-guide="reviewer-actions">
               <div className="it-primary-actions">
-                {actionButton("APPROVE", "primary")}
+                {actionButton("SEND_MESSAGE", "primary")}
+                <p className="it-field-hint">Tin nhắn hiện trên trang theo dõi của người gửi; gửi tin nhắn không thay đổi trạng thái yêu cầu.</p>
+                {actionButton("APPROVE")}
                 {actionButton("REQUEST_INFORMATION")}
               </div>
               {canReview(request.status, "FULFILL") && (
