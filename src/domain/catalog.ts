@@ -46,7 +46,7 @@ export const catalog: Record<ServiceGroup, Service> = {
       "VPN_SETUP VPN_LOGIN VPN_NOT_CONNECTING WIFI_NOT_WORKING NETWORK_UNREACHABLE DNS_RESOLUTION DNS_CHANGE PROXY_CONFIG FIREWALL_DIAGNOSTIC FIREWALL_CHANGE PORT_OPEN_REQUEST PUBLIC_EXPOSURE REMOTE_ACCESS BANDWIDTH_ISSUE CERTIFICATE_ERROR",
     ),
     fields: words(
-      "service source target environment duration reason approvalReference protocol port publicExposure requestedAction affectedUsers symptom urgency",
+      "service source target environment duration reason approvalReference protocol port publicExposure requestedAction affectedUsers symptom deviceType urgency",
     ),
   },
   SOFTWARE_LICENSE: {

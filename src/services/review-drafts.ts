@@ -99,7 +99,7 @@ export async function draftReviewReasons(id: string, value: unknown, options: Mo
         parsed.options.some(o => !context.includes(o.evidence) || redact(o.text).markers.length ||
           detectedRisks(o.text).some(risk => risk !== "USER_HANDOFF") ||
           asserted(normalize(o.text), /\b(?:cap|grant)\s+(?:quyen|access)\b|\b(?:disable|turn off|tat)\s+(?:mfa|edr|firewall)\b|\b(?:xoa|delete|wipe|format|factory reset)\b/) ||
-          !/\bban\b/.test(normalize(o.text)) || /^(?:can|de nghi)\b/.test(normalize(o.text)) ||
+          !/\b(?:ban|minh)\b/.test(normalize(o.text)) || /^(?:can|de nghi)\b/.test(normalize(o.text)) ||
           /\b(?:da|already)\s+(?:duyet|cap|mo|thuc hien|gui|khac phuc|xu ly|thong bao|approved|granted|opened|sent|resolved)\b|https?:|www\.|\b(?:sudo|curl|powershell|cmd\.exe|wget|kubectl|chmod|regedit|netsh|password|otp|secret|mat khau)\b/i.test(normalize(o.text))))
       throw new Error("INVALID_DRAFT");
     const messages = compose(parsed.options.map(o => o.text));

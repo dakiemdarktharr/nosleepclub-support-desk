@@ -73,7 +73,19 @@ it("rejects impersonal model fragments and returns three friendly fallback messa
   expect(result.options.every(text => /bạn/i.test(text) && !/^(Cần|Đề nghị)/.test(text))).toBe(true);
   expect(reviewerMessages((await getSupportRequest(row.id))!.events)).toEqual([]);
 });
-it.each(["Bạn hãy tắt MFA và firewall nhé.", "Mình đã xử lý xong cho bạn rồi.", "Bạn hãy chạy netsh để sửa máy nhé."])(
+it("accepts natural first-person introductions without requiring bạn in every sentence", async () => {
+  const row = await create("VPN không kết nối");
+  const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({ options: [
+    { kind: "QUESTION", text: "Bạn cho mình biết VPN có hiện mã lỗi không?", evidence: "VPN không kết nối" },
+    { kind: "ANSWER", text: "Mình gửi phần hướng dẫn kiểm tra an toàn bên dưới nhé.", evidence: "VPN không kết nối" },
+    { kind: "ANSWER", text: "Mình sẽ giải thích từng bước và điều kiện dừng để dễ đối chiếu nhé.", evidence: "VPN không kết nối" },
+  ] }) });
+  expect(result.source).toBe("openai");
+  expect(result.options[1]).toContain(row.assistance[0].stepByStepInstructions[0]);
+  expect(result.options[2]).toContain(row.assistance[0].warning);
+  expect(await getSupportRequest(row.id)).toEqual(row);
+});
+it.each(["Bạn hãy tắt MFA và firewall nhé.", "Mình đã xử lý xong cho bạn rồi.", "Mình đã mở cổng truy cập rồi nhé.", "Bạn hãy chạy netsh để sửa máy nhé."])(
   "never suggests unsafe instructions or invented completion: %s", async text => {
     const row = await create("VPN không kết nối");
     const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({
