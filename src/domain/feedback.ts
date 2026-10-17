@@ -1,5 +1,6 @@
 import { asserted, normalize } from "./text";
 import type { CanonicalRequest } from "./contracts";
+import { observedFeedbackText } from "./interaction-feedback";
 
 export type FeedbackSentiment = "positive" | "neutral" | "negative";
 
@@ -25,7 +26,9 @@ export function explicitFeedbackChoice(text: string): "RESOLVED" | "ADMIN" | nul
 
 /** Only whole courtesy/affect statements; never swallow a new task or question. */
 export function isFeedbackComment(text: string) {
-  return /^(?:(?:toi|minh)\s+)?(?:(?:rat |that su )?(?:hai long|buc minh|that vong)|cam on(?: ban| nhe)?|thanks|thank you)[.! ]*$/.test(normalize(text));
+  const observed = observedFeedbackText(text).trim();
+  if (!observed && text.trim()) return true;
+  return /^(?:(?:toi|minh|i am|i'm)\s+)?(?:(?:rat |that su |very )?(?:hai long|buc minh|that vong|tuc gian|tuc qua|frustrated|angry|fed up)|cam on(?: ban| nhe)?|thanks|thank you)[.! ]*$/.test(normalize(observed));
 }
 
 export function requiresFeedbackAnalysis(request: CanonicalRequest) {

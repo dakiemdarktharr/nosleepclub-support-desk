@@ -4,7 +4,7 @@ Base: `cbedebf96a17dd81ed81431e16e6a62c8d8d186f` từ GitHub `main`. Thay đổi
 
 ## Hợp đồng mới
 
-- Khi mở hồ sơ hoặc đổi version, tự tạo đúng **hai phương án trả lời xử lý**. Cả hai giữ toàn bộ bước đã rà soát, kết quả cần kiểm tra và điều kiện dừng. Model cấu hình (Luna) soạn lời dẫn; server giữ nội dung hướng dẫn. Thiếu dữ kiện/quyền thì nói rõ giới hạn, không hứa chắc chắn đã khắc phục.
+- Khi mở hồ sơ hoặc đổi version, tự tạo đúng **hai phương án trả lời xử lý**. Cả hai giữ toàn bộ bước đã rà soát, kết quả cần kiểm tra và điều kiện dừng. Luna soạn toàn bộ hai tin nhắn; server validate các bước, cách kiểm tra và cảnh báo bắt buộc, rồi trả nguyên văn. Thiếu dữ kiện/quyền thì nói rõ giới hạn, không hứa chắc chắn đã khắc phục.
 - Bấm **Hỏi thêm thông tin** gọi `/api/review/:id/information` với version, tạo một tin nhắn 1–2 câu, tối đa 500 ký tự, nêu các dữ kiện thiếu. Người xử lý sửa được và bấm **Gửi yêu cầu bổ sung**. Việc soạn chưa thay trạng thái hay gửi tin; xác nhận mới ghi atomically vào hồ sơ/audit như trước.
 - Thiếu thông tin do policy xác định được ưu tiên. Với hướng dẫn đã đủ điều kiện, hỏi chi tiết chẩn đoán chưa được cung cấp. Không hỏi lại hệ điều hành, mã lỗi hoặc thời điểm đã ghi rõ. Model lỗi/schema/evidence sai dùng mẫu dự phòng, hiển thị đúng nguồn. Version được kiểm tra trước và sau inference; phản hồi cũ không thay nội dung hồ sơ mới.
 - Lưu UUID yêu cầu khách vào `localStorage` sau khi gửi thành công. Không lưu nội dung ticket, identity hoặc trạng thái vào lịch sử trình duyệt. Đổi sang Admin/đăng nhập nhân viên/đổi phòng ban khách không xóa danh sách này.

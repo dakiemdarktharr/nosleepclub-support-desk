@@ -20,6 +20,15 @@ const create = (rawText: string, incidentSite?: string) => submitSupport({
   requesterMode: "guest", rawText, confirmed: true, idempotencyKey: crypto.randomUUID(),
   fields: incidentSite ? { incidentSite } : {},
 });
+// Model stub returns whole messages under the new contract, not introductions.
+const completeDrafts = (call: model.ModelCall, texts: string[]) => {
+  const context = JSON.parse(call.data) as { requiredAnswerParts: string[] };
+  return { options: texts.map(text => ({
+    kind: "ANSWER",
+    text: text + "\n\n" + context.requiredAnswerParts.join("\n"),
+    evidenceIds: ["answer_1"],
+  })) };
+};
 it("a delayed incident poll cannot undo a newer handoff/reply, while same-version group updates remain visible", async () => {
   const original = await create("Cúp điện công ty", "DEMO-POLL-RACE");
   const group = (await incidentView(original.incidentId!))!;
@@ -51,12 +60,12 @@ it("uses the department from the Mongo-backed session rather than the caller's d
   expect(input.fields.employeeId).toBe("demoemployee");
 });
 
-it("drafts two complete answers without changing a request or exposing sender fields to the model", async () => {
+it("drafts two reasons without changing a request or exposing sender fields to the model", async () => {
   const row = await create("Mở port 3389 ra Internet");
-  const run = vi.fn(async (call: model.ModelCall) => ({ options: [
-    { text: "Bạn cần trao đổi với người phụ trách về rủi ro của yêu cầu này nhé.", evidence: "SECURITY_RISK" },
-    { text: "Mình gửi bạn phần giải thích rủi ro và bước tiếp theo bên dưới nhé.", evidence: "SECURITY_RISK" },
-  ].map(o => ({ ...o, kind: "ANSWER", evidence: call.data.includes("SECURITY_RISK") ? "SECURITY_RISK" : "intent" })) }));
+  const run = vi.fn(async (call: model.ModelCall) => completeDrafts(call, [
+    "Bạn cần trao đổi với người phụ trách về rủi ro của yêu cầu này nhé.",
+    "Mình gửi bạn phần giải thích rủi ro và bước tiếp theo bên dưới nhé.",
+  ]));
   const result = await draftReviewReasons(row.id, { version: row.version }, { run });
   expect(result.source).toBe("openai"); expect(result.options).toHaveLength(2);
   expect(run.mock.calls[0][0].purpose).toBe("review-draft");
@@ -65,20 +74,26 @@ it("drafts two complete answers without changing a request or exposing sender fi
 });
 it("rejects impersonal model fragments and returns two friendly fallback messages", async () => {
   const row = await create("VPN không kết nối");
-  const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({
-    options: [1,2].map(n => ({ kind: "ANSWER", text: `Cần kiểm tra thông tin yêu cầu lần ${n}.`, evidence: "intent" })),
-  }) });
+  const result = await draftReviewReasons(row.id, { version: row.version }, { run: async call =>
+    completeDrafts(call, [1, 2].map(n => `Cần kiểm tra thông tin yêu cầu lần ${n}.`)) });
   expect(result.source).toBe("deterministic");
   expect(result.options.every(text => /bạn/i.test(text) && !/^(Cần|Đề nghị)/.test(text))).toBe(true);
   expect(reviewerMessages((await getSupportRequest(row.id))!.events)).toEqual([]);
 });
-it("accepts natural first-person introductions without requiring bạn in every sentence", async () => {
+it("returns all two complete model messages verbatim, with server-owned evidence and no appended text", async () => {
   const row = await create("VPN không kết nối");
-  const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({ options: [
-    { kind: "ANSWER", text: "Mình gửi phần hướng dẫn kiểm tra an toàn bên dưới nhé.", evidence: "VPN không kết nối" },
-    { kind: "ANSWER", text: "Mình sẽ giải thích từng bước và điều kiện dừng để dễ đối chiếu nhé.", evidence: "VPN không kết nối" },
-  ] }) });
+  let generated: ReturnType<typeof completeDrafts> | undefined;
+  const result = await draftReviewReasons(row.id, { version: row.version }, { run: async call => {
+    generated = completeDrafts(call, [
+      "Mình gửi phần hướng dẫn kiểm tra an toàn bên dưới nhé.",
+      "Mình sẽ giải thích từng bước và điều kiện dừng để dễ đối chiếu nhé.",
+    ]);
+    return generated;
+  } });
   expect(result.source).toBe("openai");
+  expect(result.options).toEqual(generated!.options.map(option => option.text));
+  expect(result.evidence![0][0].id).toBe("answer_1");
+  expect(result.inference?.attempts).toBe(1);
   expect(result.options[0]).toContain(row.assistance[0].stepByStepInstructions[0]);
   expect(result.options[1]).toContain(row.assistance[0].warning);
   expect(await getSupportRequest(row.id)).toEqual(row);
@@ -86,17 +101,14 @@ it("accepts natural first-person introductions without requiring bạn in every 
 it.each(["Bạn hãy tắt MFA và firewall nhé.", "Mình đã xử lý xong cho bạn rồi.", "Mình đã mở cổng truy cập rồi nhé.", "Bạn hãy chạy netsh để sửa máy nhé."])(
   "never suggests unsafe instructions or invented completion: %s", async text => {
     const row = await create("VPN không kết nối");
-    const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({
-      options: [
-        { kind: "ANSWER", text, evidence: "intent" },
-        { kind: "ANSWER", text: "Mình gửi bạn từng bước xử lý ở dưới nhé.", evidence: "intent" },
-      ],
-    }) });
+    const result = await draftReviewReasons(row.id, { version: row.version }, { run: async call =>
+      completeDrafts(call, [text, "Mình gửi bạn từng bước xử lý ở dưới nhé."]) });
     expect(result.source).toBe("deterministic");
+    expect(result.fallbackReason).toBe("DRAFT_UNSAFE_CONTENT");
     expect(result.options).not.toContain(text);
   },
 );
-it("offers exactly two complete answers without a clarification option for the precise VPN/printer question", async () => {
+it("offers exactly two complete answers for the precise VPN/printer question", async () => {
   for (const question of ["VPN liên tục ngắt kết nối. Hướng dẫn tôi kiểm tra an toàn.", "Máy in văn phòng báo kẹt giấy. Tôi nên kiểm tra gì trước?"]) {
     const row = await create(question);
     const result = await draftReviewReasons(row.id, { version: row.version });
@@ -121,10 +133,10 @@ it("gives policy-grounded explanations rather than fabricated execution for a se
     expect(answer).not.toContain("đã mở");
   }
 });
-it("rejects three questions and includes the redacted original question in model context", async () => {
+it("rejects two questions and includes the redacted original question in model context", async () => {
   const row = await create("VPN không kết nối; email synthetic@example.invalid");
-  const run = vi.fn(async () => ({ options: [1,2,3].map(n => ({
-    kind: "QUESTION", text: `Bạn gửi thêm thông tin bước ${n} giúp mình nhé?`, evidence: "intent",
+  const run = vi.fn(async () => ({ options: [1,2].map(n => ({
+    kind: "QUESTION", text: `Bạn gửi thêm thông tin bước ${n} giúp mình nhé?`, evidenceIds: ["request"],
   })) }));
   const result = await draftReviewReasons(row.id, { version: row.version }, { run });
   expect(result.source).toBe("deterministic");
@@ -164,7 +176,7 @@ it("rejects stale drafts before inference and falls back on unsafe or invalid ou
   const run = vi.fn(async () => ({ options: Array(3).fill({ text: "Đã cấp quyền quản trị cho bạn.", evidence: "fake" }) }));
   await expect(draftReviewReasons(row.id, { version: 999 }, { run })).rejects.toMatchObject({ code: "VERSION_CONFLICT" });
   expect(run).not.toHaveBeenCalled();
-  expect(await draftReviewReasons(row.id, { version: row.version }, { run })).toMatchObject({ source: "deterministic", fallbackReason: "DRAFT_UNAVAILABLE_OR_INVALID" });
+  expect(await draftReviewReasons(row.id, { version: row.version }, { run })).toMatchObject({ source: "deterministic", fallbackReason: "DRAFT_SCHEMA_INVALID" });
 });
 it("auto queue retains a request after handoff and after completion", async () => {
   const first = await create("VPN không kết nối"), second = await create("Tôi tắt máy tính lúc về được không?");

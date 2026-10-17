@@ -1,4 +1,5 @@
-import { assessSupportNeed } from "@/domain/support-need";
+import { assessSupportNeed, interactionHandoffDecision } from "@/domain/support-need";
+import { reportsUnresolvedHelp } from "@/domain/interaction-feedback";
 import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
 import { createConversationAnswer } from "@/lib/conversation-model";
 import {
@@ -259,7 +260,7 @@ export async function feedbackSupport(
   const safeReply = input.replyText ? redact(input.replyText) : null;
   if (
     safeReply &&
-    !(input.choice === "STILL_BROKEN" && isContinuationOnly(safeReply.text)) &&
+    !(input.choice === "STILL_BROKEN" && (isContinuationOnly(safeReply.text) || reportsUnresolvedHelp(safeReply.text))) &&
     explicitFeedbackChoice(safeReply.text) !== input.choice
   )
     throw new SupportError(
@@ -296,8 +297,10 @@ export async function feedbackSupport(
   }
   let nextAssistance = null;
   let failedCanonical = null;
+  const supportNeed = assessSupportNeed(snapshot, safeReply?.text || (input.choice === "ADMIN" ? "Nhờ nhân viên hỗ trợ" : input.choice === "STILL_BROKEN" ? "Vẫn chưa được" : ""), assessment);
+  const interactionHandoff = input.choice === "STILL_BROKEN" ? interactionHandoffDecision(snapshot, supportNeed) : null;
   if (
-    input.choice === "STILL_BROKEN" &&
+    input.choice === "STILL_BROKEN" && !interactionHandoff &&
     (snapshot.canonical?.conversation || snapshot.assistance.length < 3) &&
     snapshot.canonical
   ) {
@@ -315,13 +318,15 @@ export async function feedbackSupport(
   }
   return updateSupportRequest(id, input.version, (request) => {
     const before = request.status;
-    request.supportNeed = assessSupportNeed(request, safeReply?.text || (input.choice === "ADMIN" ? "Nhờ nhân viên hỗ trợ" : input.choice === "STILL_BROKEN" ? "Vẫn chưa được" : ""), assessment);
+    request.supportNeed = supportNeed;
     request.feedback.push({
       choice: input.choice,
       timestamp: new Date().toISOString(),
       sentiment,
       ...(assessment ? { sentimentAssessment: assessment } : {}),
       ...(safeReply?.text ? { replyText: safeReply.text } : {}),
+      assistanceRound: request.assistance.length,
+      supportIntent: request.canonical?.intentLabel,
     });
     if (nextAssistance) request.assistance.push(nextAssistance);
     if (
@@ -345,7 +350,10 @@ export async function feedbackSupport(
         createdAt: new Date().toISOString(),
       };
     }
-    if (failedCanonical) {
+    if (interactionHandoff) {
+      request.decision = interactionHandoff;
+      request.status = "ESCALATED";
+    } else if (failedCanonical) {
       request.canonical = failedCanonical;
       request.decision = evaluatePolicy(failedCanonical, verifyApproval);
       request.status = "ESCALATED";

@@ -37,6 +37,7 @@ import {
 import { redact } from "@/domain/redaction";
 import { isSingleNetworkPort, isSingleNetworkProtocol, sameNetworkFact } from "@/domain/network-facts";
 import { reserveModelAttemptForModel } from "./support-repository";
+import { observedFeedbackText } from "@/domain/interaction-feedback";
 
 export class ModelFailure extends Error {
   constructor(
@@ -118,6 +119,7 @@ function withSentimentAssessment(
   if (
     !parsed.success ||
     !text.includes(parsed.data.evidence) ||
+    parsed.data.sentiment !== "neutral" && !observedFeedbackText(text).includes(parsed.data.evidence) ||
     redact(JSON.stringify(parsed.data)).markers.length
   )
     return canonical;

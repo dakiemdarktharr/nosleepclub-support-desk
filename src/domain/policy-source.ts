@@ -4,6 +4,13 @@ import type { Decision, Environment, RequestKind, RiskSignal, ServiceGroup } fro
 export const POLICY_VERSION = "support-guidance-v5.20";
 export const POLICY_EFFECTIVE_DATE = "2026-10-15";
 
+// Proposed support workflow: observed failed interactions, never emotion alone.
+export const supportInteractionPolicy = {
+  ruleId: "HANDOFF-002",
+  failedRoundsWithFrustration: 2,
+  failedRoundsWithoutFrustration: 3,
+} as const;
+
 // Quota values come from the authoritative capacity service at evaluation time.
 // Do not ship fixed demo values as a benchmark or production eligibility gate.
 export const resourceQuotaPolicy = {

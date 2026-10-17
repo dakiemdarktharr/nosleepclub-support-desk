@@ -294,6 +294,8 @@ export type SupportRequest = {
     sentiment?: FeedbackSentiment;
     sentimentAssessment?: SentimentAssessment;
     replyText?: string;
+    assistanceRound?: number;
+    supportIntent?: string;
   }>;
   knowledgeCandidate?: KnowledgeCandidate;
   events: AuditEvent[];

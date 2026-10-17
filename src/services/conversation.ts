@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { assessSupportNeed, repeatedAffect } from "@/domain/support-need";
+import { assessSupportNeed, interactionHandoffDecision, repeatedAffect } from "@/domain/support-need";
+import { reportsUnresolvedHelp } from "@/domain/interaction-feedback";
+import { guidanceRules } from "@/domain/policy-source";
 import {
   getSupportRequest,
   SupportError,
@@ -36,6 +38,10 @@ export async function continueConversation(id: string, value: unknown) {
   const reply = prepareInput({ rawText: input.question, idempotencyKey: id });
   const baseline = extractIntake(reply.input, reply.markers);
   const risky = requiresFeedbackAnalysis(baseline);
+  const newTopic = baseline.intentLabel !== current.canonical?.intentLabel &&
+    !baseline.intentLabel.startsWith("CHAT_") &&
+    baseline.intentLabel !== "GENERAL_HOW_TO" &&
+    guidanceRules.some(rule => rule.labels.some(label => label === baseline.intentLabel));
   if (!risky && repeatedAffect(current, safeReply)) return current;
   const assessment = risky ? undefined : await analyzeSupportSentiment(safeReply, "post-answer");
   const sentiment = assessment?.sentiment ?? "neutral";
@@ -46,6 +52,18 @@ export async function continueConversation(id: string, value: unknown) {
       choice,
       replyText: safeReply,
     }, assessment);
+  const supportNeed = assessSupportNeed(current, safeReply, assessment);
+  const handoff = !risky && !newTopic && interactionHandoffDecision(current, supportNeed);
+  if (handoff) return updateSupportRequest(id, input.version, request => {
+    request.supportNeed = supportNeed;
+    request.feedback.push({ choice: reportsUnresolvedHelp(safeReply) ? "STILL_BROKEN" : "COMMENT",
+      sentiment, sentimentAssessment: assessment, replyText: safeReply,
+      assistanceRound: request.assistance.length, supportIntent: request.canonical?.intentLabel,
+      timestamp: new Date().toISOString() });
+    request.decision = handoff;
+    request.status = "ESCALATED";
+    request.events.push(auditEvent(request, current.status, "HANDOFF", "employee-demo", handoff.adminReason));
+  });
   if (!risky && isFeedbackComment(safeReply))
     return updateSupportRequest(id, input.version, (request) => {
       request.supportNeed = assessSupportNeed(request, safeReply, assessment);
@@ -53,7 +71,7 @@ export async function continueConversation(id: string, value: unknown) {
       request.events.push(auditEvent(request, request.status, "FEEDBACK", "employee-demo",
         `Ghi nhận cảm xúc ${sentiment}; chưa có xác nhận giải quyết hoặc yêu cầu chuyển người. Không đổi trạng thái.`));
     });
-  if (!risky && isContinuationOnly(safeReply))
+  if (!risky && !newTopic && (isContinuationOnly(safeReply) || reportsUnresolvedHelp(safeReply)))
     return feedbackSupport(
       id,
       { version: input.version, choice: "STILL_BROKEN", replyText: safeReply },
@@ -71,13 +89,18 @@ export async function continueConversation(id: string, value: unknown) {
   });
   const result = await completeAnalysis(safe.input, safe.markers);
   return updateSupportRequest(id, input.version, (request) => {
-    request.supportNeed = assessSupportNeed(request, safeReply, assessment);
+    request.supportNeed = assessSupportNeed(
+      newTopic ? { ...request, canonical: result.canonical } : request,
+      newTopic ? "" : safeReply, assessment,
+    );
     request.feedback.push({
       choice: "STILL_BROKEN",
       timestamp: new Date().toISOString(),
       sentiment,
       ...(assessment ? { sentimentAssessment: assessment } : {}),
       replyText: safeReply,
+      assistanceRound: newTopic ? 0 : request.assistance.length,
+      supportIntent: request.canonical?.intentLabel,
     });
     request.input = safe.input;
     request.canonical = result.canonical;

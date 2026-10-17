@@ -11,9 +11,7 @@ Base: `13edf8034df44decabf41b86da7fe1c89e1a9c33`. AI-assisted implementation.
   cùng atomic write với quyết định. UI hiển thị toàn bộ lịch sử; hồ sơ cũ dùng
   explanation của action reviewer tương ứng. Không suy ra tin đã đọc hoặc gửi email.
   Hợp đồng cố định ANSWER/ANSWER: hai giải đáp theo câu hỏi gốc/lịch sử đã redact.
-  Hỏi bổ sung có endpoint riêng, soạn ngắn trước khi xác nhận gửi. Model soạn lời dẫn; server
-  ghép toàn bộ các bước hướng dẫn hiện hành (hoặc câu trả lời đã được kiểm tra/
-  lý do policy), gồm điều kiện dừng. Không cắt bước để làm câu ngắn. Giới hạn
+  Hỏi bổ sung có endpoint riêng, soạn ngắn trước khi xác nhận gửi. Luna trả nguyên hai tin nhắn đầy đủ; server validate tất cả bước, kết quả cần kiểm tra và cảnh báo theo thứ tự. Không ghép nội dung thêm vào đầu ra model. Giới hạn
   tin nhắn 2.000 ký tự dùng chung server/UI; bản nháp hỏi bổ sung tối đa 500 ký tự.
   Gợi ý trả lời dạng câu hỏi bị từ chối. [Hợp đồng cập nhật](GUEST-REVIEW-CACHE.md).
 - Verify: tiến độ xác định từ số response case đã lưu, tính cả PASS/FAIL.
@@ -52,4 +50,4 @@ Base: `13edf8034df44decabf41b86da7fe1c89e1a9c33`. AI-assisted implementation.
   doanh nghiệp. Rate limit giữ nguyên; cache không phải bảo vệ DDoS.
 - Sentiment: quan sát cảm xúc riêng với mức cần hỗ trợ. Không suy diễn “gian dối”
   hoặc “genuine” từ câu chữ. Cảm xúc đơn thuần không đổi trạng thái/ưu tiên.
-  Giữ yêu cầu chuyển người rõ ràng và kiểm tra rủi ro trước sentiment.
+  Giữ yêu cầu chuyển người rõ ràng và kiểm tra rủi ro trước sentiment. Rule HANDOFF-002 chuyển người khi có hai lượt báo còn vướng kèm thất vọng, hoặc ba lượt còn vướng dù trung tính; số lượt dựa trên phản hồi sau hướng dẫn trong cùng chủ đề. [Chi tiết](INTERACTION-HANDOFF.md).
