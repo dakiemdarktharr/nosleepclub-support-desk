@@ -220,7 +220,8 @@ export type ConversationAnswer = {
   ignoredOverride: boolean;
 };
 export type Assistance = {
-  cache?: { kind: "FAQ"; createdAt: string; expiresAt: string; similarity: number; matchedBy?: "intent-symptom"; topic?: string };
+  cache?: { kind: "FAQ" | "GUIDANCE"; createdAt: string; expiresAt: string; similarity?: number;
+    matchedBy?: "intent-symptom"; topic?: string; originalSource?: "deterministic" | "openai"; originalModel?: string };
   generationReason?: "REVIEWED_TEMPLATE_SUFFICIENT";
   model?: CanonicalRequest["model"];
   fallbackReason?: string;

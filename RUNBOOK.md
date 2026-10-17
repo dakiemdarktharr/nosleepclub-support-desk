@@ -351,7 +351,9 @@ Giữ `MONGODB_URI` và `MONGODB_DB` hiện có cho Support. App tạo index tr�
 
 Sự cố chỉ liên kết trong 24 giờ tính từ khi tạo nhóm. Sau 24 giờ hoặc khi đóng, yêu cầu mới tạo nhóm khác. Audit/cập nhật cũ được giữ để theo dõi; không xóa lịch sử theo TTL cache. Cập nhật dùng mẫu server có giới hạn an toàn, không cho gửi secrets hay lệnh tùy ý đến mọi người. Đánh dấu sự cố chung đã khắc phục không tự đóng ticket cá nhân. Màn hình theo dõi polling khi tab đang mở và online; không phải dịch vụ thông báo ngoài app. Danh sách nhóm hiển thị tối đa 50 nhóm đang mở mới nhất, hồ sơ vẫn tra cứu được riêng.
 
-Cache FAQ chỉ lưu mô tả công khai thuộc grammar đóng và hash template. Mỗi hit đối chiếu cùng đối tượng/triệu chứng theo grammar đóng và template hiện hành + policy; Dice từ vựng chỉ là telemetry, không quyết định hit. Sửa matcher/template/policy tự vô hiệu hóa bản cũ. Không chia sẻ nội dung tự do/credential/entitlement. Verify và fault injection bỏ qua cache mới. Không thay model, rate limit hoặc quota. Đây chưa phải kiểm chứng tải 3.000 người hay bảo vệ DDoS đa vùng.
+Cache FAQ lưu mô tả công khai thuộc grammar đóng, toàn bộ nội dung trả lời/các bước xử lý và hash template. Mỗi hit kiểm tra body lưu vẫn đúng mẫu hiện hành và policy; entry cũ chỉ có hash sẽ miss. Dice từ vựng chỉ là telemetry, không quyết định hit. Cache hướng dẫn AI có ngữ cảnh dùng `v3_support_guidance_cache`, HMAC bằng server key hiện có, Mongo TTL `deleteAt` 7 ngày; không lưu evidence/identity/trạng thái từ người gửi cũ. Cùng đối tượng/triệu chứng/nền tảng và hash mẫu + policy + intake + provider/model mới dùng lại được. Hit không kéo dài hạn dùng. Đổi API key vô hiệu hóa chữ ký AI cũ. Không fallback memory khi Mongo lỗi. Single-flight chỉ trong cùng process, không hứa gom lời gọi đồng thời giữa nhiều instance.
+
+Không chia sẻ nội dung tự do/credential/entitlement; dữ kiện hoặc cách nói ngoài grammar vẫn chạy phân tích bình thường. Verify và fault injection bỏ qua cache chung. Không thay model, rate limit hoặc quota. [Hợp đồng, kiểm thử và giới hạn](docs/ANSWER-REUSE-CACHE.md). Đây chưa phải kiểm chứng tải 3.000 người hay bảo vệ DDoS đa vùng.
 
 
 ## Tóm tắt hồ sơ cho reviewer

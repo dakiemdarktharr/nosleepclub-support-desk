@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { sharedFaqAnswer, resetSharedFaqForTest } from "@/lib/shared-faq-cache";
+import { sharedFaqAnswer, resetSharedFaqForTest, createIsolatedFaqCache } from "@/lib/shared-faq-cache";
 import { supportDatabase } from "@/lib/support-repository";
 import { prepareInput } from "@/services/support";
 import { extractIntake } from "@/domain/text";
@@ -62,4 +62,20 @@ it("Mongo outage returns the safe template without starting a new fallback cache
   expect(await sharedFaqAnswer(f.input, f.canonical, f.decision, f.template)).toBe(f.template);
   vi.mocked(supportDatabase).mockReturnValue(null);
   expect((await sharedFaqAnswer(f.input, f.canonical, f.decision, f.template, "read")).source).toBe("deterministic");
+});
+it("stores the complete answer and fixes; old metadata-only entries and tampered bodies are misses", async () => {
+  const store = createIsolatedFaqCache();
+  const f = fixture();
+  await sharedFaqAnswer(f.input, f.canonical, f.decision, f.template, "write", store);
+  const saved = [...store.values()][0];
+  expect(saved.answer).toMatchObject({ summary: f.template.summary,
+    stepByStepInstructions: f.template.stepByStepInstructions, nextQuestion: f.template.nextQuestion });
+  expect(saved.answer).not.toHaveProperty("model");
+  const hit = await sharedFaqAnswer(f.input, f.canonical, f.decision, f.template, "read", store);
+  hit.stepByStepInstructions.push("Caller mutation");
+  expect(saved.answer.stepByStepInstructions).toEqual(f.template.stepByStepInstructions);
+  saved.answer.summary = "Injected text";
+  expect((await sharedFaqAnswer(f.input, f.canonical, f.decision, f.template, "read", store)).source).toBe("deterministic");
+  Object.assign(saved, { answer: undefined });
+  expect((await sharedFaqAnswer(f.input, f.canonical, f.decision, f.template, "read", store)).source).toBe("deterministic");
 });

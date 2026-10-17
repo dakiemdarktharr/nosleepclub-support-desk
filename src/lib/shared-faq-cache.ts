@@ -5,14 +5,23 @@ import { POLICY_VERSION } from "@/domain/policy-source";
 import { faqIntents, faqTopic } from "@/domain/faq-intent";
 import { supportDatabase } from "./support-repository";
 import { recordAnswerCache } from "./support-telemetry";
-type Entry = { _id: string; topic: string; query: string; templateHash: string; createdAt: Date; expiresAt: Date };
+import { z } from "zod";
+import { INTAKE_REVISION } from "@/domain/text";
+const answerSchema = z.object({
+  summary: z.string(), diagnosis: z.string().optional(), potentialFixes: z.array(z.string()).optional(),
+  stepByStepInstructions: z.array(z.string()), options: z.array(z.string()),
+  expectedResult: z.string(), warning: z.string(), nextQuestion: z.string(), canPassToAdmin: z.literal(true),
+  generationReason: z.literal("REVIEWED_TEMPLATE_SUFFICIENT"),
+}).strict();
+type Entry = { _id: string; topic: string; query: string; templateHash: string;
+  answer: z.infer<typeof answerSchema>; createdAt: Date; expiresAt: Date };
 const memory = new Map<string, Entry>();
 // A fresh cache for each verification case; never reads/writes the live FAQ store.
 export const createIsolatedFaqCache = () => new Map<string, Entry>();
 const hash = (s: unknown) => createHash("sha256").update(JSON.stringify(s)).digest("hex");
 
-/** Only reuse a current server-reviewed template. Policy/extraction still run per request.
- * Stored text can never become executable prose: compare digest with the current template. */
+/** Persist the answer itself. Its complete body must still equal the current
+ * reviewed template, so a modified stored answer never becomes trusted prose. */
 export async function sharedFaqAnswer(input: SupportInput, canonical: CanonicalRequest, decision: Decision,
   template: Assistance, mode: "read" | "write" = "write",
   isolatedMemory?: ReturnType<typeof createIsolatedFaqCache>): Promise<Assistance> {
@@ -27,19 +36,25 @@ export async function sharedFaqAnswer(input: SupportInput, canonical: CanonicalR
   // when any reviewed text/policy changes; no caller/private content is persisted.
   const body = { ...template };
   delete (body as Partial<Assistance>).timestamp; delete body.model;
-  const templateHash = hash(body), prefix = hash(["faq-v2-intent-symptom", POLICY_VERSION, topic, templateHash]);
+  delete (body as Partial<Assistance>).source;
+  const parsed = answerSchema.safeParse(body);
+  if (!parsed.success) return template;
+  const templateHash = hash(parsed.data), prefix = hash(["faq-v3-stored-answer", POLICY_VERSION, INTAKE_REVISION, topic, templateHash]);
   const now = new Date();
   const entries = isolatedMemory ?? memory;
   try {
     const collection = isolatedMemory ? undefined : supportDatabase()?.collection<Entry>("v3_support_shared_faq");
     const rows = collection ? await collection.find({ topic: prefix, expiresAt: { $gt: now } }).limit(30).toArray() :
       [...entries.values()].filter(r => r.topic === prefix && r.expiresAt > now);
-    const hit = rows.find(r => r.templateHash === templateHash && publicFaqTopic(r.query) === topic);
+    const hit = rows.find(r => r.templateHash === templateHash && publicFaqTopic(r.query) === topic &&
+      r.createdAt instanceof Date && r.expiresAt instanceof Date && +r.createdAt <= +now &&
+      +r.expiresAt > +now && +r.expiresAt <= +r.createdAt + FAQ_TTL_MS &&
+      answerSchema.safeParse(r.answer).success && hash(answerSchema.parse(r.answer)) === templateHash);
     if (!isolatedMemory) recordAnswerCache(hit ? "hit" : "miss");
-    if (hit) return { ...template, source: "cache", cache: { kind: "FAQ", createdAt: hit.createdAt.toISOString(), expiresAt: hit.expiresAt.toISOString(), similarity: lexicalSimilarity(input.rawText, hit.query), matchedBy: "intent-symptom", topic } };
+    if (hit) return { ...structuredClone(hit.answer), timestamp: template.timestamp, source: "cache", cache: { kind: "FAQ", createdAt: hit.createdAt.toISOString(), expiresAt: hit.expiresAt.toISOString(), similarity: lexicalSimilarity(input.rawText, hit.query), matchedBy: "intent-symptom", topic, originalSource: "deterministic" } };
     if (mode === "read") return template;
     const key = hash([prefix, input.rawText]);
-    const row: Entry = { _id: key, topic: prefix, query: input.rawText, templateHash, createdAt: now, expiresAt: new Date(+now + FAQ_TTL_MS) };
+    const row: Entry = { _id: key, topic: prefix, query: input.rawText, templateHash, answer: parsed.data, createdAt: now, expiresAt: new Date(+now + FAQ_TTL_MS) };
     if (collection) {
       await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
       await collection.createIndex({ topic: 1, expiresAt: 1 });

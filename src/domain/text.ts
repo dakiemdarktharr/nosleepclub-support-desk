@@ -1,6 +1,7 @@
 import { normalize } from "./text-normalization";
 export { normalize } from "./text-normalization";
 import { faqTopic, faqIntents } from "./faq-intent";
+import { guidanceCacheContext } from "./guidance-cache-context";
 import { allFields, catalog, validIntent } from "./catalog";
 import type {
   CanonicalRequest,
@@ -18,7 +19,7 @@ import { extractNetworkFacts, isSingleNetworkPort, isSingleNetworkProtocol, netw
 
 // Extraction fixes do not change rule definitions, but previously parsed
 // previews must be re-evaluated before confirmation under the new boundary.
-export const INTAKE_REVISION = "support-intake-v3-faq-intent";
+export const INTAKE_REVISION = "support-intake-v3-public-guidance-context";
 
 // One vocabulary for extracting a labelled fact and keeping it with its request.
 const factLabels: Record<string, string> = {
@@ -683,6 +684,8 @@ export function safeDeterministicGuidance(input: SupportInput, baseline: Canonic
       !["guidance", "diagnose", "restart", "answer"].includes(baseline.requestedAction)) return false;
   const publicTopic = Object.keys(input.fields).some(key => !isEmployeeIdentityField(key)) ? null : faqTopic(input.rawText);
   if (publicTopic && faqIntents[publicTopic] === baseline.intentLabel) return true;
+  const publicContext = Object.keys(input.fields).some(key => !isEmployeeIdentityField(key)) ? null : guidanceCacheContext(input.rawText);
+  if (publicContext?.intent === baseline.intentLabel) return true;
   const text = normalize(input.rawText);
   // An unrecognized comma/colon continuation may be a second task. During an
   // outage, require the complete clause to be known context, not just a keyword.
@@ -852,6 +855,8 @@ function classifyFallback(text: string): [ServiceGroup, string, RequestKind] {
 function classify(text: string): [ServiceGroup, string, RequestKind] {
   const topic = faqTopic(text);
   if (topic) return [topic.startsWith("printer:") ? "DEVICE_BOOT" : "NETWORK_VPN", faqIntents[topic], "SAFE_DIAGNOSTIC"];
+  const context = guidanceCacheContext(text);
+  if (context) return [context.topic.startsWith("printer:") ? "DEVICE_BOOT" : "NETWORK_VPN", context.intent, "SAFE_DIAGNOSTIC"];
   const relevant = text.replace(
     /\b(?:vpn|wi fi|wifi|mfa)\s+(?:is working|works fine|van binh thuong|binh thuong|khong bi loi|van vao web duoc)\b/g,
     " ",
@@ -1399,7 +1404,7 @@ export function extractIntake(
     }, []);
   // The closed FAQ parser consumes the full input, including polite follow-up
   // phrasing; those phrases are not independent requests. Unknown text still splits.
-  let subrequests = parts.length > 1 && !faqTopic(input.rawText) ? parts.map(extractText) : [];
+  let subrequests = parts.length > 1 && !faqTopic(input.rawText) && !guidanceCacheContext(input.rawText) ? parts.map(extractText) : [];
   if (
     extracted.intentLabel === "DEVICE_RESTART_GUIDANCE" &&
     /(?:khong|not)\s+factory reset/.test(normalize(input.rawText))

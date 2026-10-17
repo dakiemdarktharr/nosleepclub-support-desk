@@ -36,7 +36,7 @@ TTL vẫn 7 ngày; thay policy/template hoặc revision matcher làm miss. Khôn
 
 ## Cách kiểm thử
 
-Mỗi case dùng cache bộ nhớ riêng, chạy thật các hàm extraction, policy, mẫu hướng dẫn và `sharedFaqAnswer` của ứng dụng. Trước mỗi câu, nạp câu đầu của các nhóm khác; với câu kỳ vọng HIT, nạp thêm câu đầu của chính nhóm đó. Câu đối chứng được thử khi cả bốn nhóm đã có cache. Kiểm tra cả seed miss, số entry lưu, chủ đề, hit/miss/bypass, quyết định an toàn và câu trả lời hiện hành.
+Mỗi case dùng cache bộ nhớ riêng, chạy thật các hàm extraction, policy, mẫu hướng dẫn và `sharedFaqAnswer` của ứng dụng. Trước mỗi câu, nạp câu đầu của các nhóm khác; với câu kỳ vọng HIT, nạp thêm câu đầu của chính nhóm đó. Câu đối chứng được thử khi cả bốn nhóm đã có cache. Kiểm tra cả seed miss, số entry lưu, chủ đề, hit/miss/bypass, quyết định an toàn, body câu trả lời đã lưu (`stored-answer-body`) và nội dung vẫn khớp hướng dẫn hiện hành. So sánh từng field nghiệp vụ, không phụ thuộc thứ tự khóa JSON.
 
 Mỗi case tự nạp lại seed nên đổi thứ tự, thử lại hoặc chuyển worker không làm sai kỳ vọng cold/warm. Không ghi/đọc cache FAQ thật và không gọi Luna. Kết quả Verify và hồ sơ hỗ trợ được lưu qua adapter hiện có. Chỉ câu kiểm thử chính tạo hồ sơ, các câu mồi không tạo thêm yêu cầu. Vì vậy kết quả không chứng minh Mongo restart, embedding tổng quát, độ chính xác model hoặc hiệu năng production. Các case cache có hạn mức riêng 60/phút/client để đủ chạy 42 câu, intake vẫn 30 và mutation vẫn 15/phút.
 
@@ -54,3 +54,5 @@ Sửa luồng hàng đợi ngày 17/10/2026: base `88fa41b`, AI assistance: Open
 Kiểm tra local cho bản sửa: 182 unit/integration tests đạt, 4 E2E đạt trên desktop/mobile với production build, memory-demo và dữ liệu mô phỏng. E2E mở hàng đợi từ kết quả 42 câu, kiểm tra bốn nhóm, bỏ qua bộ lọc cũ và xác nhận tin nhắn có trong cả bảy hồ sơ. Typecheck, lint, build, kiểm tra tài liệu và diff đạt. Lượt E2E đầu chọn nhầm role `alert` của thông báo thành công, đã sửa thành `status`. Ca đánh giá 128 câu cũ từng timeout khi chạy đồng thời với E2E và typecheck, chạy lại riêng đạt với timeout cũ. Chưa kiểm chứng Mongo hoặc dữ liệu production trong lượt này.
 
 Grammar này có phạm vi đóng, không cam kết nhận mọi cách nói tiếng Việt. Câu chưa nhận diện vẫn đi qua luồng xử lý thông thường. Tệp kết quả chạy và diff lưu ngoài Git; không đưa timestamp/UUID runtime vào dataset.
+
+`npm run test:cache-system` còn chạy [kiểm thử tái sử dụng câu trả lời AI](../tests/guidance-answer-cache.test.ts): ba nhóm × bảy cách nói cho VPN trên Windows, macOS và timeout trên Windows; model HTTP giả lập chỉ được gọi cho câu đầu, các câu cùng ý dùng đúng câu trả lời/các bước cũ. Kiểm tra thêm Mongo boundary giả lập, TTL, đổi model/hướng dẫn, body bị sửa, cache outage và handoff. Các nhóm có ngữ cảnh này là regression qua pipeline Support; bộ Verify 42 câu vẫn giữ nguyên phạm vi FAQ để đối chiếu riêng. [Hợp đồng cache trả lời](ANSWER-REUSE-CACHE.md).

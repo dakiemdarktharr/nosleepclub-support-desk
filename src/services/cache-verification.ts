@@ -48,7 +48,10 @@ export async function runCacheVerificationCase(caseId: string, provenance?: { ru
   check("topic", topic === fixture.topic);
   check("cache-outcome", outcome === fixture.expected);
   check("storage-isolation", store.size === sizeBefore + (fixture.expected === "MISS" ? 1 : 0));
-  check("current-reviewed-answer", JSON.stringify({ ...result.answer, source: undefined, cache: undefined }) === JSON.stringify({ ...result.template, source: undefined, cache: undefined }));
+  check("current-reviewed-answer", Object.entries(result.template).filter(([field]) => field !== "source")
+    .every(([field, value]) => JSON.stringify(result.answer[field as keyof Assistance]) === JSON.stringify(value)));
+  check("stored-answer-body", [...store.values()].every(entry =>
+    entry.answer.stepByStepInstructions.length > 0 && entry.answer.summary.length > 0));
   if (fixture.topic) {
     check("policy", result.decision.action === "AUTO_APPROVE" && !result.canonical.riskSignals.length && !result.decision.missingFields.length);
     check("reviewed-template", result.template.generationReason === "REVIEWED_TEMPLATE_SUFFICIENT");

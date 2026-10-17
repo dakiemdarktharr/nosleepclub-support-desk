@@ -1,5 +1,7 @@
 import { joinIncident } from "@/lib/support-incidents";
 import { sharedFaqAnswer } from "@/lib/shared-faq-cache";
+import { readGuidanceAnswer, withGuidanceAnswerCache } from "@/lib/guidance-answer-cache";
+import { guidanceCacheContext } from "@/domain/guidance-cache-context";
 import { publicFaqTopic } from "@/domain/shared-support";
 import { guidanceTemplate } from "@/domain/guidance";
 import {
@@ -271,6 +273,13 @@ export async function completeAnalysis(
 ) {
   const cacheAllowed = !options.run && !options.fault && !options.assistanceRound && !input.verifyRunId &&
     (process.env.NODE_ENV !== "test" || process.env.SUPPORT_SHARED_CACHE_TEST === "true");
+  if (cacheAllowed && input.mode === "freeform" && guidanceCacheContext(input.rawText)) {
+    const baseline = extractIntake({ ...input, fields: {} }, markers);
+    const decision = evaluatePolicy(baseline, verifyApproval);
+    const assistance = await readGuidanceAnswer(input, baseline, decision);
+    if (assistance) return { canonical: baseline, decision, assistance,
+      sentiment: supportRequestSentimentFallback(input.rawText) };
+  }
   if (cacheAllowed && publicFaqTopic(input.rawText) && input.mode === "freeform") {
     const baseline = extractIntake({ ...input, fields: {} }, markers);
     const decision = evaluatePolicy(baseline, verifyApproval);
@@ -291,13 +300,13 @@ export async function completeAnalysis(
   ) {
     try {
       const reviewedGuide = reviewedGuideAnswers(input, result.canonical, options.assistanceRound ?? 0);
+      const generateGuide = () => createAssistance(result.canonical,
+        result.decision.handlingMode === "LLM_ASSIST" && !reviewedGuide, options);
       assistance = result.canonical.conversation
         ? await createConversationAnswer(result.canonical, options)
-        : await createAssistance(
-            result.canonical,
-            result.decision.handlingMode === "LLM_ASSIST" && !reviewedGuide,
-            options,
-          );
+        : cacheAllowed
+          ? await withGuidanceAnswerCache(input, result.canonical, result.decision, generateGuide)
+          : await generateGuide();
       if (reviewedGuide && !assistance.fallbackReason)
         assistance.generationReason = "REVIEWED_TEMPLATE_SUFFICIENT";
     } catch (error) {

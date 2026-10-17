@@ -5,7 +5,11 @@ import { knowledgeSeed } from "@/domain/knowledge";
 import { POLICY_VERSION } from "@/domain/policy-source";
 import type { ConversationContext } from "@/domain/conversation";
 import { supportDatabase } from "./support-repository";
-const ttlMs = 60 * 60_000;
+type CacheScope = "conversation" | "guidance";
+const stores = {
+  conversation: { collection: "v3_support_answer_cache", ttlMs: 60 * 60_000 },
+  guidance: { collection: "v3_support_guidance_cache", ttlMs: 7 * 24 * 60 * 60_000 },
+};
 const schema = z.object({
   value: z.unknown(),
   createdAt: z.string().datetime(),
@@ -54,10 +58,27 @@ function trusted(key: string, candidate: unknown): Row | null {
     ? row
     : null;
 }
+function cacheCollection(scope: CacheScope) {
+  // An unavailable Mongo cache stays a miss; it must not create a new memory store.
+  return supportDatabase()?.collection<Row & { _id: string }>(stores[scope].collection);
+}
+export async function readAnswerCache<T>(
+  key: string | null,
+  validate: (value: unknown) => T,
+  scope: CacheScope = "conversation",
+): Promise<{ value: T; cacheHit: true; generatedAt: string } | null> {
+  if (!key || process.env.AI_PROVIDER !== "openai" || !process.env.OPENAI_API_KEY) return null;
+  try {
+    const collection = cacheCollection(scope);
+    const row = trusted(key, collection ? await collection.findOne({ _id: key }) : memory.get(`${scope}:${key}`));
+    return row ? { value: validate(row.value), cacheHit: true, generatedAt: row.createdAt } : null;
+  } catch { return null; }
+}
 export async function withAnswerCache<T>(
   key: string | null,
   generate: () => Promise<T>,
   validate: (value: unknown) => T,
+  scope: CacheScope = "conversation",
 ): Promise<{ value: T; cacheHit: boolean; generatedAt: string }> {
   if (
     !key ||
@@ -70,35 +91,10 @@ export async function withAnswerCache<T>(
       generatedAt: new Date().toISOString(),
     };
   // Cache is optional; an outage must not turn a safe conversation into a reviewer task.
-  let collection;
-  try {
-    collection = supportDatabase()?.collection<Row & { _id: string }>(
-      "v3_support_answer_cache",
-    );
-  } catch {
-    /* local fallback */
-  }
-  let stored: unknown;
-  try {
-    stored = collection
-      ? await collection.findOne({ _id: key })
-      : memory.get(key);
-  } catch {
-    /* cache miss */
-  }
-  const row = trusted(key, stored);
-  if (row) {
-    try {
-      return {
-        value: validate(row.value),
-        cacheHit: true,
-        generatedAt: row.createdAt,
-      };
-    } catch {
-      /* revalidate on every hit */
-    }
-  }
-  const shared = pending.get(key);
+  const cached = await readAnswerCache(key, validate, scope);
+  if (cached) return cached;
+  const pendingKey = `${scope}:${key}`;
+  const shared = pending.get(pendingKey);
   if (shared) {
     const result = await shared;
     return {
@@ -113,10 +109,11 @@ export async function withAnswerCache<T>(
     const raw = {
       value,
       createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + ttlMs).toISOString(),
+      expiresAt: new Date(Date.now() + stores[scope].ttlMs).toISOString(),
     };
     const saved = { ...raw, signature: sign(key, raw) };
     try {
+      const collection = cacheCollection(scope);
       if (collection) {
         // Mongo TTL requires a Date, kept separately from signed ISO strings.
         await collection.createIndex(
@@ -130,14 +127,14 @@ export async function withAnswerCache<T>(
         );
       } else {
         if (memory.size >= 100) memory.delete(memory.keys().next().value!);
-        memory.set(key, saved);
+        memory.set(pendingKey, saved);
       }
     } catch {
       /* A cache write failure does not invalidate a verified answer. */
     }
     return saved;
   })();
-  pending.set(key, work);
+  pending.set(pendingKey, work);
   try {
     const result = await work;
     return {
@@ -146,7 +143,7 @@ export async function withAnswerCache<T>(
       generatedAt: result.createdAt,
     };
   } finally {
-    pending.delete(key);
+    pending.delete(pendingKey);
   }
 }
 export function resetAnswerCacheForTest() {
