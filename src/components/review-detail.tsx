@@ -5,7 +5,9 @@ import { IncidentUpdates } from "./incident-panel";
 import { ReviewDrafts } from "./review-drafts";
 import { ReviewSummary } from "./review-summary";
 import { REVIEW_MESSAGE_MAX_LENGTH } from "@/domain/reviewer-messages";
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { browserApi } from "@/lib/browser-api";
+import type { InformationDraft } from "@/services/review-information";
 import {
   ArrowLeft,
   Check,
@@ -101,10 +103,31 @@ export function ReviewDetail({
   const [tab, setTab] = useState<Tab>("evidence");
   const [saved, setSaved] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
+  const [information, setInformation] = useState<InformationDraft | null>(null);
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState("");
+  const draftSequence = useRef(0);
+  useEffect(() => {
+    setInformation(null); setDrafting(false); setDraftError("");
+    const sequence = draftSequence;
+    return () => { sequence.current++; };
+  }, [request.id, request.version]);
   const decision = request.decision;
   const canonical = request.canonical;
   const reasonReady = reason.trim().length >= 8;
   const approveBlock = blockedReason(request, "APPROVE", target);
+  async function askForInformation() {
+    if (drafting) return;
+    const current = ++draftSequence.current;
+    setDrafting(true); setDraftError("");
+    try {
+      const draft = await browserApi<InformationDraft>(`/api/review/${request.id}/information`, { version: request.version });
+      if (current !== draftSequence.current) return;
+      setReason(draft.text); setInformation(draft);
+    } catch (cause) {
+      if (current === draftSequence.current) setDraftError((cause as Error).message);
+    } finally { if (current === draftSequence.current) setDrafting(false); }
+  }
   async function act(action: ReviewAction) {
     if (await onAct(action)) {
       setSaved(true);
@@ -128,6 +151,8 @@ export function ReviewDetail({
     variant: "primary" | "secondary" | "danger" = "secondary",
   ) {
     const block = blockedReason(request, action, target);
+    const composeInformation = action === "REQUEST_INFORMATION" && !information;
+    const needsReason = action !== "APPROVE" && !composeInformation;
     const Icon = {
       APPROVE: Check,
       REQUEST_INFORMATION: CircleHelp,
@@ -140,18 +165,18 @@ export function ReviewDetail({
       <Button
         variant={variant}
         disabled={
-          pending || (action !== "APPROVE" && !reasonReady) || Boolean(block)
+          pending || drafting || (needsReason && !reasonReady) || Boolean(block)
         }
         title={
           block ||
-          (action !== "APPROVE" && !reasonReady
+          (needsReason && !reasonReady
             ? "Nhập lý do tối thiểu 8 ký tự để thực hiện."
             : labels[action])
         }
-        onClick={() => void act(action)}
+        onClick={() => void (composeInformation ? askForInformation() : act(action))}
       >
         <Icon size={16} />
-        {labels[action]}
+        {action === "REQUEST_INFORMATION" && information ? "Gửi yêu cầu bổ sung" : labels[action]}
       </Button>
     );
   }
@@ -198,44 +223,35 @@ export function ReviewDetail({
             {!request.originalQuestion && !request.input.rawText && <dl className="it-request-fields">{Object.entries(request.input.fields).filter(([key]) => !["employeeId", "department"].includes(key)).map(([key, value]) => <div key={key}><dt>{labelForField(key)}</dt><dd>{optionName(value)}</dd></div>)}</dl>}
           </section>
           <ReviewSummary key={request.id} id={request.id} version={request.version} />
+          <ReviewDrafts key={`${request.id}:${request.version}`} id={request.id} version={request.version} disabled={pending || drafting} onChoose={text => { setReason(text); setInformation(null); }} />
         </div>
         <aside
           className="it-action-panel it-surface"
           id="review-actions"
           aria-label="Thao tác xử lý"
         >
-          <fieldset disabled={pending}>
+          <fieldset disabled={pending || drafting}>
             <legend>Thao tác xử lý</legend>
-            <p className="it-action-intro">
-              Chọn cách xử lý sau khi đối chiếu yêu cầu.
-            </p>
             {approveBlock && (
               <div className="it-block-notice">
                 <ShieldAlert size={17} />
                 <span>{approveBlock}</span>
               </div>
             )}
-            <ReviewDrafts key={`${request.id}:${request.version}`} id={request.id} version={request.version} onChoose={setReason} />
             <label className="it-reason">
-              Lý do (không bắt buộc khi duyệt yêu cầu)
+              Tin nhắn cho người gửi
               <Textarea
                 rows={reason.length > 300 ? 8 : 3}
                 maxLength={REVIEW_MESSAGE_MAX_LENGTH}
                 value={reason}
                 data-guide="reviewer-reason"
-                aria-describedby="it-reason-hint"
-                placeholder="Bạn giúp mình bổ sung mã lỗi để mình kiểm tra chính xác hơn nhé…"
+                placeholder="Chọn gợi ý hoặc nhập tin nhắn…"
                 onChange={(event) => setReason(event.target.value)}
               />
             </label>
-            <p id="it-reason-hint" className="it-field-hint">
-              {pending
-                ? "Đang lưu quyết định…"
-                : reasonReady
-                  ? "Tin nhắn này sẽ gửi vào trang theo dõi của người gửi và lưu trong nhật ký khi bạn xác nhận thao tác."
-                  : "Có thể duyệt ngay. Các thao tác khác cần lý do tối thiểu 8 ký tự."}
-              <span>{reason.length}/{REVIEW_MESSAGE_MAX_LENGTH}</span>
-            </p>
+            {drafting && <p role="status">Đang soạn tin nhắn hỏi thông tin còn thiếu…</p>}
+            {draftError && <p role="alert">{draftError}</p>}
+            {information && <p role="status" className="it-field-hint">{information.source === "openai" ? `Bản nháp từ ${information.model || "AI"}` : information.source === "mock" ? "Bản nháp mô phỏng" : "Mẫu hỏi bổ sung dự phòng"}. Bạn có thể sửa trước khi gửi.</p>}
             <div data-guide="reviewer-actions">
               <div className="it-primary-actions">
                 {actionButton("APPROVE", "primary")}
@@ -275,10 +291,6 @@ export function ReviewDetail({
               </div>
             </div>
           </fieldset>
-          <p className="it-action-footnote">
-            Thao tác chỉ cập nhật hồ sơ mô phỏng. Dừng xử lý chặn bước tiếp
-            theo; lịch sử vẫn được giữ.
-          </p>
           <Button variant="quiet" data-guide="reviewer-history" aria-expanded={recordOpen} aria-controls="review-full-record" onClick={() => setRecordOpen(value => !value)}>
             {recordOpen ? "Ẩn hồ sơ chi tiết" : "Xem lịch sử & bằng chứng"}
           </Button>

@@ -36,7 +36,12 @@ it("passes the normalized code to Mongo filtering and counts using the same filt
   vi.spyOn(repository, "supportDatabase").mockReturnValue({ collection: () => collection } as unknown as Db);
   await supportPage(parseSupportQuery("http://local?q=HT-ABCDEF12"));
   const filter = collection.find.mock.calls[0][0];
-  expect(filter.$or).toContainEqual({ "data.id": { $regex: "ABCDEF12", $options: "i" } });
+  // Case-insensitive matching is the contract, not the spelling of the regex.
+  const idFilter = filter.$or.find((item: Record<string, unknown>) => "data.id" in item)["data.id"];
+  const idPattern = new RegExp(idFilter.$regex, idFilter.$options);
+  expect(idPattern.test("abcdef12-0000-4000-8000-000000000000")).toBe(true);
+  expect(idPattern.test("ABCDEF12-0000-4000-8000-000000000000")).toBe(true);
+  expect(idPattern.test("12345678-0000-4000-8000-000000000000")).toBe(false);
   expect(filter.$or).toContainEqual({ "data.input.fields.employeeId": "abcdef12" });
   expect(collection.countDocuments).toHaveBeenCalledWith(filter);
 });

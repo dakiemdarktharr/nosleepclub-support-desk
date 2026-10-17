@@ -65,7 +65,7 @@ export async function withAnswerCache<T>(
     !process.env.OPENAI_API_KEY
   )
     return {
-      value: await generate(),
+      value: validate(await generate()),
       cacheHit: false,
       generatedAt: new Date().toISOString(),
     };
@@ -108,7 +108,8 @@ export async function withAnswerCache<T>(
     };
   }
   const work = (async () => {
-    const value = await generate();
+    // Never sign or persist output that failed the caller's current safety/schema checks.
+    const value = validate(await generate());
     const raw = {
       value,
       createdAt: new Date().toISOString(),

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Input } from "@/components/ui";
+import { GuestRequestHistory } from "@/components/guest-request-history";
 export default function TrackPage() {
   const [value, setValue] = useState(""),
     [error, setError] = useState("");
@@ -9,6 +10,7 @@ export default function TrackPage() {
   return (
     <main className="page page-narrow">
       <h1>Theo dõi yêu cầu</h1>
+      <GuestRequestHistory />
       <Card>
         <p>Dán liên kết theo dõi hoặc mã đầy đủ đã nhận sau khi gửi.</p>
         <form

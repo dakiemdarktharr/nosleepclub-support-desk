@@ -2,7 +2,7 @@
 
 Base: `13edf8034df44decabf41b86da7fe1c89e1a9c33`. AI-assisted implementation.
 
-- Gợi ý tin nhắn: reviewer chủ động gọi model đang cấu hình, nhận ba bản nháp,
+- Gợi ý tin nhắn: tự gọi model đang cấu hình khi mở hồ sơ, nhận hai phương án xử lý,
   chọn/sửa rồi mới thực hiện thao tác. Model không quyết định trạng thái hoặc quyền.
   Phiên bản hồ sơ được kiểm tra trước và sau inference. Lỗi model dùng mẫu server,
   hiển thị đúng nguồn; không tự gửi phản hồi.
@@ -10,11 +10,12 @@ Base: `13edf8034df44decabf41b86da7fe1c89e1a9c33`. AI-assisted implementation.
   Khi xác nhận thao tác, nội dung đã redact nằm trong `AuditEvent.senderMessage`,
   cùng atomic write với quyết định. UI hiển thị toàn bộ lịch sử; hồ sơ cũ dùng
   explanation của action reviewer tương ứng. Không suy ra tin đã đọc hoặc gửi email.
-  Hợp đồng cố định QUESTION/ANSWER/ANSWER: một hỏi bổ sung, hai giải đáp theo
-  đúng câu hỏi gốc/lịch sử đã redact. Model chỉ soạn câu hỏi và lời dẫn; server
+  Hợp đồng cố định ANSWER/ANSWER: hai giải đáp theo câu hỏi gốc/lịch sử đã redact.
+  Hỏi bổ sung có endpoint riêng, soạn ngắn trước khi xác nhận gửi. Model soạn lời dẫn; server
   ghép toàn bộ các bước hướng dẫn hiện hành (hoặc câu trả lời đã được kiểm tra/
   lý do policy), gồm điều kiện dừng. Không cắt bước để làm câu ngắn. Giới hạn
-  tin nhắn 2.000 ký tự dùng chung server/UI. Ba câu hỏi thay vì hai giải đáp bị từ chối.
+  tin nhắn 2.000 ký tự dùng chung server/UI; bản nháp hỏi bổ sung tối đa 500 ký tự.
+  Gợi ý trả lời dạng câu hỏi bị từ chối. [Hợp đồng cập nhật](GUEST-REVIEW-CACHE.md).
 - Verify: tiến độ xác định từ số response case đã lưu, tính cả PASS/FAIL.
   Khởi tạo/đọc lại là trạng thái chờ, không fake ETA. Transform easing bằng CSS,
   hỗ trợ prefers-reduced-motion, không thêm thư viện. Tham khảo hình thức từ
@@ -31,7 +32,9 @@ Base: `13edf8034df44decabf41b86da7fe1c89e1a9c33`. AI-assisted implementation.
   `input.guestDepartment` enum tách khỏi employeeId/department đã xác minh,
   chỉ chấp nhận trong requesterMode=guest, không truyền vào extraction model
   hoặc kiểm tra entitlement. Hồ sơ support lưu ngữ cảnh theo storage hiện hành;
-  nhân viên và người gửi đều thấy nhãn giả lập. Không tạo tài khoản Mongo mới.
+  nhãn giả lập còn trong hồ sơ chi tiết; thông báo đầu form đã được bỏ. Không tạo tài khoản Mongo mới.
+  UUID yêu cầu đã gửi lưu riêng trong localStorage, không mất khi đổi vai trò/phòng ban;
+  danh sách tải trạng thái hiện tại từ server, không cache trạng thái trong trình duyệt.
 - Cache: chỉ câu hỏi chung thuộc danh mục đóng, sau khi policy hiện tại đã được
   đánh giá. Không dùng độ giống nhau để tái sử dụng quyền/approval/quota. Mức 80%
   là ngưỡng từ vựng, không phải xác suất hai sự cố giống nhau. Không cache secrets,

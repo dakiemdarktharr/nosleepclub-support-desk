@@ -207,7 +207,7 @@ test("reviewer tour is independent and never executes a decision automatically",
   await page.locator(`a[href="/review?requestId=${row.id}"]`).click();
   await expect(tip).toContainText("3. Đọc yêu cầu");
   await tip.getByRole("button", { name: "Tiếp theo" }).click();
-  await page.getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)").fill("Dừng yêu cầu demo để kiểm tra nhật ký.");
+  await page.getByLabel("Tin nhắn cho người gửi").fill("Dừng yêu cầu demo để kiểm tra nhật ký.");
   await expect(tip).toContainText("5. Chọn quyết định phù hợp");
   const unchanged = (await (await request.get(`/api/support/requests/${row.id}`)).json()).data;
   expect(unchanged.status).toBe("ESCALATED");

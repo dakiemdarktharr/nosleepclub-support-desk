@@ -35,5 +35,5 @@ test("summary outage keeps original and reviewer controls usable", async ({ page
   await expect(page.getByRole("region", { name: "Yêu cầu nguyên văn" })).toContainText("VPN không kết nối");
   await expect(page.getByRole("region", { name: "Tóm tắt yêu cầu" })).toContainText("Tóm tắt tạm không khả dụng");
   await expect(page.getByRole("button", { name: "Thử tóm tắt lại" })).toBeEnabled();
-  await expect(page.getByRole("button", { name: "AI soạn 3 gợi ý tin nhắn" })).toBeEnabled();
+  await expect(page.locator(".review-draft-option")).toHaveCount(2);
 });

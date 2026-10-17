@@ -73,7 +73,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
   await expect(approve).toHaveAttribute("title", /rủi ro bảo mật/);
   if (!isMobile) {
     const box = await page
-      .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
+      .getByLabel("Tin nhắn cho người gửi")
       .boundingBox();
     expect(box).not.toBeNull();
     expect(box!.y + box!.height).toBeLessThan(page.viewportSize()!.height);
@@ -104,7 +104,7 @@ test("IT workspace keeps actions reachable, supports keyboard tabs and records a
   });
   const reason = "Dừng yêu cầu demo vì phạm vi truy cập chưa an toàn.";
   await page
-    .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
+    .getByLabel("Tin nhắn cho người gửi")
     .fill(reason);
   await expect(approve).toBeDisabled();
   await page
@@ -168,7 +168,7 @@ test("queue search opens the matching request and missing information still prev
   });
   await match.click();
   await page
-    .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
+    .getByLabel("Tin nhắn cho người gửi")
     .fill("Cần thêm nguồn và phạm vi dữ liệu cụ thể.");
   await expect(
     page.getByRole("button", { name: "Duyệt yêu cầu", exact: true }),
@@ -179,6 +179,9 @@ test("queue search opens the matching request and missing information still prev
   await page
     .getByRole("button", { name: "Hỏi thêm thông tin", exact: true })
     .click();
+  await expect(page.getByRole("button", { name: "Gửi yêu cầu bổ sung", exact: true })).toBeEnabled();
+  await page.getByLabel("Tin nhắn cho người gửi").fill("Cần thêm nguồn và phạm vi dữ liệu cụ thể.");
+  await page.getByRole("button", { name: "Gửi yêu cầu bổ sung", exact: true }).click();
   await page.getByRole("button", { name: "Xem lịch sử & bằng chứng", exact: true }).click();
   await expect(
     page.getByRole("tabpanel", { name: /Lịch sử xử lý/ }),

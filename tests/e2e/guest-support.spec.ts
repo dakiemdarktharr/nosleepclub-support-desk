@@ -3,7 +3,7 @@ import { freshTest as test, expect } from "./fixtures";
 test("Marketing guest department survives validation, submission and tracking", async ({ page }) => {
   await page.addInitScript(() => sessionStorage.setItem("vng-guest-department-v1", "marketing"));
   await page.goto("/guest");
-  await expect(page.getByRole("status", { name: "Phòng ban phiên khách" })).toContainText("Marketing");
+  await expect(page.locator(".guest-notice")).toHaveCount(0);
   await page.getByLabel("Mô tả yêu cầu", { exact: true }).fill("Máy in báo kẹt giấy. Tôi cần kiểm tra gì an toàn?");
   const preview = page.waitForResponse(r => r.url().endsWith("/api/support/preview"));
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
@@ -28,11 +28,10 @@ test("fresh guest enters by keyboard, submits without employee identity and can 
   await page.getByRole("link", { name: "Đăng nhập không cần tài khoản", exact: true }).focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/guest$/);
-  const department = page.getByRole("status", { name: "Phòng ban phiên khách" });
-  await expect(department).not.toContainText("Đang chọn");
-  const firstDepartment = await department.innerText();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).toBeTruthy();
+  const firstDepartment = await page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"));
   await page.reload();
-  await expect(department).toHaveText(firstDepartment);
+  expect(await page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).toBe(firstDepartment);
   await expect(page.getByLabel("Mã nhân viên", { exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Phòng ban", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Dành cho Admin", exact: true })).toHaveCount(0);
@@ -59,23 +58,23 @@ test("fresh guest enters by keyboard, submits without employee identity and can 
   expect(identityCalls).toEqual([]);
   await page.getByRole("link", { name: "Gửi yêu cầu", exact: true }).click();
   await expect(page).toHaveURL(/\/guest$/);
-  await expect(department).toHaveText(firstDepartment);
+  expect(await page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).toBe(firstDepartment);
   await page.goto("/");
   await page.getByRole("link", { name: "Đăng nhập không cần tài khoản", exact: true }).click();
-  await expect(department).not.toHaveText(firstDepartment);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).not.toBe(firstDepartment);
+  await expect(page.getByRole("region", { name: "Yêu cầu đã gửi" })).toContainText("Approved");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.locator(".route-curtain")).toHaveCount(0);
   await page.screenshot({ path: `artifacts/guest-${info.project.name}.png`, fullPage: true });
 });
 
-test("guest has a visible demo department even when browser storage is blocked", async ({ page }) => {
+test("guest can submit without the removed notice even when browser storage is blocked", async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "sessionStorage", { get() { throw new Error("blocked for test"); } });
   });
   await page.goto("/");
   await page.getByRole("link", { name: "Đăng nhập không cần tài khoản", exact: true }).click();
-  await expect(page.getByRole("status", { name: "Phòng ban phiên khách" })).toContainText("Phòng ban ngẫu nhiên:");
-  await expect(page.getByRole("status", { name: "Phòng ban phiên khách" })).not.toContainText("Đang chọn");
+  await expect(page.locator(".guest-notice")).toHaveCount(0);
   await page.getByLabel("Mô tả yêu cầu", { exact: true }).fill("VPN không kết nối");
   const response = page.waitForResponse(r => r.url().endsWith("/api/support/preview"));
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
@@ -84,7 +83,7 @@ test("guest has a visible demo department even when browser storage is blocked",
 
 test("opening guest entry in another tab starts that tab's department without changing the original session", async ({ page, context }) => {
   await page.goto("/guest");
-  await expect(page.getByRole("status", { name: "Phòng ban phiên khách" })).not.toContainText("Đang chọn");
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).toBeTruthy();
   const original = await page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"));
   await page.goto("/");
   const entry = page.getByRole("link", { name: "Đăng nhập không cần tài khoản", exact: true });
@@ -96,7 +95,7 @@ test("opening guest entry in another tab starts that tab's department without ch
   await entry.click();
   const tab = await opened;
   await expect(tab).toHaveURL(/\/guest$/);
-  await expect(tab.getByRole("status", { name: "Phòng ban phiên khách" })).not.toContainText("Đang chọn");
+  await expect.poll(() => tab.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).toBeTruthy();
   expect(await tab.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).not.toBe(original);
   expect(await page.evaluate(() => sessionStorage.getItem("vng-guest-department-v1"))).toBe(original);
   await tab.close();

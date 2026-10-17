@@ -1,6 +1,8 @@
 "use client";
 import { incidentTopic } from "@/domain/shared-support";
 import { useEffect, useState } from "react";
+import { GuestRequestHistory } from "./guest-request-history";
+import { rememberGuestRequest } from "@/lib/guest-request-history";
 import { identityApi } from "@/components/identity-ui";
 import { useRouter } from "next/navigation";
 import {
@@ -144,6 +146,7 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
         ...preview.input,
         confirmed: true,
       });
+      if (guest) rememberGuestRequest(row.id);
       router.push(`/requests/${row.id}`);
     } catch (error) {
       setError(
@@ -189,10 +192,6 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
   return (
     <main className="page page-narrow page-enter" data-guide-stage={guest ? undefined : preview ? "sender-preview" : "sender-form"}>
       <h1>Tôi cần hỗ trợ</h1>
-      {guest && <div className="guest-notice">
-        <p role="status" aria-label="Phòng ban phiên khách"><strong>Phiên khách demo · Phòng ban ngẫu nhiên: {input.guestDepartment ? optionName(input.guestDepartment) : "Đang chọn…"}</strong></p>
-        <p>Phòng ban giữ nguyên trong phiên này; chọn lại đăng nhập không cần tài khoản từ trang đầu sẽ nhận phòng ban khác. Đây là thông tin giả lập, không cấp quyền nhân viên. Hỏi đáp và hướng dẫn thông thường dùng được ngay; yêu cầu nhạy cảm vẫn cần kiểm tra hoặc chuyển người phụ trách.</p>
-      </div>}
       {account && <Alert>ID {account.id} · Truy cập demo, chưa xác minh danh tính. <button type="button" className="identity-text-link" onClick={async () => { try { await identityApi("logout", {}); setAccount(null); edit({ fields: { ...input.fields, employeeId: "" } }); } catch (cause) { setError((cause as Error).message); } }}>Đăng xuất</button></Alert>}
       <p className="page-description">
         Bạn cứ mô tả vấn đề bằng lời của mình. Chúng tôi sẽ giúp bạn tìm hướng
@@ -205,6 +204,7 @@ export function SupportWorkspace({ guest = false }: { guest?: boolean }) {
         </li>
         <li>3. Nhận hỗ trợ</li>
       </ol>
+      {guest && !preview && <GuestRequestHistory />}
       <Card>
         <div className="support-actions" role="group" aria-label="Kiểu yêu cầu" data-guide="sender-mode">
           {(["freeform", "structured"] as const).map((mode) => (

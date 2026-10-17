@@ -181,7 +181,7 @@ test("reviewer rejection requires a reason and records audit", async ({
     page.getByRole("button", { name: "Từ chối", exact: true }),
   ).toBeDisabled();
   await page
-    .getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")
+    .getByLabel("Tin nhắn cho người gửi")
 
     .fill("Không đủ scope và approval trong demo.");
   await page.getByRole("button", { name: "Từ chối", exact: true }).click();

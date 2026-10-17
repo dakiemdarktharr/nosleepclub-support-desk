@@ -117,6 +117,14 @@ it("original fixtures and policy sources match their pre-migration hashes", () =
       item.path,
     ).toBe(item.sha256);
 });
+it.each(supportVerifyCases.filter(item => item.pack === "judge-15"))(
+  "$id verifies response quality and persistence through the same API as the UI", async item => {
+    const result = await runSupportCase(employeeFixture(item), productionApi);
+    expect(result.pass, JSON.stringify(result)).toBe(true);
+    expect(result.response?.pass).toBe(true);
+    expect(result.persistence?.pass).toBe(true);
+  },
+);
 it("reports original expectations without rewriting them or hiding mismatches", async () => {
   const original = supportVerifyCases.filter((item) =>
     item.pack.endsWith("original"),

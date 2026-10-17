@@ -51,23 +51,22 @@ it("uses the department from the Mongo-backed session rather than the caller's d
   expect(input.fields.employeeId).toBe("demoemployee");
 });
 
-it("drafts three reasons without changing a request or exposing sender fields to the model", async () => {
+it("drafts two complete answers without changing a request or exposing sender fields to the model", async () => {
   const row = await create("Mở port 3389 ra Internet");
   const run = vi.fn(async (call: model.ModelCall) => ({ options: [
-    { text: "Bạn giúp mình mô tả phạm vi truy cập cần dùng nhé.", evidence: "SECURITY_RISK" },
     { text: "Bạn cần trao đổi với người phụ trách về rủi ro của yêu cầu này nhé.", evidence: "SECURITY_RISK" },
     { text: "Mình gửi bạn phần giải thích rủi ro và bước tiếp theo bên dưới nhé.", evidence: "SECURITY_RISK" },
-  ].map((o, index) => ({ ...o, kind: index === 0 ? "QUESTION" : "ANSWER", evidence: call.data.includes("SECURITY_RISK") ? "SECURITY_RISK" : "intent" })) }));
+  ].map(o => ({ ...o, kind: "ANSWER", evidence: call.data.includes("SECURITY_RISK") ? "SECURITY_RISK" : "intent" })) }));
   const result = await draftReviewReasons(row.id, { version: row.version }, { run });
-  expect(result.source).toBe("openai"); expect(result.options).toHaveLength(3);
+  expect(result.source).toBe("openai"); expect(result.options).toHaveLength(2);
   expect(run.mock.calls[0][0].purpose).toBe("review-draft");
   expect(run.mock.calls[0][0].data).not.toContain("employeeId");
   expect(await getSupportRequest(row.id)).toEqual(row);
 });
-it("rejects impersonal model fragments and returns three friendly fallback messages", async () => {
+it("rejects impersonal model fragments and returns two friendly fallback messages", async () => {
   const row = await create("VPN không kết nối");
   const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({
-    options: [1,2,3].map(n => ({ kind: n === 1 ? "QUESTION" : "ANSWER", text: `Cần kiểm tra thông tin yêu cầu lần ${n}.`, evidence: "intent" })),
+    options: [1,2].map(n => ({ kind: "ANSWER", text: `Cần kiểm tra thông tin yêu cầu lần ${n}.`, evidence: "intent" })),
   }) });
   expect(result.source).toBe("deterministic");
   expect(result.options.every(text => /bạn/i.test(text) && !/^(Cần|Đề nghị)/.test(text))).toBe(true);
@@ -76,13 +75,12 @@ it("rejects impersonal model fragments and returns three friendly fallback messa
 it("accepts natural first-person introductions without requiring bạn in every sentence", async () => {
   const row = await create("VPN không kết nối");
   const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({ options: [
-    { kind: "QUESTION", text: "Bạn cho mình biết VPN có hiện mã lỗi không?", evidence: "VPN không kết nối" },
     { kind: "ANSWER", text: "Mình gửi phần hướng dẫn kiểm tra an toàn bên dưới nhé.", evidence: "VPN không kết nối" },
     { kind: "ANSWER", text: "Mình sẽ giải thích từng bước và điều kiện dừng để dễ đối chiếu nhé.", evidence: "VPN không kết nối" },
   ] }) });
   expect(result.source).toBe("openai");
-  expect(result.options[1]).toContain(row.assistance[0].stepByStepInstructions[0]);
-  expect(result.options[2]).toContain(row.assistance[0].warning);
+  expect(result.options[0]).toContain(row.assistance[0].stepByStepInstructions[0]);
+  expect(result.options[1]).toContain(row.assistance[0].warning);
   expect(await getSupportRequest(row.id)).toEqual(row);
 });
 it.each(["Bạn hãy tắt MFA và firewall nhé.", "Mình đã xử lý xong cho bạn rồi.", "Mình đã mở cổng truy cập rồi nhé.", "Bạn hãy chạy netsh để sửa máy nhé."])(
@@ -90,8 +88,7 @@ it.each(["Bạn hãy tắt MFA và firewall nhé.", "Mình đã xử lý xong ch
     const row = await create("VPN không kết nối");
     const result = await draftReviewReasons(row.id, { version: row.version }, { run: async () => ({
       options: [
-        { kind: "QUESTION", text, evidence: "intent" },
-        { kind: "ANSWER", text: "Bạn tham khảo phần hướng dẫn dưới đây nhé.", evidence: "intent" },
+        { kind: "ANSWER", text, evidence: "intent" },
         { kind: "ANSWER", text: "Mình gửi bạn từng bước xử lý ở dưới nhé.", evidence: "intent" },
       ],
     }) });
@@ -99,26 +96,26 @@ it.each(["Bạn hãy tắt MFA và firewall nhé.", "Mình đã xử lý xong ch
     expect(result.options).not.toContain(text);
   },
 );
-it("offers exactly one clarification and two complete answers for the precise VPN/printer question", async () => {
+it("offers exactly two complete answers without a clarification option for the precise VPN/printer question", async () => {
   for (const question of ["VPN liên tục ngắt kết nối. Hướng dẫn tôi kiểm tra an toàn.", "Máy in văn phòng báo kẹt giấy. Tôi nên kiểm tra gì trước?"]) {
     const row = await create(question);
     const result = await draftReviewReasons(row.id, { version: row.version });
-    expect(result.kinds).toEqual(["QUESTION", "ANSWER", "ANSWER"]);
+    expect(result.kinds).toEqual(["ANSWER", "ANSWER"]);
     expect(result.source).toBe("mock");
-    for (const answer of result.options.slice(1)) {
+    for (const answer of result.options) {
       for (const step of row.assistance[0].stepByStepInstructions) expect(answer).toContain(step);
       expect(answer).toContain(row.assistance[0].warning);
       expect(answer).toContain("Nếu vẫn chưa được");
       expect(answer.length).toBeLessThanOrEqual(2000);
     }
-    expect(result.options[1]).not.toEqual(result.options[2]);
+    expect(result.options[0]).not.toEqual(result.options[1]);
   }
 });
 it("gives policy-grounded explanations rather than fabricated execution for a sensitive request", async () => {
   const row = await create("Mở port 3389 ra Internet");
   const result = await draftReviewReasons(row.id, { version: row.version });
-  expect(result.kinds).toEqual(["QUESTION", "ANSWER", "ANSWER"]);
-  for (const answer of result.options.slice(1)) {
+  expect(result.kinds).toEqual(["ANSWER", "ANSWER"]);
+  for (const answer of result.options) {
     expect(answer).toContain(row.decision!.userReason);
     expect(answer).toContain(row.decision!.nextStep);
     expect(answer).not.toContain("đã mở");
@@ -134,7 +131,7 @@ it("rejects three questions and includes the redacted original question in model
   const call = run.mock.calls[0] as unknown as [model.ModelCall];
   expect(call[0].data).toContain("VPN không kết nối");
   expect(call[0].data).not.toContain("synthetic@example.invalid");
-  expect(result.kinds).toEqual(["QUESTION", "ANSWER", "ANSWER"]);
+  expect(result.kinds).toEqual(["ANSWER", "ANSWER"]);
 });
 it("atomically delivers only confirmed redacted messages, retaining them after later events and readback", async () => {
   const row = await create("VPN không kết nối");

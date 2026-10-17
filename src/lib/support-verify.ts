@@ -80,6 +80,7 @@ export type VerifyResult = {
   actual?: Decision;
   pass: boolean;
   persistence?: { pass: boolean; checks: string[] };
+  response?: { pass: boolean; checks: string[] };
   error?: string;
   httpStatus?: number;
   retryable?: boolean;
@@ -143,14 +144,17 @@ export async function runSupportCase(
         error: "Request đang xử lý; chưa có quyết định.",
       };
     const persistence = await verifyPersistence(request, fetcher);
+    const responseQuality = item.pack === "judge-15" ? verifyResponse(request, item.expected_action) : undefined;
     return {
       ...result,
       persistence,
+      ...(responseQuality ? { response: responseQuality } : {}),
       timestamp: request.updatedAt,
       requestId: request.id,
       actual,
       pass:
         persistence.pass &&
+        (responseQuality?.pass ?? true) &&
         actual.action === item.expected_action &&
         actual.bucket === item.expected_bucket &&
         (!item.expected_rule || actual.ruleIds.includes(item.expected_rule)),
@@ -158,6 +162,26 @@ export async function runSupportCase(
   } catch {
     return { ...result, retryable: true, error: "Không thể kết nối hoặc đọc lại decision API. Có thể tiếp tục case này." };
   }
+}
+
+/** Check usable guidance/questions as well as labels; never compare generated prose verbatim. */
+export function verifyResponse(request: SupportRequest, expectedAction: string) {
+  const checks: string[] = [];
+  const check = (name: string, valid: boolean) => checks.push(`${name}:${valid ? "pass" : "fail"}`);
+  const decision = request.decision;
+  check("explanation", Boolean(decision?.userReason.trim() && decision.nextStep.trim()));
+  if (expectedAction === "AUTO_APPROVE") {
+    const answer = request.assistance.at(-1);
+    check("guidance", Boolean(answer?.stepByStepInstructions.length && answer.stepByStepInstructions.every(step => step.trim().length > 10)));
+    check("verification", Boolean(answer?.expectedResult.trim() && answer.nextQuestion.trim()));
+    check("safety", Boolean(answer?.warning.trim()));
+    check("not-completed", request.status !== "COMPLETED");
+  } else {
+    check("no-approval", !["AUTO_APPROVED", "APPROVED_BY_HUMAN", "COMPLETED"].includes(request.status));
+    check("questions", Boolean(decision && [...decision.questions, ...(decision.reviewerQuestions ?? [])].some(question => question.trim().length > 10)));
+    if (expectedAction === "NEEDS_INFORMATION") check("missing-fields", Boolean(decision?.missingFields.length));
+  }
+  return { pass: checks.every(value => value.endsWith(":pass")), checks };
 }
 
 // Read back through the public production contracts; a successful POST alone is not persistence evidence.

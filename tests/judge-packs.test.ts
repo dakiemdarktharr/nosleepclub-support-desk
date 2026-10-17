@@ -37,6 +37,24 @@ it.each(supportVerifyCases.filter(row => row.pack === "judge-15"))("$id follows 
   const row = await submitSupport({ rawText: item.rawText, fields: { department: "engineering", employeeId: "VERIFY-EMP-42", ...item.fields }, confirmed: true, idempotencyKey: crypto.randomUUID() });
   expect(row.decision).toMatchObject({action:item.expected_action, bucket:item.expected_bucket});
   expect(row.decision?.ruleIds).toContain(item.expected_rule);
+  expect(row.decision?.nextStep.trim().length).toBeGreaterThan(0);
+  expect(row.decision?.userReason.trim().length).toBeGreaterThan(0);
+  if (item.expected_action === "AUTO_APPROVE") {
+    const response = row.assistance.at(-1);
+    expect(response, "A routine result must include usable guidance, not only an AUTO label").toBeDefined();
+    expect(response!.stepByStepInstructions.length).toBeGreaterThan(0);
+    expect(response!.stepByStepInstructions.every(step => step.trim().length > 10)).toBe(true);
+    expect(response!.expectedResult.trim().length).toBeGreaterThan(0);
+    expect(response!.warning.trim().length).toBeGreaterThan(0);
+    expect(response!.nextQuestion.trim().length).toBeGreaterThan(0);
+    expect(row.status).not.toBe("COMPLETED");
+  } else {
+    expect(["AUTO_APPROVED", "APPROVED_BY_HUMAN", "COMPLETED"]).not.toContain(row.status);
+    if (item.expected_action === "NEEDS_INFORMATION") {
+      expect(row.decision!.missingFields.length).toBeGreaterThan(0);
+      expect(row.decision!.questions.join(" ")).toMatch(/\?/);
+    }
+  }
   if (item.expected_action !== "AUTO_APPROVE") {
     expect((row.decision?.questions?.length ?? 0) + (row.decision?.reviewerQuestions?.length ?? 0)).toBeGreaterThan(0);
   }

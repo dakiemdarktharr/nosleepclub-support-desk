@@ -7,7 +7,7 @@ test("judge can enter from home, run De A, inspect audit and try a new input wit
   await staff.focus();
   await page.keyboard.press("Enter");
   await page.getByRole("button", { name: "Đã hiểu", exact: true }).click();
-  await expect(page.getByText("Reviewer demo công khai", { exact: false })).toBeVisible();
+  await expect(page.getByText("Reviewer demo công khai", { exact: false })).toHaveCount(0);
   await page.getByRole("button", { name: "Bỏ qua hướng dẫn" }).click();
   const verify = page.getByRole("link", { name: "Kiểm thử", exact: true });
   await verify.focus();

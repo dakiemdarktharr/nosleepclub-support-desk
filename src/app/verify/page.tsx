@@ -337,6 +337,7 @@ export default function VerifyPage() {
                 {result.actual?.bucket}
               </p>
               <p>Rule IDs: {result.actual?.ruleIds.join(", ") ?? "—"}</p>
+              {result.response && <p>Kiểm tra phản hồi: {result.response.checks.join(" · ")}</p>}
               {result.actual && <>
                 <p>Nơi tiếp nhận: {result.actual.assignedTeam} · nhãn điều phối mô phỏng, chưa gửi thông báo.</p>
                 <p>Policy: {result.actual.policyVersion}</p>

@@ -31,7 +31,7 @@ beforeEach(() => {
     collection: () => ({ findOne, updateOne, createIndex }),
   } as unknown as ReturnType<typeof supportDatabase>);
 });
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => { vi.unstubAllEnvs(); vi.useRealTimers(); });
 it("persists a signed Mongo entry, uses Date TTL, and rejects modified cached content", async () => {
   const generate = vi.fn(async () => "Verified public response");
   await withAnswerCache("hashed-question", generate, validator);
@@ -62,4 +62,64 @@ it("cache read/write outages do not discard an otherwise valid generated answer"
   );
   expect(result.value).toBe("safe answer");
   expect(result.cacheHit).toBe(false);
+});
+it("validates before persisting and never caches a rejected generation", async () => {
+  const generate = vi.fn().mockResolvedValueOnce({ unsafe: true }).mockResolvedValue("safe answer");
+  await expect(withAnswerCache("invalid", generate, validator)).rejects.toThrow("invalid");
+  expect(documents.size).toBe(0);
+  expect((await withAnswerCache("invalid", generate, validator)).value).toBe("safe answer");
+  expect(generate).toHaveBeenCalledTimes(2);
+});
+it("expires at the exact TTL boundary and retains the original generation timestamp on hits", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  const generate = vi.fn(async () => "safe answer");
+  const first = await withAnswerCache("ttl", generate, validator);
+  vi.setSystemTime(Date.now() + 3_599_999);
+  const hit = await withAnswerCache("ttl", generate, validator);
+  expect(hit).toMatchObject({ cacheHit: true, generatedAt: first.generatedAt });
+  vi.setSystemTime(Date.now() + 1);
+  expect((await withAnswerCache("ttl", generate, validator)).cacheHit).toBe(false);
+  expect(generate).toHaveBeenCalledTimes(2);
+});
+it("coalesces concurrent misses and retries after a failed shared generation", async () => {
+  let release!: (value: string) => void;
+  const generate = vi.fn(() => new Promise<string>(resolve => { release = resolve; }));
+  const first = withAnswerCache("same", generate, validator);
+  const second = withAnswerCache("same", generate, validator);
+  await vi.waitFor(() => expect(generate).toHaveBeenCalledTimes(1));
+  release("safe answer");
+  const results = await Promise.all([first, second]);
+  expect(results.map(result => result.cacheHit).sort()).toEqual([false, true]);
+  const failed = vi.fn(async () => { throw Error("provider down"); });
+  await expect(withAnswerCache("retry", failed, validator)).rejects.toThrow("provider down");
+  expect((await withAnswerCache("retry", async () => "recovered", validator)).value).toBe("recovered");
+});
+it("revalidates cached values against a changed validator", async () => {
+  await withAnswerCache("schema", async () => "old answer", validator);
+  const newer = (value: unknown) => { if (value !== "new answer") throw Error("old schema"); return value; };
+  const generate = vi.fn(async () => "new answer");
+  expect(await withAnswerCache("schema", generate, newer)).toMatchObject({ value: "new answer", cacheHit: false });
+});
+it("rejects signatures from another key or signing secret", async () => {
+  const generate = vi.fn(async () => "safe answer");
+  await withAnswerCache("a", generate, validator);
+  documents.set("b", documents.get("a")!);
+  expect((await withAnswerCache("b", generate, validator)).cacheHit).toBe(false);
+  vi.stubEnv("OPENAI_API_KEY", "rotated-synthetic-signing-key");
+  expect((await withAnswerCache("a", generate, validator)).cacheHit).toBe(false);
+});
+it.each(["bad-signature", "future-created", "malformed"])("treats %s as a miss", async kind => {
+  const generate = vi.fn(async () => "safe answer");
+  await withAnswerCache(kind, generate, validator);
+  const row = documents.get(kind)!;
+  if (kind === "bad-signature") row.signature = "0".repeat(64);
+  if (kind === "future-created") row.createdAt = new Date(Date.now() + 60000).toISOString();
+  if (kind === "malformed") row.expiresAt = "not a date";
+  expect((await withAnswerCache(kind, generate, validator)).cacheHit).toBe(false);
+});
+it.each(["no-key", "mock", "no-secret"])("bypasses storage but still validates output for %s", async mode => {
+  if (mode === "mock") vi.stubEnv("AI_PROVIDER", "mock");
+  if (mode === "no-secret") vi.stubEnv("OPENAI_API_KEY", "");
+  await expect(withAnswerCache<unknown>(mode === "no-key" ? null : "bypass", async () => 42, validator)).rejects.toThrow("invalid");
+  expect(findOne).not.toHaveBeenCalled(); expect(updateOne).not.toHaveBeenCalled();
 });

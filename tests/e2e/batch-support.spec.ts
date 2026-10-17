@@ -10,24 +10,23 @@ test("reviewer chooses a friendly draft, confirms it, and sender receives it thr
   await page.goto("/review");
   await page.getByRole("button", { name: "Đã xử lý tự động", exact: true }).click();
   await page.locator(`a[href='/review?requestId=${row.id}']`).click();
-  await page.getByRole("button", { name: "AI soạn 3 gợi ý tin nhắn" }).click();
-  await expect(page.locator(".review-draft-option")).toHaveCount(3);
-  await expect(page.locator(".review-draft-option").nth(0)).toContainText("Hỏi thêm thông tin");
-  await expect(page.locator(".review-draft-option").nth(1)).toContainText("Kiểm tra Internet");
-  await expect(page.locator(".review-draft-option").nth(2)).toContainText("giữ nguyên MFA");
-  for (const index of [1, 2]) {
+  await expect(page.locator(".review-draft-option")).toHaveCount(2);
+  await expect(page.locator(".review-draft-option").nth(0)).toContainText("Kiểm tra Internet");
+  await expect(page.locator(".review-draft-option").nth(1)).toContainText("giữ nguyên MFA");
+  for (const index of [0, 1]) {
     const option = page.locator(".review-draft-option").nth(index);
     const fullText = await option.locator("span").innerText();
     await option.click();
-    await expect(page.getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")).toHaveValue(fullText);
+    await expect(page.getByLabel("Tin nhắn cho người gửi")).toHaveValue(fullText);
     expect(fullText).toContain("Nếu vẫn chưa được");
   }
-  await page.locator(".review-draft-option").first().click();
-  await expect(page.getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)")).not.toHaveValue("");
+  await page.getByRole("button", { name: "Hỏi thêm thông tin", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Gửi yêu cầu bổ sung", exact: true })).toBeEnabled();
+  await expect(page.getByLabel("Tin nhắn cho người gửi")).not.toHaveValue("");
   const latest = await (await request.get(`/api/support/requests/${row.id}`)).json();
   expect(latest.data.version).toBe((await handoff.json()).data.version);
   expect(latest.data.events.some((event: { senderMessage?: string }) => event.senderMessage)).toBe(false);
-  const message = await page.getByLabel("Lý do (không bắt buộc khi duyệt yêu cầu)").inputValue();
+  const message = await page.getByLabel("Tin nhắn cho người gửi").inputValue();
   expect(message).toMatch(/bạn/i);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: `artifacts/batch-drafts-${info.project.name}.png`, fullPage: true });
@@ -36,7 +35,7 @@ test("reviewer chooses a friendly draft, confirms it, and sender receives it thr
   await expect(sender.getByRole("region", { name: "Tin nhắn từ nhân viên" })).toHaveCount(0);
   // Keep the sender visible while the reviewer sends, exercising the real poll.
   await sender.bringToFront();
-  await page.getByRole("button", { name: "Hỏi thêm thông tin", exact: true }).click();
+  await page.getByRole("button", { name: "Gửi yêu cầu bổ sung", exact: true }).click();
   await expect(page.getByText("Đã lưu quyết định và gửi tin nhắn vào hồ sơ người gửi")).toBeVisible();
   await sender.bringToFront();
   await expect(sender.getByRole("region", { name: "Tin nhắn từ nhân viên" })).toContainText(message, { timeout: 10000 });
