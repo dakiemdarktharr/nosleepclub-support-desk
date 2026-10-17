@@ -59,6 +59,16 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 
 [Hợp đồng và giới hạn](docs/BATCH-SUPPORT-CONTRACT.md) · [Báo cáo kiểm thử](docs/BATCH-SUPPORT-VALIDATION.md).
 
+## Kiểm chứng Production ngày 17/10/2026
+
+Đã đồng bộ 40/40 phòng ban và giữ nguyên quyền. Trên commit 6edafe2: tóm tắt Luna thật 3/3 ca, cache sau reload 3/3, tin nhắn reviewer đến đúng hồ sơ người gửi 3/3. Gợi ý trả lời ở lượt này: 1 bộ từ Luna, 2 bộ dùng mẫu dự phòng; không coi fallback là model thành công. Đã dọn chính xác các ID thử. [Báo cáo, kiểm thử và giới hạn](docs/DEPARTMENTS-LUNA-PRODUCTION-2026-10-17.md).
+
+Ảnh dưới chụp **Production với dữ liệu giả lập**, bản tóm tắt do OpenAI/gpt-6-luna trả về; không phải feedback người dùng thật.
+
+[![Chi tiết reviewer chỉ hiện nguyên văn và tóm tắt bằng Luna](docs/images/review-summary-desktop.png)](docs/images/review-summary-desktop.png)
+
+[Ảnh giao diện trên điện thoại](docs/images/review-summary-mobile.png).
+
 ## ID demo
 
 Có **41 ID đang hoạt động**: 1 tài khoản IT và 40 tài khoản nhân viên bên dưới. Tất cả tên, vị trí và đích tài nguyên trong bộ này là **dữ liệu giả lập**, không phải danh sách nhân sự VNG.
