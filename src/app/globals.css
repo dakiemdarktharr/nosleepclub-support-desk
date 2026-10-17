@@ -966,16 +966,16 @@ body:has(.it-workspace) { background: var(--paper); }
   width:100%;
   position:relative;
   z-index:1;
-  filter:drop-shadow(0 10px 14px rgb(136 67 24 / 18%)) drop-shadow(0 2px 3px rgb(136 67 24 / 10%));
+  filter:drop-shadow(0 16px 18px rgb(105 54 26 / 34%)) drop-shadow(0 4px 5px rgb(84 42 20 / 24%));
 }
 .role-welcome .welcome-art::after {
   content:"";
   position:absolute;
-  left:27%;
-  right:27%;
+  left:26%;
+  right:26%;
   top:84%;
-  height:5%;
-  background:radial-gradient(ellipse, rgb(110 63 25 / 22%), rgb(110 63 25 / 8%) 45%, transparent 72%);
+  height:6%;
+  background:radial-gradient(ellipse, rgb(94 49 24 / 46%), rgb(94 49 24 / 20%) 45%, transparent 75%);
   filter:blur(3px);
   pointer-events:none;
   z-index:0;
@@ -1043,7 +1043,7 @@ input:not([type="checkbox"]),textarea { transition:border-color 150ms,box-shadow
   .role-welcome .entry-card > strong { font-size:18px; }
   .role-welcome .entry-icon { flex-basis:42px; width:42px; height:42px; }
   .role-welcome .welcome-art { max-width:260px; margin:10px auto; }
-  .role-welcome .welcome-art img { filter:drop-shadow(0 6px 9px rgb(136 67 24 / 18%)) drop-shadow(0 1px 2px rgb(136 67 24 / 10%)); }
+  .role-welcome .welcome-art img { filter:drop-shadow(0 10px 12px rgb(105 54 26 / 34%)) drop-shadow(0 3px 4px rgb(84 42 20 / 24%)); }
   .role-welcome .hello-note { font-size:16px; padding:10px 15px; }
   .login-page .identity-login { padding:28px 24px; }
   .flow-steps li { padding:8px; }
