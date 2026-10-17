@@ -24,7 +24,7 @@ export default function Home() {
       <div className="welcome-art">
         <span className="mascot-orbit" aria-hidden="true" />
         <span className="hello-note" aria-hidden="true">Xin chào!</span>
-        <Image src="/illustrations/vng-support-mascot.png" width={1024} height={1024}
+        <Image src="/illustrations/vng-support-mascot-folder.png" width={1024} height={1024}
           priority alt="Nhân vật màu cam thân thiện đang vẫy tay chào" />
       </div>
     </main>
