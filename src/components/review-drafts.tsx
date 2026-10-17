@@ -21,7 +21,7 @@ export function ReviewDrafts({ id, version, onChoose, disabled = false }: { id: 
     {busy && <p role="status">Đang soạn 2 gợi ý xử lý…</p>}
     {error && <div><p role="alert">{error}</p><Button variant="quiet" onClick={() => setRetry(value => value + 1)}>Thử tải gợi ý lại</Button></div>}
     {drafts && <div aria-live="polite">
-      <p className="it-field-hint">{drafts.source === "openai" ? `Gợi ý từ ${drafts.model || "AI"}` : drafts.source === "mock" ? "Gợi ý mô phỏng" : "Mẫu hướng dẫn dự phòng"}</p>
+      <p className="it-field-hint">{drafts.source === "openai" ? "Gợi ý từ AI" : drafts.source === "mock" ? "Gợi ý mô phỏng" : "Mẫu hướng dẫn dự phòng"}</p>
       {drafts.options.map((text, i) => <button type="button" disabled={disabled} className="review-draft-option" key={i} onClick={() => onChoose(text)}><strong>Gợi ý xử lý {i + 1}</strong><span className="whitespace-pre-wrap line-clamp-3">{text}</span></button>)}
     </div>}
   </section>;
