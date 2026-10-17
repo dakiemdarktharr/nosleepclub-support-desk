@@ -36,7 +36,9 @@ it("passes the normalized code to Mongo filtering and counts using the same filt
   vi.spyOn(repository, "supportDatabase").mockReturnValue({ collection: () => collection } as unknown as Db);
   await supportPage(parseSupportQuery("http://local?q=HT-ABCDEF12"));
   const filter = collection.find.mock.calls[0][0];
-  expect(filter.$or).toContainEqual({ "data.id": { $regex: "ABCDEF12", $options: "i" } });
+  // The stored search pattern may be normalized; the contract is exact code
+  // text plus case-insensitive matching, not uppercase internal representation.
+  expect(filter.$or).toContainEqual({ "data.id": { $regex: expect.stringMatching(/^abcdef12$/i), $options: "i" } });
   expect(filter.$or).toContainEqual({ "data.input.fields.employeeId": "abcdef12" });
   expect(collection.countDocuments).toHaveBeenCalledWith(filter);
 });
