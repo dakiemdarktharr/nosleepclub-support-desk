@@ -12,6 +12,7 @@ import {
   listSupportRequests,
 } from "./support-repository";
 import { employeeIdPattern, normalizeEmployeeId } from "@/domain/employee-identity";
+import type { GroupCandidate } from "@/domain/request-groups";
 
 const querySchema = z.object({
   cursor: z.coerce.number().int().min(0).max(1000000).default(0),
@@ -90,8 +91,10 @@ function filterFor(query: SupportQuery): Filter<Row> {
 async function memoryRows(query: SupportQuery) {
   // Only used for explicitly temporary local tests/development.
   const rows = await listSupportRequests(true);
-  return rows.filter(
-    (row) =>
+  return rows.filter(row => matchesSupportQuery(row, query));
+}
+export function matchesSupportQuery(row: GroupCandidate, query: SupportQuery) {
+  return (
       (!query.requestId || row.id === query.requestId) &&
       (!query.employeeId ||
         normalizeEmployeeId(row.input.fields.employeeId ?? "") ===
@@ -106,8 +109,21 @@ async function memoryRows(query: SupportQuery) {
       [row.id, row.originalQuestion, row.input.rawText, row.input.fields.employeeId]
         .some((value) =>
           (value ?? "").toLocaleLowerCase().includes(query.q.toLocaleLowerCase()),
-        ),
+        )
   );
+}
+export function summarizeSupport(row: GroupCandidate): SupportSummary {
+  return {
+    id: row.id, incidentId: row.incidentId, version: row.version, status: row.status,
+    createdAt: row.createdAt, updatedAt: row.updatedAt,
+    title: (row.originalQuestion || row.input.rawText || "Yêu cầu theo danh mục").slice(0, 140),
+    employeeId: row.input.fields.employeeId,
+    serviceGroup: row.canonical?.serviceGroup ?? "OTHER",
+    action: row.decision?.action ?? null,
+    uncertaintyClass: row.decision?.uncertaintyClass,
+    assignedTeam: row.decision?.assignedTeam,
+    hasKnowledgeCandidate: row.knowledgeCandidate?.status === "PENDING_REVIEW",
+  };
 }
 export async function supportPage(
   query: SupportQuery,

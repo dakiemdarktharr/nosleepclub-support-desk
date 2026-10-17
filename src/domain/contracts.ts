@@ -284,6 +284,7 @@ export type SupportRequest = {
   supportNeed?: import("./support-need").SupportNeed;
   incidentId?: string;
   incident?: import("../lib/support-incidents").IncidentView;
+  sharedReplies?: import("./request-groups").SharedReply[];
   stepExplanations?: Array<{ step: number; text: string; timestamp: string }>;
   canonical: CanonicalRequest | null;
   decision: Decision | null;

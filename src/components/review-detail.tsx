@@ -230,6 +230,13 @@ export function ReviewDetail({
             {!request.originalQuestion && !request.input.rawText && <dl className="it-request-fields">{Object.entries(request.input.fields).filter(([key]) => !["employeeId", "department"].includes(key)).map(([key, value]) => <div key={key}><dt>{labelForField(key)}</dt><dd>{optionName(value)}</dd></div>)}</dl>}
           </section>
           <ReviewSummary key={request.id} id={request.id} version={request.version} />
+          {!!request.sharedReplies?.length && <section className="it-surface it-intake" aria-label="Phản hồi chung">
+            <h2>Phản hồi chung</h2>
+            <ol className="reviewer-messages">{request.sharedReplies.map(reply => <li key={reply.id}>
+              <time dateTime={reply.timestamp}>{new Date(reply.timestamp).toLocaleString("vi-VN")}</time>
+              <p className="whitespace-pre-wrap">{reply.text}</p>
+            </li>)}</ol>
+          </section>}
           <ReviewDrafts key={`${request.id}:${request.version}`} id={request.id} version={request.version} disabled={pending || drafting} onChoose={text => { setReason(text); setInformation(null); }} />
         </div>
         <aside

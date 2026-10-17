@@ -95,7 +95,8 @@ export function RequestDetail({ id }: { id: string }) {
       const updated = await browserApi<SupportRequest>(
         `/api/support/requests/${id}/${path}`, { ...body, version: request.version },
       );
-      setRequest({ ...updated, ...(updated.incidentId === request.incidentId ? { incident: request.incident } : {}) });
+      setRequest({ ...updated, sharedReplies: request.sharedReplies,
+        ...(updated.incidentId === request.incidentId ? { incident: request.incident } : {}) });
       setClarification("");
       setFollowup("");
       setFields({});
@@ -195,12 +196,12 @@ export function RequestDetail({ id }: { id: string }) {
                 "Yêu cầu theo danh mục"}
             </blockquote>
           </Card>
-          {reviewerMessages(request.events).length > 0 && (
+          {reviewerMessages(request.events, request.sharedReplies).length > 0 && (
             <Card>
               <section aria-label="Tin nhắn từ nhân viên" aria-live="polite" aria-relevant="additions">
                 <h2>Phản hồi của nhân viên</h2>
                 <ol className="reviewer-messages">
-                  {reviewerMessages(request.events).map(message => <li key={message.id}>
+                  {reviewerMessages(request.events, request.sharedReplies).map(message => <li key={message.id}>
                     <div><strong>Nhân viên hỗ trợ</strong><time dateTime={message.timestamp}>{new Date(message.timestamp).toLocaleString("vi-VN")}</time></div>
                     <p>{message.text}</p>
                   </li>)}

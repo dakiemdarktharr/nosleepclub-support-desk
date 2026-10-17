@@ -9,13 +9,13 @@ import {
   ChevronRight,
   ShieldAlert,
   UserCheck,
+  Users,
   BookOpen,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type ResultPage,
-  type SupportSummary,
   type RequestStatus,
   type SupportRequest,
 } from "@/domain/contracts";
@@ -26,12 +26,13 @@ import { browserApi } from "@/lib/browser-api";
 import { Alert, Badge, Button } from "@/components/ui";
 import { ReviewDetail } from "@/components/review-detail";
 import { StaffWorkspace } from "@/components/staff-workspace";
+import type { SupportQueueItem } from "@/domain/request-groups";
 
 export function ReviewConsole({ requestId }: { requestId?: string }) {
   const sequence = useRef(0);
   const detailSequence = useRef(0);
   const employeeSuggestionSequence = useRef(0);
-  const [requests, setRequests] = useState<SupportSummary[]>([]),
+  const [requests, setRequests] = useState<SupportQueueItem[]>([]),
     [selected, setSelected] = useState<SupportRequest | null>(null);
   const [reason, setReason] = useState(""),
     [target, setTarget] = useState<RequestStatus>("NEEDS_INFORMATION"),
@@ -73,7 +74,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
     setSearch(""); setEmployeeId(""); setFilter("all"); setOrigin("all"); setQueue("all");
     setSelectedEmployeeId(""); setEmployeeSuggestions([]); setEmployeeSuggestionsOpen(false);
   }
-  const visibleRequests = requests.filter((row, index, all) => !groupIncidents || !row.incidentId || all.findIndex(r => r.incidentId === row.incidentId) === index);
+  const visibleRequests = requests;
   const quickQueues = [
     { label: "Đã xử lý tự động", filter: "auto", queue: "all", icon: UserCheck },
     { label: "Chờ xử lý", filter: "pending", queue: "all", icon: Inbox },
@@ -88,7 +89,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
       if (!cursor) { setRequests([]); setTotal(0); setNextCursor(null); }
       try {
         const params = new URLSearchParams({
-          view: "page",
+          view: groupIncidents ? "grouped" : "page",
           q: search,
           status: filter,
           origin,
@@ -97,7 +98,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
           ...(employeeId.trim() ? { employeeId: employeeId.trim() } : {}),
           ...(cursor ? { cursor } : {}),
         });
-        const page = await browserApi<ResultPage<SupportSummary>>(
+        const page = await browserApi<ResultPage<SupportQueueItem>>(
           `/api/support/requests?${params}`,
         );
         if (current !== sequence.current) return;
@@ -116,7 +117,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
         if (current === sequence.current) setLoading(false);
       }
     },
-    [search, employeeId, filter, origin, queue],
+    [search, employeeId, filter, origin, queue, groupIncidents],
   );
   useEffect(() => {
     if (requestId || !filtersReady) return;
@@ -202,7 +203,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
           ...(action === "OVERRIDE" ? { target } : {}),
         },
       );
-      setSelected(updated);
+      setSelected({ ...updated, sharedReplies: selected.sharedReplies });
       setReason("");
       if (!requestId) await refresh();
       return true;
@@ -250,7 +251,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
               </Button>
             </header>
             <IncidentQueue />
-            <label className="flex items-center gap-2 my-3"><input type="checkbox" checked={groupIncidents} onChange={event => setGroupIncidents(event.target.checked)} />Gộp sự cố trùng trong danh sách đã tải (vẫn giữ mọi hồ sơ)</label>
+            <label className="flex items-center gap-2 my-3"><input type="checkbox" checked={groupIncidents} onChange={event => setGroupIncidents(event.target.checked)} />Gộp yêu cầu cùng vấn đề</label>
             <div className="it-quick-queues" role="group" aria-label="Chọn nhanh hàng đợi">
               {quickQueues.map(({ label, filter: nextFilter, queue: nextQueue, icon: Icon }) => (
                 <button key={label} type="button" aria-pressed={filter === nextFilter && queue === nextQueue}
@@ -402,7 +403,7 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                 <span role="status" aria-live="polite">
                   {loading
                     ? "Đang tải danh sách…"
-                    : `Đã tải ${requests.length}/${total} hồ sơ; hiển thị ${visibleRequests.length} mục${groupIncidents ? " sau gộp sự cố" : ""}.`}
+                    : `${requests.length}/${total} mục`}
                 </span>
                 {(search || employeeId || filter !== "all" || origin !== "all" || queue !== "all") && (
                   <Button variant="quiet" onClick={clearFilters}><X size={14} />Xóa bộ lọc</Button>
@@ -438,12 +439,12 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                   {visibleRequests.map((request, index) => (
                     <li key={request.id}>
                       <Link
-                        href={`/review?requestId=${request.id}`}
+                        href={request.group ? `/review?groupId=${request.group.id}` : `/review?requestId=${request.id}`}
                         className="it-request-row"
                         data-guide={index === 0 ? "reviewer-list" : undefined}
                       >
                         <div className="it-row-id">
-                          {displayId(request.id)}
+                          {request.group ? <Users size={20} aria-hidden="true" /> : displayId(request.id)}
                           <small>
                             {new Date(request.createdAt).toLocaleDateString(
                               "vi-VN",
@@ -453,7 +454,6 @@ export function ReviewConsole({ requestId }: { requestId?: string }) {
                         </div>
                         <div className="it-row-subject">
                           <strong>{request.title}</strong>
-                          {request.incidentId && <small>Sự cố chung · cập nhật một lần cho các hồ sơ cùng nhóm</small>}
                           <small>{catalog[request.serviceGroup].label}</small>
                           {request.employeeId && (
                             <small>Mã nhân viên: {request.employeeId}</small>

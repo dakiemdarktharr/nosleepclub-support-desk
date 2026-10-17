@@ -1,3 +1,7 @@
+export class BrowserApiError extends Error {
+  constructor(message: string, public code?: string) { super(message); }
+}
+
 export async function browserApi<T>(path: string, body?: unknown): Promise<T> {
   // Bound both headers and response-body reads. A timeout is an unknown outcome,
   // not proof that the server failed to save; callers retain their draft/key.
@@ -35,6 +39,6 @@ async function readResponse<T>(path: string, body: unknown, signal: AbortSignal)
     throw new Error("Máy chủ chưa phản hồi đúng. Vui lòng thử lại.");
   }
   if (!response.ok || result.success !== true)
-    throw new Error(result.error?.message || "Không thể hoàn tất yêu cầu.");
+    throw new BrowserApiError(result.error?.message || "Không thể hoàn tất yêu cầu.", result.error?.code);
   return result.data as T;
 }

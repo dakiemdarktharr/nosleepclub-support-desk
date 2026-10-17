@@ -17,6 +17,7 @@ import {
   listSupportSummaries,
 } from "@/lib/support-repository";
 import { submitSupport } from "@/services/support";
+import { groupedSupportPage } from "@/lib/support-groups";
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   return supportApi(async () => {
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
   return supportApi(async () => {
     requireDemoReviewer();
     const view = new URL(request.url).searchParams.get("view");
+    if (view === "grouped") return groupedSupportPage(parseSupportQuery(request.url));
     if (view === "employee-suggestions")
       return employeeIdSuggestions(parseEmployeeSuggestionPrefix(request.url));
     if (view === "page")
