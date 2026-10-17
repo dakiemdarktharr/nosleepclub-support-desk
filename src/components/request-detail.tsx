@@ -162,10 +162,10 @@ export function RequestDetail({ id }: { id: string }) {
             {request.status === "COMPLETED" && (
               <Image
                 className="completion-mascot"
-                src="/illustrations/vng-support-mascot-folder.png"
+                src="/illustrations/vng-support-mascot-navi-wave.png"
                 width={100}
                 height={100}
-                alt="Nhân vật đồng hành mỉm cười"
+                alt="Navi nháy mắt cười vui vẻ và giơ một tay chào"
               />
             )}
             <Button
