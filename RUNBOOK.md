@@ -35,43 +35,6 @@ Playwright tự khởi động server riêng tại `127.0.0.1:3227` với model 
 
 Báo cáo, ảnh chụp và video do test sinh ra cần được kiểm tra riêng trước khi đưa vào Git. Kết quả local không thay thế kiểm tra dịch vụ đang triển khai.
 
-## Pilot đo thời gian phục vụ
-
-Cấu hình nằm trong `src/domain/service-level-config.ts`, engine trong `service-level.ts` và `service-calendar.ts`.
-Mặc định ba metric đều SHADOW; target, calendar, owner và cảnh báo chưa cấu hình, không phải cam kết VNG.
-Clock bắt đầu hoàn tất hỗ trợ từ DECISION đầu tiên, phản hồi nhân viên từ lúc vào hàng chờ;
-REQUEST_INFORMATION/CLARIFICATION tạo và kết thúc các chu kỳ chờ riêng. Chờ không tự pause SLA.
-Hoàn tất hỗ trợ hoặc mô phỏng không được trình bày như khôi phục dịch vụ thực tế.
-
-1. Reviewer mở hồ sơ để xem thời gian thực trôi qua, giờ làm việc (nếu có lịch đã duyệt), trạng thái,
-   policy/version, lý do, team hiện tại và owner cần xác nhận. Dữ liệu đọc từ giờ UTC của server,
-   refresh 30 giây khi tab mở/online; không có scheduler hoặc cảnh báo email/push.
-2. Mở **Phép đo thời gian phục vụ** từ hàng đợi; chọn khoảng `[from, to)` theo thời điểm bắt đầu cycle.
-   API `GET /api/review/service-level?from=<ISO UTC>&to=<ISO UTC>` giới hạn 500 hồ sơ, loại Verify;
-   báo rõ truncation và ẩn tỷ lệ nếu vượt giới hạn. Không dùng báo cáo bị cắt làm kết luận toàn tổ chức.
-3. Thêm service/owner trong catalog với ID ổn định, department owner riêng và approval reference.
-   Có thể ánh xạ grouping hiện có (kể cả OTHER) sang service mới; thêm catalog/config không cần nhánh theo tên phòng ban.
-   Hệ thống vẫn chỉ có một service được route cho mỗi grouping; cần mở rộng contract intake/routing trước
-   nếu muốn nhiều service cùng một grouping hoặc nguồn HR/Finance mới, không suy ra từ phòng ban người gửi.
-4. Thêm policy cấu hình đầy đủ: scope (organization/service/owner/request type/priority/segment khi có nguồn),
-   precedence, version/effective date, definition version và `completionEvents` phù hợp nguồn FULFILL/REQUESTER_RESOLVED.
-   Precedence cao hơn thắng, rồi scope nhiều điều kiện hơn; bằng điểm trả CONFIG_CONFLICT.
-   Priority/segment hiện chưa có nguồn được duyệt nên các scope đó không khớp trong pilot.
-5. Chỉ chuyển ACTIVE sau khi owner duyệt target, calendar/version/zone/holidays, người nhận cảnh báo,
-   mục tiêu SLA/SLO/OLA, audience và pause exceptions. Calendar BUSINESS dùng khoảng phút mỗi ngày,
-   hỗ trợ nhiều ca/nghỉ trưa/ngày nghỉ/DST; ca qua đêm cần tách qua hai ngày. CONTINUOUS cũng cần phê duyệt.
-   Engine từ chối cấu hình ACTIVE thiếu trường. SHADOW/DRAFT/OLA không được requester-facing.
-   Quản trị config qua review Git; chưa có UI/API quản trị hay pause. Config không tự cấp quyền runtime.
-6. Thay policy tạo version/effective date mới; clock hiện tại giữ snapshot, không reset khi chuyển team hay thay config.
-   Đặt effectiveUntil của phiên cũ bằng effectiveFrom phiên mới để tránh hai cấu hình cùng điểm đang hiệu lực.
-   Ticket cũ thiếu `serviceLevel` giữ LEGACY_UNMEASURED. Không chạy backfill/migration database.
-
-Phản hồi nhóm dùng document giao hàng/audit bất biến, ghép metadata khi đọc; không fan-out đổi version ticket.
-Cảnh báo queue có ID ổn định, được tính sau khi ghép đầy đủ nguồn; không có lịch sử gửi notification nền.
-Các API đo dùng cùng guard reviewer demo hiện có; public-demo không phải phân quyền doanh nghiệp.
-UI người gửi không render clock/policy thử nghiệm, nhưng API demo công khai không tạo ranh giới bảo mật mới.
-Chi tiết và các câu hỏi owner cần xác nhận: [SLA design](docs/SLA-DESIGN.md).
-
 ## Cập nhật sơ đồ workflow
 
 Nguồn Mermaid nằm trong `docs/diagrams/*.mmd`; README và tài liệu kiến trúc dùng SVG dựng sẵn để nhãn không bị renderer của GitHub cắt. Giữ `look: classic`, font Arial và ngắt dòng chủ động. Không sửa chữ trực tiếp trong SVG.

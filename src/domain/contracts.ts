@@ -272,8 +272,6 @@ export type AuditEvent = {
   explanation: string;
 };
 export type SupportRequest = {
-  /** Optional: historical tickets must never receive invented service events. */
-  serviceLevel?: import("./service-level").ServiceLevelState;
   id: string;
   version: number;
   fingerprint: string;

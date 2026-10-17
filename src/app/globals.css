@@ -1136,16 +1136,3 @@ input:not([type="checkbox"]),textarea { transition:border-color 150ms,box-shadow
   .verify-progress-track > span { transition: none; animation: none !important; }
   .verify-progress-track.is-indeterminate > span { width: 100%; opacity: .55; }
 }
-/* Service measurement uses the existing reviewer surfaces and responsive flow. */
-.service-level-panel { padding: 1.25rem; overflow-wrap: anywhere; }
-.service-level-panel h2, .service-level-panel h3 { font-weight: 800; margin-bottom: .5rem; }
-.service-clock-list { display: grid; gap: 1rem; margin: 1rem 0; padding: 0; list-style: none; }
-.service-clock-list > li { border: 1px solid #e2e8f0; border-left: 3px solid #f05a22; border-radius: .75rem; padding: 1rem; }
-.service-clock-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .75rem; margin-top: .75rem; }
-.service-clock-fields dt { font-size: .8rem; color: #475569; }
-.service-clock-fields dd { margin: 0; }
-.service-events { padding-left: 1.25rem; display: grid; gap: .5rem; }
-.service-events small { display: block; color: #475569; }
-.service-report-form { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; margin: 1rem 0; }
-.service-report-form label { display: grid; gap: .35rem; max-width: 100%; }
-.service-report-form input { max-width: 100%; padding: .5rem; border: 1px solid #cbd5e1; border-radius: .5rem; }

@@ -38,8 +38,6 @@ Thanh chờ không hiển thị phần trăm hay thời gian hoàn tất giả. 
 
 ## Hỗ trợ hàng loạt và giám sát tự động
 
-- **Đo thời gian phục vụ (SHADOW)**: mở hồ sơ reviewer để xem đồng hồ phản hồi của nhân viên, hoàn tất hỗ trợ và chờ bổ sung. Mỗi chu kỳ giữ sự kiện nguồn cùng snapshot cấu hình; tin nhắn trả lời nhóm được tính từ bản ghi giao đúng người nhận. **Phép đo thời gian phục vụ** trong trang hàng đợi cho chọn khoảng thời gian, xem số mẫu, độ phủ và mẫu số. Target, owner cam kết và lịch làm việc chưa được phê duyệt nên còn `UNCONFIGURED`; chưa có tỷ lệ đạt SLA VNG. Người gửi không thấy mục tiêu thử nghiệm. Hồ sơ cũ không hồi tố; không có thông báo ngoài app. [Hợp đồng, giới hạn và pilot](docs/SLA-DESIGN.md).
-
 - **Trả lời chung**: hàng đợi hiện nhóm như **7 yêu cầu về lỗi kết nối VPN**. Mở nhóm để xem từng yêu cầu và nhập một câu trả lời cho toàn bộ người gửi. Tin nhắn hiện ở hồ sơ theo dõi của từng người, giữ trạng thái riêng. Nhóm thay đổi thì tải lại trước khi gửi. [Cách dùng và hợp đồng gửi](docs/GROUP-REPLIES.md).
 
 - **Nhóm từ bộ test cache**: chạy 42 câu để tạo bốn nhóm 7 yêu cầu và 14 hồ sơ đối chứng trong hàng đợi, nhãn **Case Verify**. Bấm **Xem yêu cầu cần xử lý** để mở đúng lần chạy và trả lời chung. Lần chạy cũ dùng cùng nút để bổ sung hồ sơ còn thiếu. [Chi tiết](docs/TEST-CACHE-SYSTEM.md).

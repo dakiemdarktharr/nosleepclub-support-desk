@@ -1,5 +1,4 @@
 import { MongoClient, MongoServerError, type Db } from "mongodb";
-import { applyServiceLevelEvents } from "@/domain/service-level";
 import type {
   SupportRequest,
   SupportPreview,
@@ -147,7 +146,6 @@ export async function updateSupportRequest(
   update(draft);
   draft.version = version + 1;
   draft.updatedAt = new Date().toISOString();
-  applyServiceLevelEvents(draft, draft.events.slice(existing.events.length));
   const db = supportDatabase();
   if (db) {
     const result = await db
