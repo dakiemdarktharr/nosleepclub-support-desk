@@ -1,4 +1,8 @@
-# VNG Support
+# NoSleepClub Support Desk — MLAI Hackathon 2026
+
+🏆 **First Prize · VNG AI Agent track · MLAI Hackathon 2026**
+
+Built by **NoSleepClub**, this Support Desk project won first prize in the VNG-led AI Agent track at MLAI Hackathon 2026. The competition began with nearly 200 teams. [Read HUTECH's official results announcement](https://www.facebook.com/hutechuniversity/posts/pfbid02aDmtNL88SKFYwZUSW7gRMWut1BLRCKFEPxb2ZkhA3j2vRQx8P5epe2AaP63dhZ82l).
 
 Support Desk chung giúp nhân viên mô tả vấn đề công việc, nhận hướng dẫn an toàn và chuyển đúng bộ phận cùng lịch sử hội thoại. Không cần biết thuật ngữ kỹ thuật để gửi yêu cầu.
 
